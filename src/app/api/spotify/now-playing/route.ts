@@ -35,14 +35,18 @@ export async function GET() {
       cache: 'no-store'
     });
 
-    if (response.status === 204 || response.status > 400) {
-      return NextResponse.json({ isPlaying: false });
+    if (response.status === 204) {
+      return NextResponse.json({ isPlaying: false, status: 'NO_CONTENT' });
+    }
+
+    if (response.status > 400) {
+      return NextResponse.json({ isPlaying: false, status: 'ERROR' });
     }
 
     const song = await response.json();
     
     if (!song.item) {
-      return NextResponse.json({ isPlaying: false });
+      return NextResponse.json({ isPlaying: false, status: 'NO_ITEM' });
     }
 
     const isPlaying = song.is_playing;

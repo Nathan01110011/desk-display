@@ -1,17 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SpotifyNowPlaying } from '@/types';
 
 export function useSpotify() {
   const [spotify, setSpotify] = useState<SpotifyNowPlaying | null>(null);
+  const failCount = useRef(0);
+  const MAX_FAILS = 5; // Allow ~25 seconds of hiccups before clearing UI
 
   const fetchSpotify = async () => {
     try {
       const res = await fetch('/api/spotify/now-playing');
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json();
-        setSpotify(data);
+        
+        // Logic: Only clear UI if it's consistently empty
+        if (data.isPlaying) {
+          setSpotify(data);
+          failCount.current = 0;
+        } else {
+          failCount.current++;
+          if (failCount.current >= MAX_FAILS || !spotify) {
+            setSpotify(null);
+          }
+          // If failCount < MAX_FAILS and we have old data, do nothing (keep old data on screen)
+        }
+      } else {
+        failCount.current++;
+        if (failCount.current >= MAX_FAILS) setSpotify(null);
       }
-    } catch (e) { console.error("Spotify Fetch Error:", e); }
+    } catch (e) { 
+      failCount.current++;
+      if (failCount.current >= MAX_FAILS) setSpotify(null);
+    }
   };
 
   useEffect(() => {
