@@ -6,20 +6,27 @@ let cache: { data: SportMatch[]; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Parse environment variables
-const SPORTS_LEAGUES_ENV = process.env.SPORTS_LEAGUES || '';
-const SPORTS_TEAMS_ENV = process.env.SPORTS_TEAMS || '';
+const SPORTS_LEAGUES_RAW = process.env.SPORTS_LEAGUES || '';
+const SPORTS_TEAMS_RAW = process.env.SPORTS_TEAMS || '';
 
-const LEAGUES = SPORTS_LEAGUES_ENV.split(',').filter(Boolean).map(item => {
-  const [sport, id] = item.split(':');
-  return { sport, id };
-});
+const LEAGUES = SPORTS_LEAGUES_RAW
+  .split(',')
+  .filter(Boolean)
+  .map(item => {
+    const parts = item.trim().split(':');
+    if (parts.length < 2) return null;
+    return { sport: parts[0], id: parts[1] };
+  })
+  .filter((l): l is { sport: string; id: string } => l !== null);
 
-const TARGET_TEAMS = SPORTS_TEAMS_ENV.split(',').filter(Boolean).map(t => t.trim());
+const TARGET_TEAMS = SPORTS_TEAMS_RAW
+  .split(',')
+  .filter(Boolean)
+  .map(t => t.trim());
 
 async function fetchLeagueScoreboard(sport: string, leagueId: string, date: string): Promise<SportMatch[]> {
   try {
     const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${leagueId}/scoreboard?dates=${date}`;
-    
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     const data = await res.json();
