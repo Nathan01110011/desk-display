@@ -5,9 +5,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSpotify } from '@/hooks/useSpotify';
 import { useCalendar } from '@/hooks/useCalendar';
 import { usePomodoro } from '@/hooks/usePomodoro';
+import { useSports } from '@/hooks/useSports';
 import { CalendarView } from '@/components/CalendarView';
 import { SpotifyPlayer } from '@/components/SpotifyPlayer';
 import { PomodoroView } from '@/components/PomodoroView';
+import { SportsView } from '@/components/SportsView';
 import { AppLauncher } from '@/components/AppLauncher';
 import { SettingsView } from '@/components/SettingsView';
 import { ViewState } from '@/types';
@@ -19,10 +21,13 @@ export default function Dashboard() {
 
   const { spotify, handleAction } = useSpotify();
   const { calendar } = useCalendar();
+  const { matches } = useSports();
   const { 
     pomoTime, pomoActive, pomoMode, workDuration, breakDuration, 
     togglePomo, resetPomo, switchMode, updateDurations 
   } = usePomodoro();
+
+  const isSportsLive = matches.some(m => m.status === 'IN');
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -71,8 +76,10 @@ export default function Dashboard() {
                 <AppLauncher 
                   onOpenPomo={() => setActiveView('pomodoro')} 
                   onOpenSettings={() => setActiveView('settings')}
+                  onOpenSports={() => setActiveView('sports')}
                   pomoActive={pomoActive} 
                   pomoTime={pomoTime} 
+                  isSportsLive={isSportsLive}
                 />
               </motion.div>
             )}
@@ -85,6 +92,13 @@ export default function Dashboard() {
                 onToggle={togglePomo}
                 onReset={resetPomo}
                 onSwitchMode={() => switchMode()}
+                onClose={() => setActiveView('dashboard')}
+              />
+            )}
+
+            {activeView === 'sports' && (
+              <SportsView 
+                matches={matches}
                 onClose={() => setActiveView('dashboard')}
               />
             )}

@@ -16,6 +16,17 @@ export interface SpotifyNowPlaying {
   durationMs: number;
 }
 
-export type ViewState = 'dashboard' | 'pomodoro' | 'settings';
+export type ViewState = 'dashboard' | 'pomodoro' | 'settings' | 'sports';
 
 export type PomodoroMode = 'work' | 'break';
+
+export interface SportMatch {
+  id: string;
+  sport: 'soccer' | 'rugby';
+  league: string;
+  homeTeam: { name: string; logo: string; score: string };
+  awayTeam: { name: string; logo: string; score: string };
+  clock: string;
+  status: 'PRE' | 'IN' | 'POST';
+  startTime: string;
+}

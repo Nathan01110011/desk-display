@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { SpotifyNowPlaying } from '@/types';
 
 export function useSpotify() {
@@ -6,7 +6,7 @@ export function useSpotify() {
   const failCount = useRef(0);
   const MAX_FAILS = 5; // Allow ~25 seconds of hiccups before clearing UI
 
-  const fetchSpotify = async () => {
+  const fetchSpotify = useCallback(async () => {
     try {
       const res = await fetch('/api/spotify/now-playing');
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
@@ -27,11 +27,11 @@ export function useSpotify() {
         failCount.current++;
         if (failCount.current >= MAX_FAILS) setSpotify(null);
       }
-    } catch (e) { 
+    } catch { 
       failCount.current++;
       if (failCount.current >= MAX_FAILS) setSpotify(null);
     }
-  };
+  }, [spotify]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -50,7 +50,7 @@ export function useSpotify() {
       clearInterval(sTimer);
       clearInterval(progressTimer);
     };
-  }, []);
+  }, [fetchSpotify]);
 
   const handleAction = async (action: 'play' | 'pause' | 'next') => {
     if (!spotify) return;

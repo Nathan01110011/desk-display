@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
-// @ts-ignore - ical.js types are inconsistent across environments
+// @ts-expect-error - ical.js types are inconsistent across environments
 import ICAL from 'ical.js';
 
 interface CalendarEvent {
@@ -56,21 +56,27 @@ export async function GET() {
     // Pass 1: Collect Recurrence-IDs
     vevents.forEach((vevent: unknown) => {
       const v = vevent as { getFirstPropertyValue: (prop: string) => { toString: () => string } };
-      // @ts-ignore - ical.js lacks types
+      // @ts-expect-error - ical.js lacks types
       const rid = v.getFirstPropertyValue('recurrence-id');
       if (rid) recurrenceOverrides.add(rid.toString());
     });
 
     // Pass 2: Process events
-    // @ts-ignore - ical.js types are problematic
+    // @ts-expect-error - ical.js types are problematic
     vevents.forEach((vevent: unknown) => {
       const v = vevent as { getFirstPropertyValue: (prop: string) => string };
-      // @ts-ignore - ical.js lacks types
+      // @ts-expect-error - ical.js lacks types
       const event = new ICAL.Event(v as unknown as Record<string, unknown>);
       
       if (v.getFirstPropertyValue('status') === 'CANCELLED') return;
 
-      const processOccurrence = (occ: any) => {
+      const processOccurrence = (occ: {
+        startDate: { toJSDate: () => Date; isDate: boolean };
+        endDate: { toJSDate: () => Date };
+        summary?: string;
+        location?: string;
+        item?: { summary: string; location: string };
+      }) => {
         const start = occ.startDate.toJSDate();
         const end = occ.endDate.toJSDate();
         
