@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     `, {
       headers: { 'Content-Type': 'text/html' },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to exchange token' });
   }
 }
