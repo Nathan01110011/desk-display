@@ -1,6 +1,7 @@
 import React from 'react';
-import { Timer, Settings, Trophy } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2 } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
+import { PomodoroMode } from '@/types';
 
 interface AppLauncherProps {
   onOpenPomo: () => void;
@@ -8,6 +9,7 @@ interface AppLauncherProps {
   onOpenSports: () => void;
   pomoActive: boolean;
   pomoTime: number;
+  pomoMode: PomodoroMode;
   isSportsLive: boolean;
 }
 
@@ -17,27 +19,39 @@ export function AppLauncher({
   onOpenSports, 
   pomoActive, 
   pomoTime,
+  pomoMode,
   isSportsLive
 }: AppLauncherProps) {
+  const isPomoFinished = pomoTime === 0 && !pomoActive;
+
   return (
     <div className="w-full max-w-4xl border-t border-white/5 pt-12">
       <div className="grid grid-cols-4 gap-6">
         <button
           onPointerDown={onOpenPomo}
           className={`aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border ${
-            pomoActive 
+            pomoActive || isPomoFinished
               ? 'bg-white/10 border-white/20' 
               : 'bg-white/5 border-white/5 hover:bg-white/10'
           }`}
         >
           <div className="relative">
-            <Timer size={48} className={pomoActive ? 'text-white animate-pulse' : 'text-white/80'} />
-            {pomoActive && (
-              <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-black" />
+            {isPomoFinished ? (
+              <CheckCircle2 size={48} className="text-green-500 animate-bounce" />
+            ) : (
+              <>
+                <Timer size={48} className={pomoActive ? 'text-white animate-pulse' : 'text-white/80'} />
+                {pomoActive && (
+                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-black" />
+                )}
+              </>
             )}
           </div>
-          <span className={`text-lg font-bold ${pomoActive ? 'text-white' : 'text-white/40'}`}>
-            {pomoActive ? formatPomoTime(pomoTime) : 'Pomodoro'}
+          <span className={`text-lg font-bold ${pomoActive || isPomoFinished ? 'text-white' : 'text-white/40'}`}>
+            {isPomoFinished 
+              ? (pomoMode === 'work' ? 'Work Done!' : 'Break Done!')
+              : pomoActive ? formatPomoTime(pomoTime) : 'Pomodoro'
+            }
           </span>
         </button>
 

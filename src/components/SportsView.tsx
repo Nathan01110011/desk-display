@@ -8,6 +8,17 @@ interface SportsViewProps {
   onClose: () => void;
 }
 
+function formatMatchDate(dateStr: string) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffDays = Math.floor((date.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === -1) return 'Yesterday';
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
 export function SportsView({ matches, onClose }: SportsViewProps) {
   return (
     <motion.div
@@ -38,23 +49,26 @@ export function SportsView({ matches, onClose }: SportsViewProps) {
               </div>
 
               {/* Score / Status */}
-              <div className="flex flex-col items-center min-w-[120px]">
+              <div className="flex flex-col items-center min-w-[140px]">
                 {match.status === 'PRE' ? (
                   <div className="text-center">
-                    <p className="text-3xl font-black">VS</p>
-                    <p className="text-sm text-white/40 font-bold uppercase mt-1">
+                    <p className="text-2xl font-black text-white/20 uppercase tracking-tighter mb-1">Upcoming</p>
+                    <p className="text-3xl font-black">
                       {new Date(match.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                    </p>
+                    <p className="text-sm text-white/40 font-bold uppercase mt-1">
+                      {formatMatchDate(match.startTime)}
                     </p>
                   </div>
                 ) : (
                   <div className="text-center">
                     <div className="flex items-center gap-4">
-                      <span className="text-5xl font-black">{match.homeScore}</span>
+                      <span className="text-5xl font-black">{match.homeTeam.score}</span>
                       <span className="text-2xl text-white/20">-</span>
-                      <span className="text-5xl font-black">{match.awayScore}</span>
+                      <span className="text-5xl font-black">{match.awayTeam.score}</span>
                     </div>
                     <p className={`text-sm font-bold uppercase mt-2 ${match.status === 'IN' ? 'text-red-500 animate-pulse' : 'text-white/40'}`}>
-                      {match.clock}
+                      {match.status === 'POST' ? `Final • ${formatMatchDate(match.startTime)}` : match.clock}
                     </p>
                   </div>
                 )}

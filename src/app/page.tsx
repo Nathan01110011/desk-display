@@ -79,6 +79,7 @@ export default function Dashboard() {
                   onOpenSports={() => setActiveView('sports')}
                   pomoActive={pomoActive} 
                   pomoTime={pomoTime} 
+                  pomoMode={pomoMode}
                   isSportsLive={isSportsLive}
                 />
               </motion.div>

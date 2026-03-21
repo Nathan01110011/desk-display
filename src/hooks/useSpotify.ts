@@ -12,16 +12,18 @@ export function useSpotify() {
       if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
         const data = await res.json();
         
-        // Logic: Only clear UI if it's consistently empty
-        if (data.isPlaying) {
+        // Success Logic:
+        // 1. If it's playing, we are happy.
+        // 2. If it's NOT playing but has a title, it's just paused - we are also happy.
+        if (data.isPlaying || data.title) {
           setSpotify(data);
           failCount.current = 0;
         } else {
+          // No song and not playing = truly inactive
           failCount.current++;
-          if (failCount.current >= MAX_FAILS || !spotify) {
+          if (failCount.current >= MAX_FAILS) {
             setSpotify(null);
           }
-          // If failCount < MAX_FAILS and we have old data, do nothing (keep old data on screen)
         }
       } else {
         failCount.current++;
@@ -31,7 +33,7 @@ export function useSpotify() {
       failCount.current++;
       if (failCount.current >= MAX_FAILS) setSpotify(null);
     }
-  }, [spotify]);
+  }, []); // Remove spotify dependency to stabilize callback
 
   useEffect(() => {
     requestAnimationFrame(() => {
