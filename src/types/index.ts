@@ -16,6 +16,6 @@ export interface SpotifyNowPlaying {
   durationMs: number;
 }
 
-export type ViewState = 'dashboard' | 'pomodoro';
+export type ViewState = 'dashboard' | 'pomodoro' | 'settings';
 
 export type PomodoroMode = 'work' | 'break';
