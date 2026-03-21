@@ -27,16 +27,17 @@ const TARGET_TEAMS = SPORTS_TEAMS_RAW
 async function fetchLeagueScoreboard(sport: string, leagueId: string, date: string): Promise<SportMatch[]> {
   try {
     const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${leagueId}/scoreboard?dates=${date}`;
+    
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     const data = await res.json();
 
     const matches: SportMatch[] = [];
 
-    data.events?.forEach((event: any) => {
+    data.events?.forEach((event: { id: string; competitions: { competitors: { homeAway: string; team: { displayName: string; shortDisplayName?: string; logo: string }; score: string }[] }[]; status: { type: { detail: string; state: string } }; date: string }) => {
       const competition = event.competitions[0];
-      const home = competition.competitors.find((c: any) => c.homeAway === 'home');
-      const away = competition.competitors.find((c: any) => c.homeAway === 'away');
+      const home = competition.competitors.find((c: { homeAway: string }) => c.homeAway === 'home')!;
+      const away = competition.competitors.find((c: { homeAway: string }) => c.homeAway === 'away')!;
 
       if (!home || !away) return;
 
@@ -53,7 +54,7 @@ async function fetchLeagueScoreboard(sport: string, leagueId: string, date: stri
       );
 
       if (isTarget) {
-        const getScore = (competitor: any) => {
+        const getScore = (competitor: { score?: string | number; displayScore?: string | number; linescores?: { value: number }[] }) => {
           if (competitor.score !== undefined && competitor.score !== null && competitor.score !== '') {
             return competitor.score.toString();
           }
@@ -61,14 +62,14 @@ async function fetchLeagueScoreboard(sport: string, leagueId: string, date: stri
             return competitor.displayScore.toString();
           }
           if (competitor.linescores && competitor.linescores.length > 0) {
-            return competitor.linescores.reduce((total: number, line: any) => total + (line.value || 0), 0).toString();
+            return competitor.linescores.reduce((total: number, line: { value: number }) => total + (line.value || 0), 0).toString();
           }
           return '0';
         };
 
         matches.push({
           id: event.id,
-          sport: sport as 'soccer' | 'rugby',
+          sport: sport as 'soccer' | 'rugby' | 'football',
           league: data.leagues?.[0]?.name || 'League',
           homeTeam: {
             name: homeName,
@@ -88,7 +89,7 @@ async function fetchLeagueScoreboard(sport: string, leagueId: string, date: stri
     });
 
     return matches;
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -107,7 +108,6 @@ export async function GET() {
     return NextResponse.json(cache.data);
   }
 
-  // Fallback if env vars aren't set
   if (LEAGUES.length === 0 || TARGET_TEAMS.length === 0) {
     return NextResponse.json([]);
   }
@@ -147,7 +147,7 @@ export async function GET() {
 
     cache = { data: sorted, timestamp: now };
     return NextResponse.json(sorted);
-  } catch (error) {
+  } catch {
     return NextResponse.json([], { status: 500 });
   }
 }

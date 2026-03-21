@@ -17,17 +17,18 @@ export function useSports() {
   }, []);
 
   useEffect(() => {
-    fetchSports();
-    
-    // Create a dynamic interval
-    const getInterval = () => {
-      const isLive = matches.some(m => m.status === 'IN');
-      return isLive ? 30000 : 300000;
-    };
+    requestAnimationFrame(() => {
+      fetchSports();
+    });
 
-    const timer = setInterval(fetchSports, getInterval());
+    // Check live status to determine initial interval
+    const isLive = matches.some(m => m.status === 'IN');
+    const interval = isLive ? 30000 : 300000;
+
+    const timer = setInterval(fetchSports, interval);
     return () => clearInterval(timer);
-  }, [fetchSports, matches.length]); // Re-run effect if matches count changes
+  }, [fetchSports, matches]); // Include matches to handle dynamic polling interval correctly
+ // Re-run effect if matches count changes
 
   return { matches };
 }

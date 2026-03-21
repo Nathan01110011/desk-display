@@ -12,16 +12,26 @@ import { PomodoroView } from '@/components/PomodoroView';
 import { SportsView } from '@/components/SportsView';
 import { AppLauncher } from '@/components/AppLauncher';
 import { SettingsView } from '@/components/SettingsView';
-import { ViewState } from '@/types';
+import { WeatherView } from '@/components/WeatherView';
+import { useWeather } from '@/hooks/useWeather';
+import { ViewState, AppConfig } from '@/types';
+
+const DEFAULT_CONFIG: AppConfig = {
+  pomodoro: true,
+  sports: true,
+  weather: true
+};
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
+  const [appConfig, setAppConfig] = useState<AppConfig>(DEFAULT_CONFIG);
 
   const { spotify, handleAction } = useSpotify();
   const { calendar } = useCalendar();
   const { matches } = useSports();
+  const { weather } = useWeather();
   const { 
     pomoTime, pomoActive, pomoMode, workDuration, breakDuration, 
     togglePomo, resetPomo, switchMode, updateDurations 
@@ -30,7 +40,17 @@ export default function Dashboard() {
   const isSportsLive = matches.some(m => m.status === 'IN');
 
   useEffect(() => {
+    // Load config from localStorage
+    const savedConfig = localStorage.getItem('appConfig');
+    
     requestAnimationFrame(() => {
+      if (savedConfig) {
+        try {
+          setAppConfig(JSON.parse(savedConfig));
+        } catch (e) {
+          console.error("Failed to parse appConfig", e);
+        }
+      }
       setMounted(true);
       setCurrentTime(new Date());
     });
@@ -38,6 +58,11 @@ export default function Dashboard() {
     const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(clockTimer);
   }, []);
+
+  const updateAppConfig = (newConfig: AppConfig) => {
+    setAppConfig(newConfig);
+    localStorage.setItem('appConfig', JSON.stringify(newConfig));
+  };
 
   if (!mounted || !currentTime) return <main className="fixed inset-0 bg-black" />;
 
@@ -77,10 +102,12 @@ export default function Dashboard() {
                   onOpenPomo={() => setActiveView('pomodoro')} 
                   onOpenSettings={() => setActiveView('settings')}
                   onOpenSports={() => setActiveView('sports')}
+                  onOpenWeather={() => setActiveView('weather')}
                   pomoActive={pomoActive} 
                   pomoTime={pomoTime} 
                   pomoMode={pomoMode}
                   isSportsLive={isSportsLive}
+                  appConfig={appConfig}
                 />
               </motion.div>
             )}
@@ -104,12 +131,21 @@ export default function Dashboard() {
               />
             )}
 
+            {activeView === 'weather' && (
+              <WeatherView 
+                weather={weather}
+                onClose={() => setActiveView('dashboard')}
+              />
+            )}
+
             {activeView === 'settings' && (
               <SettingsView 
                 workDuration={workDuration}
                 breakDuration={breakDuration}
                 onUpdateDurations={updateDurations}
                 onClose={() => setActiveView('dashboard')}
+                appConfig={appConfig}
+                onUpdateAppConfig={updateAppConfig}
               />
             )}
           </AnimatePresence>
