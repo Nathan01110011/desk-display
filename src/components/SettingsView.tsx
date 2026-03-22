@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, X, Minus, Plus, Check, Keyboard } from 'lucide-react';
-import { AppConfig } from '@/types';
+import { Settings, X, Minus, Plus, Check, Keyboard, Globe, Trash2 } from 'lucide-react';
+import { AppConfig, AdditionalClock } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
 interface SettingsViewProps {
@@ -11,6 +11,8 @@ interface SettingsViewProps {
   onClose: () => void;
   appConfig: AppConfig;
   onUpdateAppConfig: (config: AppConfig) => void;
+  worldClocks: AdditionalClock[];
+  onUpdateClocks: (clocks: AdditionalClock[]) => void;
 }
 
 export function SettingsView({ 
@@ -19,14 +21,19 @@ export function SettingsView({
   onUpdateDurations, 
   onClose,
   appConfig,
-  onUpdateAppConfig
+  onUpdateAppConfig,
+  worldClocks,
+  onUpdateClocks
 }: SettingsViewProps) {
   const [showKeyboard, setShowKeyboard] = useState(false);
+  const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
   const [kbValue, setKbValue] = useState('');
 
   React.useEffect(() => {
-    setKbValue(localStorage.getItem('weatherLocation') || '');
-  }, []);
+    if (!showKeyboard && kbMode === 'weather') {
+      setKbValue(localStorage.getItem('weatherLocation') || '');
+    }
+  }, [showKeyboard, kbMode]);
   
   const handleExitApp = async () => {
     try {
@@ -43,13 +50,35 @@ export function SettingsView({
     });
   };
 
+  const handleAddClock = async (city: string) => {
+    try {
+      const res = await fetch(`/api/system/resolve-city?city=${encodeURIComponent(city)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const newClock: AdditionalClock = {
+          id: Math.random().toString(36).substr(2, 9),
+          label: data.city,
+          city: data.city,
+          offset: data.offset
+        };
+        onUpdateClocks([...worldClocks, newClock].slice(0, 5));
+      }
+    } catch (e) {
+      console.error("Failed to add clock", e);
+    }
+  };
+
+  const handleRemoveClock = (id: string) => {
+    onUpdateClocks(worldClocks.filter(c => c.id !== id));
+  };
+
   return (
     <motion.div
       key="settings-view"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="w-full max-w-5xl mx-auto flex flex-col space-y-10 py-4"
+      className="w-full max-w-6xl mx-auto flex flex-col space-y-8 py-4 h-[650px] overflow-y-auto pr-4 scrollbar-hide"
     >
       <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
         <Settings size={20} /> Settings
@@ -77,6 +106,35 @@ export function SettingsView({
                   <button onPointerDown={() => onUpdateDurations(workDuration, breakDuration + 1)} className="p-2 rounded-xl bg-white/5 active:scale-90"><Plus size={24} /></button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* World Clocks */}
+          <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white/80 flex items-center gap-3"><Globe size={24} /> World Clocks</h3>
+              <span className="text-xs font-bold text-white/20 uppercase">{worldClocks.length}/5</span>
+            </div>
+            
+            <div className="space-y-3">
+              {worldClocks.map(clock => (
+                <div key={clock.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <span className="text-lg font-bold text-white/60">{clock.label}</span>
+                  <button onPointerDown={() => handleRemoveClock(clock.id)} className="text-red-500/40 hover:text-red-500 active:scale-90 p-2"><Trash2 size={20} /></button>
+                </div>
+              ))}
+              {worldClocks.length < 5 && (
+                <button 
+                  onPointerDown={() => {
+                    setKbMode('clock');
+                    setKbValue('');
+                    setShowKeyboard(true);
+                  }}
+                  className="w-full py-4 rounded-2xl border border-dashed border-white/10 text-white/30 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
+                >
+                  + Add Clock
+                </button>
+              )}
             </div>
           </div>
 
@@ -115,13 +173,21 @@ export function SettingsView({
             <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Weather Location</p>
             <div className="flex gap-3">
               <div 
-                onPointerDown={() => setShowKeyboard(true)}
+                onPointerDown={() => {
+                  setKbMode('weather');
+                  setKbValue(localStorage.getItem('weatherLocation') || '');
+                  setShowKeyboard(true);
+                }}
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xl min-h-[3.5rem] flex items-center overflow-hidden truncate"
               >
-                {kbValue || <span className="opacity-20 italic text-lg">Auto-locate (IP)</span>}
+                {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-lg">Auto-locate (IP)</span>}
               </div>
               <button 
-                onPointerDown={() => setShowKeyboard(true)}
+                onPointerDown={() => {
+                  setKbMode('weather');
+                  setKbValue(localStorage.getItem('weatherLocation') || '');
+                  setShowKeyboard(true);
+                }}
                 className="p-4 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
               >
                 <Keyboard size={24} />
@@ -137,9 +203,14 @@ export function SettingsView({
           onChange={setKbValue}
           onClose={() => setShowKeyboard(false)}
           onSubmit={() => {
-            localStorage.setItem('weatherLocation', kbValue);
-            setShowKeyboard(false);
-            window.location.reload();
+            if (kbMode === 'weather') {
+              localStorage.setItem('weatherLocation', kbValue);
+              setShowKeyboard(false);
+              window.location.reload();
+            } else {
+              handleAddClock(kbValue);
+              setShowKeyboard(false);
+            }
           }}
         />
       )}

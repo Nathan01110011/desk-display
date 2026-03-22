@@ -42,10 +42,18 @@ export interface WeatherData {
   condition: string;
   icon: string;
   location: string;
+  timezone: number; // Offset in seconds
   forecast: {
     time: string;
     temp: number;
     condition: string;
     icon: string;
   }[];
+}
+
+export interface AdditionalClock {
+  id: string;
+  label: string;
+  city: string;
+  offset: number; // Offset in seconds from UTC
 }

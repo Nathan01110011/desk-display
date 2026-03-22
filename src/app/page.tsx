@@ -6,6 +6,7 @@ import { useSpotify } from '@/hooks/useSpotify';
 import { useCalendar } from '@/hooks/useCalendar';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useSports } from '@/hooks/useSports';
+import { useTime } from '@/hooks/useTime';
 import { CalendarView } from '@/components/CalendarView';
 import { SpotifyPlayer } from '@/components/SpotifyPlayer';
 import { PomodoroView } from '@/components/PomodoroView';
@@ -24,7 +25,6 @@ const DEFAULT_CONFIG: AppConfig = {
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig>(DEFAULT_CONFIG);
 
@@ -36,6 +36,9 @@ export default function Dashboard() {
     pomoTime, pomoActive, pomoMode, workDuration, breakDuration, 
     togglePomo, resetPomo, switchMode, updateDurations 
   } = usePomodoro();
+
+  // The main clock uses the offset from the weather city, or system time if loading
+  const { time, date, clocks, updateClocks } = useTime(weather?.timezone);
 
   const isSportsLive = matches.some(m => m.status === 'IN');
 
@@ -52,11 +55,7 @@ export default function Dashboard() {
         }
       }
       setMounted(true);
-      setCurrentTime(new Date());
     });
-    
-    const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(clockTimer);
   }, []);
 
   const updateAppConfig = (newConfig: AppConfig) => {
@@ -64,7 +63,7 @@ export default function Dashboard() {
     localStorage.setItem('appConfig', JSON.stringify(newConfig));
   };
 
-  if (!mounted || !currentTime) return <main className="fixed inset-0 bg-black" />;
+  if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
   return (
     <main className="fixed inset-0 bg-black text-white flex overflow-hidden font-sans select-none antialiased">
@@ -82,8 +81,20 @@ export default function Dashboard() {
         {/* Left Column (Static) */}
         <div className="w-1/3 border-r border-white/10 p-10 flex flex-col bg-black/40 backdrop-blur-3xl">
           <div className="mb-12">
-            <h1 className="text-6xl font-bold tracking-tighter mb-2">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</h1>
-            <p className="text-2xl text-white/50 font-medium">{currentTime.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+            <h1 className="text-6xl font-bold tracking-tighter mb-2">{time}</h1>
+            <p className="text-2xl text-white/50 font-medium mb-6">{date}</p>
+            
+            {/* Additional Clocks */}
+            {clocks.length > 0 && (
+              <div className="space-y-4 pt-6 border-t border-white/5">
+                {clocks.map(c => (
+                  <div key={c.id} className="flex justify-between items-center text-white/40">
+                    <span className="text-lg font-bold uppercase tracking-widest">{c.label}</span>
+                    <span className="text-2xl font-mono tabular-nums">{c.displayTime}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <CalendarView calendar={calendar} />
         </div>
@@ -146,6 +157,8 @@ export default function Dashboard() {
                 onClose={() => setActiveView('dashboard')}
                 appConfig={appConfig}
                 onUpdateAppConfig={updateAppConfig}
+                worldClocks={clocks}
+                onUpdateClocks={updateClocks}
               />
             )}
           </AnimatePresence>

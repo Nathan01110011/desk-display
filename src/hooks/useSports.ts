@@ -20,7 +20,9 @@ export function useSports() {
 
   useEffect(() => {
     // Initial fetch
-    fetchSports();
+    requestAnimationFrame(() => {
+      fetchSports();
+    });
     
     // Interval based polling (Stable 5 min interval)
     const timer = setInterval(() => {

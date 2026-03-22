@@ -52,7 +52,7 @@ export function useSpotify() {
       clearInterval(sTimer);
       clearInterval(progressTimer);
     };
-  }, []); // Stable effect
+  }, [fetchSpotify]); // Stable effect
 
   const handleAction = async (action: 'play' | 'pause' | 'next') => {
     if (!spotify) return;

@@ -73,6 +73,7 @@ export async function GET(req: NextRequest) {
       condition: current.weather[0].main,
       icon: current.weather[0].icon,
       location: geo.name,
+      timezone: wData.city.timezone, // Offset in seconds
       forecast
     };
 
