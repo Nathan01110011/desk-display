@@ -44,7 +44,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const initSettings = async () => {
-      // 1. Try backend first (for persistence across rebuilds)
+      // 1. Try backend first
       try {
         const res = await fetch('/api/system/settings');
         const data = await res.json();
@@ -52,8 +52,10 @@ export default function Dashboard() {
         if (data.appConfig) setAppConfig(data.appConfig);
         if (data.worldClocks) updateClocks(data.worldClocks);
         if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
+        
+        // Sync Pomodoro Durations
+        if (data.pomoWork) updateDurations(data.pomoWork, data.pomoBreak || 5);
       } catch (e) {
-        // 2. Fallback to localStorage
         const savedConfig = localStorage.getItem('appConfig');
         if (savedConfig) setAppConfig(JSON.parse(savedConfig));
       }
@@ -62,9 +64,7 @@ export default function Dashboard() {
     };
 
     initSettings();
-    const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(clockTimer);
-  }, []); // Remove updateClocks from here to prevent loop
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateAppConfig = async (newConfig: AppConfig) => {
     setAppConfig(newConfig);
@@ -73,6 +73,15 @@ export default function Dashboard() {
     await fetch('/api/system/settings', {
       method: 'POST',
       body: JSON.stringify({ appConfig: newConfig })
+    });
+  };
+
+  const handleUpdateDurations = async (work: number, brk: number) => {
+    updateDurations(work, brk);
+    // Persist to backend
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      body: JSON.stringify({ pomoWork: work, pomoBreak: brk })
     });
   };
 
@@ -166,7 +175,7 @@ export default function Dashboard() {
               <SettingsView 
                 workDuration={workDuration}
                 breakDuration={breakDuration}
-                onUpdateDurations={updateDurations}
+                onUpdateDurations={handleUpdateDurations}
                 onClose={() => setActiveView('dashboard')}
                 appConfig={appConfig}
                 onUpdateAppConfig={updateAppConfig}

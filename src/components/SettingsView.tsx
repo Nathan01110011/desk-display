@@ -100,29 +100,31 @@ export function SettingsView({
       <div className="grid grid-cols-2 gap-8">
         {/* Left Column: Pomodoro & System */}
         <div className="space-y-8">
-          <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
-            <h3 className="text-xl font-bold text-white/80">Pomodoro Timer</h3>
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Work</p>
-                <div className="flex items-center gap-4">
-                  <button onPointerDown={() => onUpdateDurations(Math.max(1, workDuration - 1), breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90"><Minus size={24} /></button>
-                  <span className="text-4xl font-black">{workDuration}</span>
-                  <button onPointerDown={() => onUpdateDurations(workDuration + 1, breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90"><Plus size={24} /></button>
+          {appConfig.pomodoro && (
+            <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
+              <h3 className="text-xl font-bold text-white/80">Pomodoro Timer</h3>
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Work</p>
+                  <div className="flex items-center gap-4">
+                    <button onPointerDown={() => onUpdateDurations(Math.max(1, workDuration - 1), breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90"><Minus size={24} /></button>
+                    <span className="text-4xl font-black">{workDuration}</span>
+                    <button onPointerDown={() => onUpdateDurations(workDuration + 1, breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90"><Plus size={24} /></button>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-3">
-                <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Break</p>
-                <div className="flex items-center gap-4">
-                  <button onPointerDown={() => onUpdateDurations(workDuration, Math.max(1, breakDuration - 1))} className="p-2 rounded-xl bg-white/5 active:scale-90"><Minus size={24} /></button>
-                  <span className="text-4xl font-black">{breakDuration}</span>
-                  <button onPointerDown={() => onUpdateDurations(workDuration, breakDuration + 1)} className="p-2 rounded-xl bg-white/5 active:scale-90"><Plus size={24} /></button>
+                <div className="space-y-3">
+                  <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Break</p>
+                  <div className="flex items-center gap-4">
+                    <button onPointerDown={() => onUpdateDurations(workDuration, Math.max(1, breakDuration - 1))} className="p-2 rounded-xl bg-white/5 active:scale-90"><Minus size={24} /></button>
+                    <span className="text-4xl font-black">{breakDuration}</span>
+                    <button onPointerDown={() => onUpdateDurations(workDuration, breakDuration + 1)} className="p-2 rounded-xl bg-white/5 active:scale-90"><Plus size={24} /></button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* World Clocks */}
+          {/* World Clocks (Always show if possible, or part of app grid) */}
           <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-white/80 flex items-center gap-3"><Globe size={24} /> World Clocks</h3>
@@ -182,31 +184,33 @@ export function SettingsView({
             ))}
           </div>
           
-          <div className="pt-4 border-t border-white/5 space-y-3">
-            <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Weather Location</p>
-            <div className="flex gap-3">
-              <div 
-                onPointerDown={() => {
-                  setKbMode('weather');
-                  setKbValue(localStorage.getItem('weatherLocation') || '');
-                  setShowKeyboard(true);
-                }}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xl min-h-[3.5rem] flex items-center overflow-hidden truncate"
-              >
-                {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-lg">Auto-locate (IP)</span>}
+          {appConfig.weather && (
+            <div className="pt-4 border-t border-white/5 space-y-3">
+              <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Weather Location</p>
+              <div className="flex gap-3">
+                <div 
+                  onPointerDown={() => {
+                    setKbMode('weather');
+                    setKbValue(localStorage.getItem('weatherLocation') || '');
+                    setShowKeyboard(true);
+                  }}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xl min-h-[3.5rem] flex items-center overflow-hidden truncate"
+                >
+                  {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-lg">Auto-locate (IP)</span>}
+                </div>
+                <button 
+                  onPointerDown={() => {
+                    setKbMode('weather');
+                    setKbValue(localStorage.getItem('weatherLocation') || '');
+                    setShowKeyboard(true);
+                  }}
+                  className="p-4 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
+                >
+                  <Keyboard size={24} />
+                </button>
               </div>
-              <button 
-                onPointerDown={() => {
-                  setKbMode('weather');
-                  setKbValue(localStorage.getItem('weatherLocation') || '');
-                  setShowKeyboard(true);
-                }}
-                className="p-4 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
-              >
-                <Keyboard size={24} />
-              </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

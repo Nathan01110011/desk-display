@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     condition: 'Partly Cloudy',
     icon: '02d',
     location: 'London (Mock)',
+    timezone: 0,
     forecast: [
       { time: '15:00', temp: 19, condition: 'Sunny', icon: '01d' },
       { time: '18:00', temp: 17, condition: 'Cloudy', icon: '03d' },
