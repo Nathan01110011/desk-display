@@ -97,7 +97,7 @@ export default function Dashboard() {
             <img src={spotify.albumImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover blur-[100px] saturate-[150%] opacity-40" />
           </div>
         ) : (
-          <div className="absolute inset-0 z-0 bg-black" />
+          <div className="absolute inset-0 z-0 bg-[#000000] bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000000_70%)] opacity-20" />
         )}
       </AnimatePresence>
 
@@ -124,15 +124,19 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column (Dynamic Views) */}
-        <div className="w-2/3 p-12 flex flex-col justify-center">
+        <div className="w-2/3 p-12 flex flex-col h-full overflow-hidden">
           <AnimatePresence mode="wait">
             {activeView === 'dashboard' && (
               <motion.div
                 key="dashboard-view"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                className="w-full flex flex-col items-center space-y-12"
+                className="w-full h-full flex flex-col justify-between items-center py-8"
               >
-                <SpotifyPlayer spotify={spotify} onAction={handleAction} />
+                {/* Fixed container for Spotify to prevent layout jumping */}
+                <div className="w-full flex-1 flex items-center justify-center">
+                  <SpotifyPlayer spotify={spotify} onAction={handleAction} />
+                </div>
+
                 <AppLauncher 
                   onOpenPomo={() => setActiveView('pomodoro')} 
                   onOpenSettings={() => setActiveView('settings')}

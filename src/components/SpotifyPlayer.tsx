@@ -12,29 +12,23 @@ interface SpotifyPlayerProps {
 export function SpotifyPlayer({ spotify, onAction }: SpotifyPlayerProps) {
   if (!spotify || !spotify.title) {
     return (
-      <div className="w-full flex items-center gap-10 max-w-4xl opacity-40">
-        <div className="relative w-[240px] h-[240px] shrink-0 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-center">
-          <Music size={80} className="text-white/10" />
+      <div className="w-full flex items-center gap-12 max-w-4xl opacity-20">
+        <div className="relative w-[280px] h-[240px] shrink-0 bg-white/5 border border-white/5 rounded-3xl flex items-center justify-center">
+          <Music size={100} className="text-white/10" />
         </div>
-        <div className="flex-1 space-y-2">
-          <h3 className="text-4xl font-black tracking-tight text-white/60">No music playing</h3>
-          <p className="text-xl font-medium text-white/20">Start a song on your device</p>
+        <div className="flex-1 space-y-3">
+          <h3 className="text-5xl font-black tracking-tighter text-white/60">Quiet mode</h3>
+          <p className="text-2xl font-medium text-white/20 uppercase tracking-widest">No music playing</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full flex items-center gap-10 max-w-4xl">
-      <div className="relative w-[240px] h-[240px] shrink-0 shadow-2xl rounded-2xl overflow-hidden">
-        {spotify.albumImageUrl ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={spotify.albumImageUrl} alt="Album Art" className="object-cover w-full h-full" />
-        ) : (
-          <div className="w-full h-full bg-white/5 flex items-center justify-center">
-            <Music size={80} className="text-white/10" />
-          </div>
-        )}
+    <div className="w-full flex items-center gap-12 max-w-4xl">
+      <div className="relative w-[280px] h-[240px] shrink-0 shadow-[0_30px_100px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden border border-white/5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={spotify.albumImageUrl} alt="Album Art" className="object-cover w-full h-full" />
       </div>
 
       <div className="flex-1 flex flex-col justify-center space-y-6 min-w-0">
