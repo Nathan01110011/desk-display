@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SportMatch } from '@/types';
 
 export function useSports() {
   const [matches, setMatches] = useState<SportMatch[]>([]);
+  const matchesRef = useRef<SportMatch[]>([]);
 
   const fetchSports = useCallback(async () => {
     try {
@@ -10,6 +11,7 @@ export function useSports() {
       if (res.ok) {
         const data = await res.json();
         setMatches(data);
+        matchesRef.current = data;
       }
     } catch (e) {
       console.error("Sports Fetch Error:", e);
@@ -17,18 +19,16 @@ export function useSports() {
   }, []);
 
   useEffect(() => {
-    requestAnimationFrame(() => {
+    // Initial fetch
+    fetchSports();
+    
+    // Interval based polling (Stable 5 min interval)
+    const timer = setInterval(() => {
       fetchSports();
-    });
+    }, 300000);
 
-    // Check live status to determine initial interval
-    const isLive = matches.some(m => m.status === 'IN');
-    const interval = isLive ? 30000 : 300000;
-
-    const timer = setInterval(fetchSports, interval);
     return () => clearInterval(timer);
-  }, [fetchSports, matches]); // Include matches to handle dynamic polling interval correctly
- // Re-run effect if matches count changes
+  }, [fetchSports]);
 
   return { matches };
 }

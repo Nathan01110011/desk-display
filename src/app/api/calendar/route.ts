@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
-// @ts-expect-error - ical.js types are inconsistent across environments
+// @ts-ignore - ical.js types are inconsistent across environments
 import ICAL from 'ical.js';
 
 interface CalendarEvent {
@@ -44,7 +44,6 @@ export async function GET() {
     const vcalendar = new ICAL.Component(jcalData);
     const vevents = vcalendar.getAllSubcomponents('vevent');
 
-    const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
@@ -56,16 +55,16 @@ export async function GET() {
     // Pass 1: Collect Recurrence-IDs
     vevents.forEach((vevent: unknown) => {
       const v = vevent as { getFirstPropertyValue: (prop: string) => { toString: () => string } };
-      // @ts-expect-error - ical.js lacks types
+      // @ts-ignore - ical.js lacks types
       const rid = v.getFirstPropertyValue('recurrence-id');
       if (rid) recurrenceOverrides.add(rid.toString());
     });
 
     // Pass 2: Process events
-    // @ts-expect-error - ical.js types are problematic
+    // @ts-ignore - ical.js types are problematic
     vevents.forEach((vevent: unknown) => {
       const v = vevent as { getFirstPropertyValue: (prop: string) => string };
-      // @ts-expect-error - ical.js lacks types
+      // @ts-ignore - ical.js lacks types
       const event = new ICAL.Event(v as unknown as Record<string, unknown>);
       
       if (v.getFirstPropertyValue('status') === 'CANCELLED') return;
@@ -81,7 +80,6 @@ export async function GET() {
         const end = occ.endDate.toJSDate();
         
         // Only Today AND NOT finished yet
-        // We show events that end after 'now' and start before 'end of today'
         if (end > now && start <= endOfToday) {
           filteredEvents.push({
             summary: (occ.item ? occ.item.summary : occ.summary) || 'No Title',

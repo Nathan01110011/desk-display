@@ -30,30 +30,35 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(cache.data);
   }
 
-  if (!API_KEY) {
-    // Return mock data if no key configured
-    const mock: WeatherData = {
-      temp: 18,
-      condition: 'Partly Cloudy',
-      icon: '02d',
-      location: 'London (Mock)',
-      forecast: [
-        { time: '15:00', temp: 19, condition: 'Sunny', icon: '01d' },
-        { time: '18:00', temp: 17, condition: 'Cloudy', icon: '03d' },
-        { time: '21:00', temp: 14, condition: 'Rain', icon: '10d' },
-      ]
-    };
-    return NextResponse.json(mock);
+  const mockData: WeatherData = {
+    temp: 18,
+    condition: 'Partly Cloudy',
+    icon: '02d',
+    location: 'London (Mock)',
+    forecast: [
+      { time: '15:00', temp: 19, condition: 'Sunny', icon: '01d' },
+      { time: '18:00', temp: 17, condition: 'Cloudy', icon: '03d' },
+      { time: '21:00', temp: 14, condition: 'Rain', icon: '10d' },
+    ]
+  };
+
+  if (!API_KEY || API_KEY === 'your_key_here') {
+    return NextResponse.json(mockData);
   }
 
   try {
     const geo = await getGeo(locationOverride || undefined);
-    
+
     // Fetch Current + Forecast
     const weatherRes = await fetch(
       `https://api.openweathermap.org/data/2.5/forecast?lat=${geo.lat}&lon=${geo.lon}&units=metric&cnt=4&appid=${API_KEY}`
     );
     const wData = await weatherRes.json();
+
+    if (weatherRes.status !== 200 || !wData.list) {
+      console.error('OpenWeather Error:', wData);
+      return NextResponse.json({ ...mockData, location: `${geo.name} (Offline)` });
+    }
 
     const current = wData.list[0];
     const forecast = wData.list.slice(1, 4).map((item: { dt: number; main: { temp: number }; weather: { main: string; icon: string }[] }) => ({
