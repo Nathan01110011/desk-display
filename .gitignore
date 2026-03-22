@@ -19,6 +19,7 @@
 .DS_Store
 *.pem
 .calendar-cache.json
+.dashboard-settings.json
 
 # debug
 npm-debug.log*

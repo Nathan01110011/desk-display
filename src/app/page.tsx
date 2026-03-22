@@ -43,24 +43,37 @@ export default function Dashboard() {
   const isSportsLive = matches.some(m => m.status === 'IN');
 
   useEffect(() => {
-    // Load config from localStorage
-    const savedConfig = localStorage.getItem('appConfig');
-    
-    requestAnimationFrame(() => {
-      if (savedConfig) {
-        try {
-          setAppConfig(JSON.parse(savedConfig));
-        } catch (e) {
-          console.error("Failed to parse appConfig", e);
-        }
+    const initSettings = async () => {
+      // 1. Try backend first (for persistence across rebuilds)
+      try {
+        const res = await fetch('/api/system/settings');
+        const data = await res.json();
+        
+        if (data.appConfig) setAppConfig(data.appConfig);
+        if (data.worldClocks) updateClocks(data.worldClocks);
+        if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
+      } catch (e) {
+        // 2. Fallback to localStorage
+        const savedConfig = localStorage.getItem('appConfig');
+        if (savedConfig) setAppConfig(JSON.parse(savedConfig));
       }
+      
       setMounted(true);
-    });
-  }, []);
+    };
 
-  const updateAppConfig = (newConfig: AppConfig) => {
+    initSettings();
+    const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(clockTimer);
+  }, []); // Remove updateClocks from here to prevent loop
+
+  const updateAppConfig = async (newConfig: AppConfig) => {
     setAppConfig(newConfig);
     localStorage.setItem('appConfig', JSON.stringify(newConfig));
+    // Persist to backend
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      body: JSON.stringify({ appConfig: newConfig })
+    });
   };
 
   if (!mounted) return <main className="fixed inset-0 bg-black" />;

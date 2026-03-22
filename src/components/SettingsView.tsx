@@ -61,15 +61,28 @@ export function SettingsView({
           city: data.city,
           offset: data.offset
         };
-        onUpdateClocks([...worldClocks, newClock].slice(0, 5));
+        const updatedClocks = [...worldClocks, newClock].slice(0, 5);
+        onUpdateClocks(updatedClocks);
+        // Persist to backend
+        await fetch('/api/system/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ worldClocks: updatedClocks })
+        });
       }
     } catch (e) {
       console.error("Failed to add clock", e);
     }
   };
 
-  const handleRemoveClock = (id: string) => {
-    onUpdateClocks(worldClocks.filter(c => c.id !== id));
+  const handleRemoveClock = async (id: string) => {
+    const updatedClocks = worldClocks.filter(c => c.id !== id);
+    onUpdateClocks(updatedClocks);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ worldClocks: updatedClocks })
+    });
   };
 
   return (
@@ -202,9 +215,14 @@ export function SettingsView({
           value={kbValue}
           onChange={setKbValue}
           onClose={() => setShowKeyboard(false)}
-          onSubmit={() => {
+          onSubmit={async () => {
             if (kbMode === 'weather') {
               localStorage.setItem('weatherLocation', kbValue);
+              await fetch('/api/system/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ weatherLocation: kbValue })
+              });
               setShowKeyboard(false);
               window.location.reload();
             } else {
