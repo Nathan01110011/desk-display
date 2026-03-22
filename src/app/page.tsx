@@ -91,11 +91,13 @@ export default function Dashboard() {
     <main className="fixed inset-0 bg-black text-white flex overflow-hidden font-sans select-none antialiased">
       {/* Background Glassmorphism */}
       <AnimatePresence mode="wait">
-        {spotify?.albumImageUrl && (
+        {spotify?.albumImageUrl ? (
           <div className="absolute inset-0 z-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={spotify.albumImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover blur-[100px] saturate-[150%] opacity-40" />
           </div>
+        ) : (
+          <div className="absolute inset-0 z-0 bg-black" />
         )}
       </AnimatePresence>
 

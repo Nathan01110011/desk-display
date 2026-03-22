@@ -10,11 +10,16 @@ interface SpotifyPlayerProps {
 }
 
 export function SpotifyPlayer({ spotify, onAction }: SpotifyPlayerProps) {
-  if (!spotify) {
+  if (!spotify || !spotify.title) {
     return (
-      <div className="flex flex-col items-center gap-4 opacity-20 py-10">
-        <Music size={80} />
-        <p className="text-xl uppercase tracking-widest">Spotify Offline</p>
+      <div className="w-full flex items-center gap-10 max-w-4xl opacity-40">
+        <div className="relative w-[240px] h-[240px] shrink-0 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-center">
+          <Music size={80} className="text-white/10" />
+        </div>
+        <div className="flex-1 space-y-2">
+          <h3 className="text-4xl font-black tracking-tight text-white/60">No music playing</h3>
+          <p className="text-xl font-medium text-white/20">Start a song on your device</p>
+        </div>
       </div>
     );
   }
