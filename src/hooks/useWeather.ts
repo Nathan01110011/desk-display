@@ -3,11 +3,12 @@ import { WeatherData } from '@/types';
 
 export function useWeather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
 
   const fetchWeather = useCallback(async () => {
     try {
-      const location = localStorage.getItem('weatherLocation');
-      const url = location ? `/api/weather?location=${encodeURIComponent(location)}` : '/api/weather';
+      const savedLocation = localStorage.getItem('weatherLocation');
+      const url = savedLocation ? `/api/weather?location=${encodeURIComponent(savedLocation)}` : '/api/weather';
       
       const res = await fetch(url);
       if (res.ok) {
@@ -19,15 +20,21 @@ export function useWeather() {
     }
   }, []);
 
+  // Expose a way to update the location state
+  const updateLocation = (newLoc: string) => {
+    localStorage.setItem('weatherLocation', newLoc);
+    setLocation(newLoc);
+    fetchWeather(); // Immediate refresh
+  };
+
   useEffect(() => {
     requestAnimationFrame(() => {
       fetchWeather();
     });
     
-    // Poll every 30 mins
     const timer = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(timer);
-  }, [fetchWeather]);
+  }, [fetchWeather, location]); // Re-run if location state changes
 
-  return { weather, refreshWeather: fetchWeather };
+  return { weather, refreshWeather: fetchWeather, updateLocation };
 }

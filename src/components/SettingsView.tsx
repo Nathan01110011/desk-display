@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, X, Minus, Plus, Check } from 'lucide-react';
+import { Settings, X, Minus, Plus, Check, Keyboard } from 'lucide-react';
 import { AppConfig } from '@/types';
+import { OnScreenKeyboard } from './OnScreenKeyboard';
 
 interface SettingsViewProps {
   workDuration: number;
@@ -20,6 +21,12 @@ export function SettingsView({
   appConfig,
   onUpdateAppConfig
 }: SettingsViewProps) {
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [kbValue, setKbValue] = useState('');
+
+  React.useEffect(() => {
+    setKbValue(localStorage.getItem('weatherLocation') || '');
+  }, []);
   
   const handleExitApp = async () => {
     try {
@@ -106,16 +113,36 @@ export function SettingsView({
           
           <div className="pt-4 border-t border-white/5 space-y-3">
             <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Weather Location</p>
-            <input 
-              type="text" 
-              placeholder="Auto-locate (IP)" 
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-white/30"
-              defaultValue={localStorage.getItem('weatherLocation') || ''}
-              onChange={(e) => localStorage.setItem('weatherLocation', e.target.value)}
-            />
+            <div className="flex gap-3">
+              <div 
+                onPointerDown={() => setShowKeyboard(true)}
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xl min-h-[3.5rem] flex items-center overflow-hidden truncate"
+              >
+                {kbValue || <span className="opacity-20 italic text-lg">Auto-locate (IP)</span>}
+              </div>
+              <button 
+                onPointerDown={() => setShowKeyboard(true)}
+                className="p-4 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
+              >
+                <Keyboard size={24} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {showKeyboard && (
+        <OnScreenKeyboard 
+          value={kbValue}
+          onChange={setKbValue}
+          onClose={() => setShowKeyboard(false)}
+          onSubmit={() => {
+            localStorage.setItem('weatherLocation', kbValue);
+            setShowKeyboard(false);
+            window.location.reload();
+          }}
+        />
+      )}
 
       <button
         onPointerDown={onClose}
