@@ -47,30 +47,23 @@ export function WeatherView({ weather, onClose }: WeatherViewProps) {
       </div>
 
       {/* Forecast Row */}
-      <div className="w-full max-w-4xl grid grid-cols-3 gap-8 pt-8 border-t border-white/5">
+      <div className="w-full max-w-5xl grid grid-cols-4 gap-6 pt-8 border-t border-white/5">
         {weather.forecast.map((item, i) => (
-          <div key={i} className="bg-white/5 rounded-3xl p-8 flex flex-col items-center gap-4 border border-white/5">
+          <div key={i} className="bg-white/5 rounded-3xl p-6 flex flex-col items-center gap-3 border border-white/5">
             <p className="text-lg font-bold text-white/30 uppercase tracking-widest">{item.time}</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={`http://openweathermap.org/img/wn/${item.icon}@2x.png`} 
               alt={item.condition}
-              className="w-20 h-20"
+              className="w-16 h-16"
             />
-            <div className="text-4xl font-black">{item.temp}°</div>
-            <p className="text-sm font-bold text-white/20 uppercase tracking-widest truncate w-full text-center">
+            <div className="text-3xl font-black">{item.temp}°</div>
+            <p className="text-xs font-bold text-white/20 uppercase tracking-widest truncate w-full text-center">
               {item.condition}
             </p>
           </div>
         ))}
       </div>
-
-      <button
-        onPointerDown={onClose}
-        className="absolute top-0 right-0 p-6 text-white/20 hover:text-white/60 active:scale-90 transition-all"
-      >
-        <X size={48} />
-      </button>
     </motion.div>
   );
 }

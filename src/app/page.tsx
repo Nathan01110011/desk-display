@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import { useSpotify } from '@/hooks/useSpotify';
 import { useCalendar } from '@/hooks/useCalendar';
 import { usePomodoro } from '@/hooks/usePomodoro';
@@ -37,14 +38,12 @@ export default function Dashboard() {
     togglePomo, resetPomo, switchMode, updateDurations 
   } = usePomodoro();
 
-  // The main clock uses the offset from the weather city, or system time if loading
   const { time, date, clocks, updateClocks } = useTime(weather?.timezone);
 
   const isSportsLive = matches.some(m => m.status === 'IN');
 
   useEffect(() => {
     const initSettings = async () => {
-      // 1. Try backend first
       try {
         const res = await fetch('/api/system/settings');
         const data = await res.json();
@@ -52,24 +51,19 @@ export default function Dashboard() {
         if (data.appConfig) setAppConfig(data.appConfig);
         if (data.worldClocks) updateClocks(data.worldClocks);
         if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
-        
-        // Sync Pomodoro Durations
         if (data.pomoWork) updateDurations(data.pomoWork, data.pomoBreak || 5);
       } catch (e) {
         const savedConfig = localStorage.getItem('appConfig');
         if (savedConfig) setAppConfig(JSON.parse(savedConfig));
       }
-      
       setMounted(true);
     };
-
     initSettings();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateAppConfig = async (newConfig: AppConfig) => {
     setAppConfig(newConfig);
     localStorage.setItem('appConfig', JSON.stringify(newConfig));
-    // Persist to backend
     await fetch('/api/system/settings', {
       method: 'POST',
       body: JSON.stringify({ appConfig: newConfig })
@@ -78,7 +72,6 @@ export default function Dashboard() {
 
   const handleUpdateDurations = async (work: number, brk: number) => {
     updateDurations(work, brk);
-    // Persist to backend
     await fetch('/api/system/settings', {
       method: 'POST',
       body: JSON.stringify({ pomoWork: work, pomoBreak: brk })
@@ -88,8 +81,7 @@ export default function Dashboard() {
   if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
   return (
-    <main className="fixed inset-0 bg-black text-white flex overflow-hidden font-sans select-none antialiased">
-      {/* Background Glassmorphism */}
+    <main className="fixed inset-0 bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased">
       <AnimatePresence mode="wait">
         {spotify?.albumImageUrl ? (
           <div className="absolute inset-0 z-0">
@@ -97,18 +89,20 @@ export default function Dashboard() {
             <img src={spotify.albumImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover blur-[100px] saturate-[150%] opacity-40" />
           </div>
         ) : (
-          <div className="absolute inset-0 z-0 bg-[#000000] bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000000_70%)] opacity-20" />
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-0" 
+            style={{ background: 'radial-gradient(circle at center, #333333 0%, #000000 70%)' }}
+          />
         )}
       </AnimatePresence>
 
       <div className="relative z-10 w-full flex h-full">
-        {/* Left Column (Static) */}
         <div className="w-1/3 border-r border-white/10 p-10 flex flex-col bg-black/40 backdrop-blur-3xl">
           <div className="mb-12">
             <h1 className="text-6xl font-bold tracking-tighter mb-2">{time}</h1>
             <p className="text-2xl text-white/50 font-medium mb-6">{date}</p>
-            
-            {/* Additional Clocks */}
             {clocks.length > 0 && (
               <div className="space-y-4 pt-6 border-t border-white/5">
                 {clocks.map(c => (
@@ -123,20 +117,33 @@ export default function Dashboard() {
           <CalendarView calendar={calendar} />
         </div>
 
-        {/* Right Column (Dynamic Views) */}
-        <div className="w-2/3 p-12 flex flex-col h-full overflow-hidden">
+        <div className="w-2/3 p-12 flex flex-col h-full overflow-hidden relative">
+          {/* Persistent Close Button for Apps */}
+          <AnimatePresence>
+            {activeView !== 'dashboard' && (
+              <motion.button
+                key="close-button"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                onPointerDown={() => setActiveView('dashboard')}
+                className="absolute top-6 right-6 z-[100] p-6 text-white/20 hover:text-white/60 active:scale-90 transition-all rounded-full bg-white/5"
+              >
+                <X size={48} />
+              </motion.button>
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
-            {activeView === 'dashboard' && (
+            {activeView === 'dashboard' ? (
               <motion.div
                 key="dashboard-view"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                 className="w-full h-full flex flex-col justify-between items-center py-8"
               >
-                {/* Fixed container for Spotify to prevent layout jumping */}
                 <div className="w-full flex-1 flex items-center justify-center">
                   <SpotifyPlayer spotify={spotify} onAction={handleAction} />
                 </div>
-
                 <AppLauncher 
                   onOpenPomo={() => setActiveView('pomodoro')} 
                   onOpenSettings={() => setActiveView('settings')}
@@ -149,45 +156,30 @@ export default function Dashboard() {
                   appConfig={appConfig}
                 />
               </motion.div>
-            )}
-
-            {activeView === 'pomodoro' && (
-              <PomodoroView 
-                pomoTime={pomoTime}
-                pomoActive={pomoActive}
-                pomoMode={pomoMode}
-                onToggle={togglePomo}
-                onReset={resetPomo}
-                onSwitchMode={() => switchMode()}
-                onClose={() => setActiveView('dashboard')}
-              />
-            )}
-
-            {activeView === 'sports' && (
-              <SportsView 
-                matches={matches}
-                onClose={() => setActiveView('dashboard')}
-              />
-            )}
-
-            {activeView === 'weather' && (
-              <WeatherView 
-                weather={weather}
-                onClose={() => setActiveView('dashboard')}
-              />
-            )}
-
-            {activeView === 'settings' && (
-              <SettingsView 
-                workDuration={workDuration}
-                breakDuration={breakDuration}
-                onUpdateDurations={handleUpdateDurations}
-                onClose={() => setActiveView('dashboard')}
-                appConfig={appConfig}
-                onUpdateAppConfig={updateAppConfig}
-                worldClocks={clocks}
-                onUpdateClocks={updateClocks}
-              />
+            ) : (
+              <motion.div
+                key="app-view"
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+                className="w-full h-full flex items-center justify-center"
+              >
+                {activeView === 'pomodoro' && (
+                  <PomodoroView 
+                    pomoTime={pomoTime} pomoActive={pomoActive} pomoMode={pomoMode}
+                    onToggle={togglePomo} onReset={resetPomo} onSwitchMode={() => switchMode()}
+                    onClose={() => setActiveView('dashboard')}
+                  />
+                )}
+                {activeView === 'sports' && <SportsView matches={matches} onClose={() => setActiveView('dashboard')} />}
+                {activeView === 'weather' && <WeatherView weather={weather} onClose={() => setActiveView('dashboard')} />}
+                {activeView === 'settings' && (
+                  <SettingsView 
+                    workDuration={workDuration} breakDuration={breakDuration}
+                    onUpdateDurations={handleUpdateDurations} onClose={() => setActiveView('dashboard')}
+                    appConfig={appConfig} onUpdateAppConfig={updateAppConfig}
+                    worldClocks={clocks} onUpdateClocks={updateClocks}
+                  />
+                )}
+              </motion.div>
             )}
           </AnimatePresence>
         </div>

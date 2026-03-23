@@ -13,7 +13,7 @@ export function SpotifyPlayer({ spotify, onAction }: SpotifyPlayerProps) {
   if (!spotify || !spotify.title) {
     return (
       <div className="w-full flex items-center gap-12 max-w-4xl opacity-20">
-        <div className="relative w-[280px] h-[240px] shrink-0 bg-white/5 border border-white/5 rounded-3xl flex items-center justify-center">
+        <div className="relative w-[240px] h-[240px] shrink-0 bg-white/5 border border-white/5 rounded-3xl flex items-center justify-center">
           <Music size={100} className="text-white/10" />
         </div>
         <div className="flex-1 space-y-3">
@@ -26,7 +26,7 @@ export function SpotifyPlayer({ spotify, onAction }: SpotifyPlayerProps) {
 
   return (
     <div className="w-full flex items-center gap-12 max-w-4xl">
-      <div className="relative w-[280px] h-[240px] shrink-0 shadow-[0_30px_100px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden border border-white/5">
+      <div className="relative w-[240px] h-[240px] shrink-0 shadow-[0_30px_100px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden border border-white/5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={spotify.albumImageUrl} alt="Album Art" className="object-cover w-full h-full" />
       </div>

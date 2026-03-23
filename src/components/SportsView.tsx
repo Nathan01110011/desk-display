@@ -91,13 +91,6 @@ export function SportsView({ matches, onClose }: SportsViewProps) {
           </div>
         )}
       </div>
-
-      <button
-        onPointerDown={onClose}
-        className="absolute top-0 right-0 p-6 text-white/20 hover:text-white/60 active:scale-90 transition-all"
-      >
-        <X size={48} />
-      </button>
     </motion.div>
   );
 }

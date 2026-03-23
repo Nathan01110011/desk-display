@@ -28,7 +28,7 @@ export async function GET() {
 
   try {
     const access_token = await getAccessToken();
-    const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+    const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing?additional_types=episode', {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
@@ -46,14 +46,27 @@ export async function GET() {
     const song = await response.json();
     
     if (!song.item) {
+      console.log('Spotify: No item playing');
       return NextResponse.json({ isPlaying: false, status: 'NO_ITEM' });
     }
 
     const isPlaying = song.is_playing;
+    const isEpisode = song.currently_playing_type === 'episode';
+    
+    console.log('Spotify Data:', {
+      type: song.currently_playing_type,
+      title: song.item.name,
+      artist: isEpisode ? song.item.show?.name : song.item.artists?.[0]?.name
+    });
+    
     const title = song.item.name;
-    const artist = song.item.artists.map((_artist: { name: string }) => _artist.name).join(', ');
-    const album = song.item.album.name;
-    const albumImageUrl = song.item.album.images[0].url;
+    const artist = isEpisode 
+      ? song.item.show.name 
+      : song.item.artists.map((_artist: { name: string }) => _artist.name).join(', ');
+    
+    const album = isEpisode ? song.item.show.publisher : song.item.album.name;
+    const albumImageUrl = isEpisode ? song.item.images[0].url : song.item.album.images[0].url;
+    
     const progressMs = song.progress_ms;
     const durationMs = song.item.duration_ms;
 

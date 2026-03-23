@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
       { time: '15:00', temp: 19, condition: 'Sunny', icon: '01d' },
       { time: '18:00', temp: 17, condition: 'Cloudy', icon: '03d' },
       { time: '21:00', temp: 14, condition: 'Rain', icon: '10d' },
+      { time: '00:00', temp: 12, condition: 'Clear', icon: '01n' },
     ]
   };
 
@@ -62,7 +63,10 @@ export async function GET(req: NextRequest) {
     }
 
     const current = wData.list[0];
-    const forecast = wData.list.slice(1, 4).map((item: { dt: number; main: { temp: number }; weather: { main: string; icon: string }[] }) => ({
+    console.log(`Weather: Mapping ${wData.list.length} intervals. Starting from index 0.`);
+    
+    // We actually want the next 4 intervals starting from the current one if possible
+    const forecast = wData.list.slice(0, 4).map((item: { dt: number; main: { temp: number }; weather: { main: string; icon: string }[] }) => ({
       time: new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
       temp: Math.round(item.main.temp),
       condition: item.weather[0].main,

@@ -1,23 +1,27 @@
-# 📟 Smart Kiosk Dashboard
+# 📟 Desk Display: Smart Kiosk Dashboard
 
 A minimalist, high-performance smart display dashboard designed for Raspberry Pi touchscreens. Optimized for "True Dark Mode" and kiosk environments.
 
-![v1 Dashboard](https://via.placeholder.com/1280x720/000000/FFFFFF?text=Smart+Kiosk+Dashboard+v1)
+![v1 Dashboard](https://via.placeholder.com/1280x720/000000/FFFFFF?text=Desk+Display+v1.1)
 
 ## 🌟 Features
 
-- **🗓️ Smart Calendar**: Live iCal feed integration with persistent caching, recurring event expansion, and automatic "Today Only" filtering.
-- **🎵 Spotify Now Playing**: Real-time playback status with album art background (glassmorphism), progress interpolation (smooth 10fps movement), and touch controls (Play/Pause/Skip).
-- **⏱️ Pomodoro Timer**: Built-in productivity timer with Work/Break cycles and large, touch-friendly display.
-- **🌑 True Dark Mode**: Locked at `#000000` to blend perfectly with screen bezels.
-- **🥧 Pi Optimized**: Purpose-built for 1280x720 resolution with large kiosk-grade typography.
+- **🗓️ Smart Calendar**: Live iCal feed integration with persistent caching, recurring event expansion, timezone normalization, and relative time countdowns (e.g., "in 22m").
+- **🎵 Spotify Now Playing**: Real-time playback status for music and podcasts. Includes album art background (glassmorphism), smooth progress interpolation, and touch controls.
+- **⏱️ Pomodoro Timer**: Built-in productivity timer with Work/Break cycles and "Done" state notifications on the dashboard.
+- **🌤️ Weather App**: Current conditions and 12-hour forecast with auto-location (IP-based) and manual city overrides.
+- **🌍 World Clocks**: Track up to 5 additional timezones directly on the dashboard.
+- **⚙️ Settings Panel**: Fully configurable via an on-screen keyboard. Toggle apps, adjust timers, and exit to the OS.
+
+---
 
 ## 🚀 Quick Start
 
 ### 1. Prerequisites
 - Node.js 20+
-- Spotify Developer Account (for API credentials)
-- Private iCal URL (iCloud, Google, etc.)
+- A Spotify Developer account
+- A free OpenWeatherMap API key
+- A private iCal URL (iCloud, Outlook, or Google)
 
 ### 2. Installation
 ```bash
@@ -27,42 +31,69 @@ npm install
 ```
 
 ### 3. Environment Setup
-Create a `.env.local` file in the root directory:
+Create a `.env.local` file in the root directory and fill in the following:
+
 ```text
-ICAL_URL=your_private_ical_url
-SPOTIFY_CLIENT_ID=your_spotify_id
-SPOTIFY_CLIENT_SECRET=your_spotify_secret
-SPOTIFY_REFRESH_TOKEN=
+# --- Calendar ---
+ICAL_URL=https://outlook.office365.com/.../calendar.ics
+
+# --- Spotify ---
+SPOTIFY_CLIENT_ID=your_id
+SPOTIFY_CLIENT_SECRET=your_secret
+SPOTIFY_REFRESH_TOKEN=generate_via_/api/spotify/login
+
+# --- Weather ---
+OPENWEATHER_API_KEY=your_key_here
+
+# --- Sports (Dynamic Configuration) ---
+# Format: sport:league_id,sport:league_id
+SPORTS_LEAGUES=soccer:eng.1,soccer:sco.1,rugby:270557,football:nfl
+# Comma-separated names/aliases of teams to track
+SPORTS_TEAMS=Manchester United,Rangers,Ulster,Giants
 ```
 
-### 4. Spotify Authentication
-To generate your first refresh token:
-1. Visit `http://localhost:3000/api/spotify/login` in your browser.
-2. Authorize the app.
-3. Copy the token into your `.env.local`.
+---
 
-### 5. Development
-```bash
-npm run dev
-```
+## 🛠️ App Configuration Guide
+
+### 🎾 Sports (ESPN API)
+The sports app uses the unofficial ESPN scoreboard API. 
+- **Leagues**: You must provide the sport and league ID (e.g., `soccer:eng.1` for Premier League).
+- **Common IDs**: `eng.1` (EPL), `sco.1` (Scottish Prem), `270557` (URC Rugby), `nfl` (NFL).
+- **Filtering**: The app will only show matches if one of the team names matches a string in your `SPORTS_TEAMS` list.
+
+### 🌤️ Weather (OpenWeatherMap)
+- **API Key**: Requires a free "Current Weather" and "5 Day Forecast" key.
+- **Location**: By default, it uses your public IP to guess your city. You can override this in the **Dashboard Settings** using the on-screen keyboard.
+
+### 🎵 Spotify
+- **Auth**: Visit `http://localhost:3000/api/spotify/login` once to generate your `SPOTIFY_REFRESH_TOKEN`.
+- **Podcasts**: Fully supported! The UI will automatically switch to "Episode" mode when a podcast is detected.
+
+---
 
 ## 🥧 Raspberry Pi Deployment
 
 ### Automatic Setup
-We provide a script to handle Node.js installation, PM2 setup, and kiosk configuration:
 ```bash
 chmod +x scripts/setup-pi.sh
 ./scripts/setup-pi.sh
 ```
 
-### Manual Kiosk Mode (Wayland/Labwc)
-Add the following to `~/.config/labwc/autostart`:
+### Clean Deployment Script
+Use the provided deploy script for one-command updates (Pulls, Builds, Restarts PM2, and Refreshes Browser):
 ```bash
-# Wait for backend
-sleep 15
-# Launch Chromium
-chromium --kiosk --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport --force-device-scale-factor=1 --ozone-platform=wayland http://localhost:3000 &
+./scripts/deploy.sh
 ```
+
+### Manual Kiosk Mode (Wayland/Labwc)
+Add this to `~/.config/labwc/autostart`:
+```bash
+# Launch Browser
+/usr/bin/chromium --kiosk --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport --force-device-scale-factor=1 --ozone-platform=wayland http://localhost:3000 &
+```
+
+---
 
 ## 🛠️ Tech Stack
 - **Framework**: Next.js 16 (App Router)
@@ -71,6 +102,3 @@ chromium --kiosk --incognito --disable-infobars --noerrdialogs --password-store=
 - **Icons**: Lucide React
 - **Parser**: ICAL.js
 - **Process Manager**: PM2
-
----
-Built with ❤️ for the Raspberry Pi community.
