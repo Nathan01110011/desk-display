@@ -29,7 +29,7 @@ export function SettingsView({
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
   const [kbValue, setKbValue] = useState('');
 
-  const allAvailableApps = ['pomodoro', 'sports', 'weather', 'fitbit'] as const;
+  const allAvailableApps = ['pomodoro', 'sports', 'weather', 'fitbit', 'home'] as const;
   const savedOrder = appConfig.appOrder || allAvailableApps;
   // Merge: Start with saved order, then add any missing apps from the full list
   const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter(app => allAvailableApps.includes(app as any));
@@ -209,7 +209,7 @@ export function SettingsView({
                     onPointerDown={() => toggleApp(app as keyof AppConfig)}
                     className="flex-1 flex items-center justify-between p-5 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
                   >
-                    <span className="text-xl font-bold capitalize text-white/70">{app}</span>
+                    <span className="text-xl font-bold capitalize text-white/70">{app === 'home' ? 'Smart Home' : app}</span>
                     {appConfig[app as keyof AppConfig] ? (
                       <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black">
                         <Check size={20} strokeWidth={4} />

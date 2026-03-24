@@ -10,6 +10,7 @@ import { useSports } from '@/hooks/useSports';
 import { useTime } from '@/hooks/useTime';
 import { useWeather } from '@/hooks/useWeather';
 import { useFitbit } from '@/hooks/useFitbit';
+import { useSmartHome } from '@/hooks/useSmartHome';
 import { CalendarView } from '@/components/CalendarView';
 import { SpotifyPlayer } from '@/components/SpotifyPlayer';
 import { PomodoroView } from '@/components/PomodoroView';
@@ -18,14 +19,16 @@ import { AppLauncher } from '@/components/AppLauncher';
 import { SettingsView } from '@/components/SettingsView';
 import { WeatherView } from '@/components/WeatherView';
 import { FitbitView } from '@/components/FitbitView';
+import { SmartHomeView } from '@/components/SmartHomeView';
 import { ViewState, AppConfig } from '@/types';
 
 const DEFAULT_CONFIG: AppConfig = {
   pomodoro: true,
   sports: true,
   weather: true,
-  fitbit: true,
-  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit']
+  fitbit: false,
+  home: true,
+  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit', 'home']
 };
 
 export default function Dashboard() {
@@ -38,6 +41,7 @@ export default function Dashboard() {
   const { matches } = useSports();
   const { weather } = useWeather();
   const { stats: fitbitStats, loading: fitbitLoading } = useFitbit(appConfig.fitbit);
+  const { devices: smartDevices, loading: smartLoading, toggleDevice } = useSmartHome(appConfig.home);
   const { 
     pomoTime, pomoActive, pomoMode, workDuration, breakDuration, 
     togglePomo, resetPomo, switchMode, updateDurations 
@@ -55,9 +59,9 @@ export default function Dashboard() {
         
         if (data.appConfig) {
           const mergedConfig = { ...DEFAULT_CONFIG, ...data.appConfig };
-          // Migration: Ensure fitbit exists in order
-          if (mergedConfig.appOrder && !mergedConfig.appOrder.includes('fitbit')) {
-            mergedConfig.appOrder.push('fitbit');
+          if (mergedConfig.appOrder) {
+            if (!mergedConfig.appOrder.includes('fitbit')) mergedConfig.appOrder.push('fitbit');
+            if (!mergedConfig.appOrder.includes('home')) mergedConfig.appOrder.push('home');
           }
           setAppConfig(mergedConfig);
         }
@@ -167,6 +171,7 @@ export default function Dashboard() {
                   onOpenSports={() => setActiveView('sports')}
                   onOpenWeather={() => setActiveView('weather')}
                   onOpenFitbit={() => setActiveView('fitbit')}
+                  onOpenHome={() => setActiveView('home')}
                   pomoActive={pomoActive} 
                   pomoTime={pomoTime} 
                   pomoMode={pomoMode}
@@ -190,6 +195,7 @@ export default function Dashboard() {
                 {activeView === 'sports' && <SportsView matches={matches} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'weather' && <WeatherView weather={weather} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onClose={() => setActiveView('dashboard')} />}
+                {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onToggle={toggleDevice} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'settings' && (
                   <SettingsView 
                     workDuration={workDuration} breakDuration={breakDuration}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
 import { PomodoroMode, AppConfig } from '@/types';
 
@@ -9,6 +9,7 @@ interface AppLauncherProps {
   onOpenSports: () => void;
   onOpenWeather: () => void;
   onOpenFitbit: () => void;
+  onOpenHome: () => void;
   pomoActive: boolean;
   pomoTime: number;
   pomoMode: PomodoroMode;
@@ -22,6 +23,7 @@ export function AppLauncher({
   onOpenSports, 
   onOpenWeather,
   onOpenFitbit,
+  onOpenHome,
   pomoActive, 
   pomoTime,
   pomoMode,
@@ -29,17 +31,16 @@ export function AppLauncher({
   appConfig
 }: AppLauncherProps) {
   const isPomoFinished = pomoTime === 0 && !pomoActive;
-  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit'];
+  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit', 'home'];
 
   const apps = {
     pomodoro: (
       <button
-        key="pomo"
         onPointerDown={onOpenPomo}
-        className={`aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border ${
+        className={`w-full h-full rounded-[2.5rem] flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border ${
           pomoActive || isPomoFinished
             ? 'bg-white/10 border-white/20' 
-            : 'bg-white/5 border-white/5 hover:bg-white/10'
+            : 'bg-white/5 border-white/5'
         }`}
       >
         <div className="relative">
@@ -64,12 +65,11 @@ export function AppLauncher({
     ),
     sports: (
       <button
-        key="sports"
         onPointerDown={onOpenSports}
-        className={`aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border ${
+        className={`w-full h-full rounded-[2.5rem] flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border ${
           isSportsLive 
             ? 'bg-red-500/10 border-red-500/20' 
-            : 'bg-white/5 border-white/5 hover:bg-white/10'
+            : 'bg-white/5 border-white/5'
         }`}
       >
         <div className="relative">
@@ -85,9 +85,8 @@ export function AppLauncher({
     ),
     weather: (
       <button
-        key="weather"
         onPointerDown={onOpenWeather}
-        className="aspect-square rounded-3xl bg-white/5 flex flex-col items-center justify-center gap-3 hover:bg-white/10 active:scale-95 transition-all border border-white/5"
+        className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
       >
         <CloudSun size={48} className="text-white/80" />
         <span className="text-lg font-bold text-white/40">Weather</span>
@@ -95,37 +94,46 @@ export function AppLauncher({
     ),
     fitbit: (
       <button
-        key="fitbit"
         onPointerDown={onOpenFitbit}
-        className="aspect-square rounded-3xl bg-white/5 flex flex-col items-center justify-center gap-3 hover:bg-white/10 active:scale-95 transition-all border border-white/5"
+        className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
       >
         <Activity size={48} className="text-white/80" />
         <span className="text-lg font-bold text-white/40">Fitbit</span>
       </button>
+    ),
+    home: (
+      <button
+        onPointerDown={onOpenHome}
+        className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
+      >
+        <Home size={48} className="text-white/80" />
+        <span className="text-lg font-bold text-white/40">Home</span>
+      </button>
     )
   };
 
-  const activeAppCount = order.filter(appId => appConfig[appId as keyof AppConfig]).length + 1; // +1 for Settings
-
   return (
-    <div className="w-full max-w-4xl border-t border-white/5 pt-12">
-      <div 
-        className="grid gap-6 mx-auto" 
-        style={{ 
-          gridTemplateColumns: `repeat(${activeAppCount}, minmax(0, 1fr))`,
-          maxWidth: activeAppCount * 180 // Keep buttons from getting too wide
-        }}
-      >
-        {order.map(appId => appConfig[appId as keyof AppConfig] ? (apps as any)[appId] : null)}
+    <div className="w-full max-w-5xl border-t border-white/5 pt-12">
+      <div className="flex gap-6 overflow-x-auto pb-8 px-4 scrollbar-hide snap-x">
+        {order.map(appId => {
+          if (!appConfig[appId as keyof AppConfig]) return null;
+          return (
+            <div key={appId} className="shrink-0 w-[180px] h-[180px] snap-center">
+              {(apps as any)[appId]}
+            </div>
+          );
+        })}
 
         {/* Settings (Always Visible) */}
-        <button
-          onPointerDown={onOpenSettings}
-          className="aspect-square rounded-3xl bg-white/5 flex flex-col items-center justify-center gap-3 hover:bg-white/10 active:scale-95 transition-all border border-white/5"
-        >
-          <Settings size={48} className="text-white/80" />
-          <span className="text-lg font-bold text-white/40">Settings</span>
-        </button>
+        <div className="shrink-0 w-[180px] h-[180px] snap-center">
+          <button
+            onPointerDown={onOpenSettings}
+            className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
+          >
+            <Settings size={48} className="text-white/80" />
+            <span className="text-lg font-bold text-white/40">Settings</span>
+          </button>
+        </div>
       </div>
     </div>
   );
