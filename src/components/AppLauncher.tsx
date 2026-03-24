@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
 import { PomodoroMode, AppConfig } from '@/types';
 
@@ -8,6 +8,7 @@ interface AppLauncherProps {
   onOpenSettings: () => void;
   onOpenSports: () => void;
   onOpenWeather: () => void;
+  onOpenFitbit: () => void;
   pomoActive: boolean;
   pomoTime: number;
   pomoMode: PomodoroMode;
@@ -20,6 +21,7 @@ export function AppLauncher({
   onOpenSettings, 
   onOpenSports, 
   onOpenWeather,
+  onOpenFitbit,
   pomoActive, 
   pomoTime,
   pomoMode,
@@ -27,7 +29,7 @@ export function AppLauncher({
   appConfig
 }: AppLauncherProps) {
   const isPomoFinished = pomoTime === 0 && !pomoActive;
-  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather'];
+  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit'];
 
   const apps = {
     pomodoro: (
@@ -90,13 +92,31 @@ export function AppLauncher({
         <CloudSun size={48} className="text-white/80" />
         <span className="text-lg font-bold text-white/40">Weather</span>
       </button>
+    ),
+    fitbit: (
+      <button
+        key="fitbit"
+        onPointerDown={onOpenFitbit}
+        className="aspect-square rounded-3xl bg-white/5 flex flex-col items-center justify-center gap-3 hover:bg-white/10 active:scale-95 transition-all border border-white/5"
+      >
+        <Activity size={48} className="text-white/80" />
+        <span className="text-lg font-bold text-white/40">Fitbit</span>
+      </button>
     )
   };
 
+  const activeAppCount = order.filter(appId => appConfig[appId as keyof AppConfig]).length + 1; // +1 for Settings
+
   return (
     <div className="w-full max-w-4xl border-t border-white/5 pt-12">
-      <div className="grid grid-cols-4 gap-6">
-        {order.map(appId => appConfig[appId] ? apps[appId as keyof typeof apps] : null)}
+      <div 
+        className="grid gap-6 mx-auto" 
+        style={{ 
+          gridTemplateColumns: `repeat(${activeAppCount}, minmax(0, 1fr))`,
+          maxWidth: activeAppCount * 180 // Keep buttons from getting too wide
+        }}
+      >
+        {order.map(appId => appConfig[appId as keyof AppConfig] ? (apps as any)[appId] : null)}
 
         {/* Settings (Always Visible) */}
         <button

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical } from 'lucide-react';
 import { AppConfig, AdditionalClock } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
@@ -29,7 +29,10 @@ export function SettingsView({
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
   const [kbValue, setKbValue] = useState('');
 
-  const appOrder = appConfig.appOrder || ['pomodoro', 'sports', 'weather'];
+  const allAvailableApps = ['pomodoro', 'sports', 'weather', 'fitbit'] as const;
+  const savedOrder = appConfig.appOrder || allAvailableApps;
+  // Merge: Start with saved order, then add any missing apps from the full list
+  const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter(app => allAvailableApps.includes(app as any));
 
   React.useEffect(() => {
     if (!showKeyboard && kbMode === 'weather') {

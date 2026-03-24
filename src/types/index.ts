@@ -16,7 +16,7 @@ export interface SpotifyNowPlaying {
   durationMs: number;
 }
 
-export type ViewState = 'dashboard' | 'pomodoro' | 'settings' | 'sports' | 'weather';
+export type ViewState = 'dashboard' | 'pomodoro' | 'settings' | 'sports' | 'weather' | 'fitbit';
 
 export type PomodoroMode = 'work' | 'break';
 
@@ -35,7 +35,19 @@ export interface AppConfig {
   pomodoro: boolean;
   sports: boolean;
   weather: boolean;
-  appOrder?: ('pomodoro' | 'sports' | 'weather')[];
+  fitbit: boolean;
+  appOrder?: ('pomodoro' | 'sports' | 'weather' | 'fitbit')[];
+}
+
+export interface FitbitStats {
+  steps: number;
+  stepGoal: number;
+  floors: number;
+  floorGoal: number;
+  calories: number;
+  activeMinutes: number;
+  restingHeartRate: number;
+  lastSyncTime: string;
 }
 
 export interface WeatherData {

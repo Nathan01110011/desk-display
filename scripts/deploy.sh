@@ -18,8 +18,12 @@ rm -rf "$PROJECT_DIR/.next"
 
 echo "--- 📥 Step 2: Syncing with GitHub ---"
 cd "$PROJECT_DIR"
+# Backup settings if they exist to prevent git reset from deleting rotated tokens
+[ -f .dashboard-settings.json ] && cp .dashboard-settings.json /tmp/dashboard-settings.json.bak
 git fetch origin
 git reset --hard origin/main
+# Restore settings
+[ -f /tmp/dashboard-settings.json.bak ] && mv /tmp/dashboard-settings.json.bak .dashboard-settings.json
 
 echo "--- 📦 Step 3: Installing Dependencies ---"
 npm install

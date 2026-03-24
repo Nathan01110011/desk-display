@@ -7,7 +7,7 @@ echo "--- 🥧 Raspberry Pi Setup Script ---"
 
 # 1. Update and install basic tools
 echo "--- 🛠️ Updating system tools ---"
-sudo apt update && sudo apt install -y git chromium
+sudo apt update && sudo apt install -y git chromium swayidle wlopm
 
 # 2. Install Node.js (if not already present)
 if ! command -v node &> /dev/null
@@ -31,10 +31,13 @@ pm2 start npm --name "dashboard" -- start
 pm2 save # Save current process list for boot
 
 echo ""
-echo "--- 🖥️ KIOSK MODE SETUP INSTRUCTIONS ---"
-echo "To make the dashboard open in full-screen on boot, add the following to your autostart file:"
-echo "Location: /etc/xdg/lxsession/rpd-x/autostart (or /etc/xdg/lxsession/LXDE-pi/autostart)"
+echo "--- 🖥️ KIOSK & POWER SETUP (Wayland/Labwc) ---"
+echo "Add these lines to: ~/.config/labwc/autostart"
 echo ""
-echo "@chromium --kiosk --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport http://localhost:3000"
+echo "# 1. Screen Sleep (1 hour inactivity, wake on touch/input)"
+echo "swayidle -w timeout 3600 'wlopm --off *' resume 'wlopm --on *' &"
+echo ""
+echo "# 2. Launch Browser"
+echo "chromium --kiosk --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport --force-device-scale-factor=1 --ozone-platform=wayland http://localhost:3000 &"
 echo ""
 echo "--- ✅ Setup finished! ---"

@@ -8,6 +8,8 @@ import { useCalendar } from '@/hooks/useCalendar';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useSports } from '@/hooks/useSports';
 import { useTime } from '@/hooks/useTime';
+import { useWeather } from '@/hooks/useWeather';
+import { useFitbit } from '@/hooks/useFitbit';
 import { CalendarView } from '@/components/CalendarView';
 import { SpotifyPlayer } from '@/components/SpotifyPlayer';
 import { PomodoroView } from '@/components/PomodoroView';
@@ -15,14 +17,15 @@ import { SportsView } from '@/components/SportsView';
 import { AppLauncher } from '@/components/AppLauncher';
 import { SettingsView } from '@/components/SettingsView';
 import { WeatherView } from '@/components/WeatherView';
-import { useWeather } from '@/hooks/useWeather';
+import { FitbitView } from '@/components/FitbitView';
 import { ViewState, AppConfig } from '@/types';
 
 const DEFAULT_CONFIG: AppConfig = {
   pomodoro: true,
   sports: true,
   weather: true,
-  appOrder: ['pomodoro', 'sports', 'weather']
+  fitbit: true,
+  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit']
 };
 
 export default function Dashboard() {
@@ -34,6 +37,7 @@ export default function Dashboard() {
   const { calendar } = useCalendar();
   const { matches } = useSports();
   const { weather } = useWeather();
+  const { stats: fitbitStats, loading: fitbitLoading } = useFitbit(appConfig.fitbit);
   const { 
     pomoTime, pomoActive, pomoMode, workDuration, breakDuration, 
     togglePomo, resetPomo, switchMode, updateDurations 
@@ -49,13 +53,24 @@ export default function Dashboard() {
         const res = await fetch('/api/system/settings');
         const data = await res.json();
         
-        if (data.appConfig) setAppConfig({ ...DEFAULT_CONFIG, ...data.appConfig });
+        if (data.appConfig) {
+          const mergedConfig = { ...DEFAULT_CONFIG, ...data.appConfig };
+          // Migration: Ensure fitbit exists in order
+          if (mergedConfig.appOrder && !mergedConfig.appOrder.includes('fitbit')) {
+            mergedConfig.appOrder.push('fitbit');
+          }
+          setAppConfig(mergedConfig);
+        }
+        
         if (data.worldClocks) updateClocks(data.worldClocks);
         if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
         if (data.pomoWork) updateDurations(data.pomoWork, data.pomoBreak || 5);
       } catch (e) {
         const savedConfig = localStorage.getItem('appConfig');
-        if (savedConfig) setAppConfig({ ...DEFAULT_CONFIG, ...JSON.parse(savedConfig) });
+        if (savedConfig) {
+          const parsed = JSON.parse(savedConfig);
+          setAppConfig({ ...DEFAULT_CONFIG, ...parsed });
+        }
       }
       setMounted(true);
     };
@@ -98,16 +113,14 @@ export default function Dashboard() {
           />
         )}
       </AnimatePresence>
-<div className="relative z-10 w-full flex h-full">
-        {/* Left Column (Static) */}
+
+      <div className="relative z-10 w-full flex h-full">
         <div className="w-1/3 border-r border-white/10 p-10 flex flex-col bg-black/40 backdrop-blur-3xl">
           <div className="mb-10 flex items-start justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-7xl font-black tracking-tighter leading-none">{time}</h1>
               <p className="text-xl text-white/40 font-bold uppercase tracking-widest mt-2">{date}</p>
             </div>
-            
-            {/* World Clocks Integrated on Right */}
             {clocks.length > 0 && (
               <div className="flex flex-col items-end gap-2 pt-1">
                 {clocks.map(c => (
@@ -119,13 +132,10 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          
           <CalendarView calendar={calendar} />
         </div>
 
-
         <div className="w-2/3 p-12 flex flex-col h-full overflow-hidden relative">
-          {/* Persistent Close Button for Apps */}
           <AnimatePresence>
             {activeView !== 'dashboard' && (
               <motion.button
@@ -156,6 +166,7 @@ export default function Dashboard() {
                   onOpenSettings={() => setActiveView('settings')}
                   onOpenSports={() => setActiveView('sports')}
                   onOpenWeather={() => setActiveView('weather')}
+                  onOpenFitbit={() => setActiveView('fitbit')}
                   pomoActive={pomoActive} 
                   pomoTime={pomoTime} 
                   pomoMode={pomoMode}
@@ -178,6 +189,7 @@ export default function Dashboard() {
                 )}
                 {activeView === 'sports' && <SportsView matches={matches} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'weather' && <WeatherView weather={weather} onClose={() => setActiveView('dashboard')} />}
+                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'settings' && (
                   <SettingsView 
                     workDuration={workDuration} breakDuration={breakDuration}
