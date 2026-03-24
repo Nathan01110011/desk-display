@@ -21,7 +21,8 @@ import { ViewState, AppConfig } from '@/types';
 const DEFAULT_CONFIG: AppConfig = {
   pomodoro: true,
   sports: true,
-  weather: true
+  weather: true,
+  appOrder: ['pomodoro', 'sports', 'weather']
 };
 
 export default function Dashboard() {
@@ -48,13 +49,13 @@ export default function Dashboard() {
         const res = await fetch('/api/system/settings');
         const data = await res.json();
         
-        if (data.appConfig) setAppConfig(data.appConfig);
+        if (data.appConfig) setAppConfig({ ...DEFAULT_CONFIG, ...data.appConfig });
         if (data.worldClocks) updateClocks(data.worldClocks);
         if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
         if (data.pomoWork) updateDurations(data.pomoWork, data.pomoBreak || 5);
       } catch (e) {
         const savedConfig = localStorage.getItem('appConfig');
-        if (savedConfig) setAppConfig(JSON.parse(savedConfig));
+        if (savedConfig) setAppConfig({ ...DEFAULT_CONFIG, ...JSON.parse(savedConfig) });
       }
       setMounted(true);
     };
@@ -97,25 +98,31 @@ export default function Dashboard() {
           />
         )}
       </AnimatePresence>
-
-      <div className="relative z-10 w-full flex h-full">
+<div className="relative z-10 w-full flex h-full">
+        {/* Left Column (Static) */}
         <div className="w-1/3 border-r border-white/10 p-10 flex flex-col bg-black/40 backdrop-blur-3xl">
-          <div className="mb-12">
-            <h1 className="text-6xl font-bold tracking-tighter mb-2">{time}</h1>
-            <p className="text-2xl text-white/50 font-medium mb-6">{date}</p>
+          <div className="mb-10 flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-7xl font-black tracking-tighter leading-none">{time}</h1>
+              <p className="text-xl text-white/40 font-bold uppercase tracking-widest mt-2">{date}</p>
+            </div>
+            
+            {/* World Clocks Integrated on Right */}
             {clocks.length > 0 && (
-              <div className="space-y-4 pt-6 border-t border-white/5">
+              <div className="flex flex-col items-end gap-2 pt-1">
                 {clocks.map(c => (
-                  <div key={c.id} className="flex justify-between items-center text-white/40">
-                    <span className="text-lg font-bold uppercase tracking-widest">{c.label}</span>
-                    <span className="text-2xl font-mono tabular-nums">{c.displayTime}</span>
+                  <div key={c.id} className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{c.label}</span>
+                    <span className="text-base font-bold tabular-nums text-white/60">{c.displayTime}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
+          
           <CalendarView calendar={calendar} />
         </div>
+
 
         <div className="w-2/3 p-12 flex flex-col h-full overflow-hidden relative">
           {/* Persistent Close Button for Apps */}

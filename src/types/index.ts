@@ -35,6 +35,7 @@ export interface AppConfig {
   pomodoro: boolean;
   sports: boolean;
   weather: boolean;
+  appOrder?: ('pomodoro' | 'sports' | 'weather')[];
 }
 
 export interface WeatherData {

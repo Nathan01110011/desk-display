@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2 } from 'lucide-react';
+import { motion, Reorder } from 'framer-motion';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { AppConfig, AdditionalClock } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
@@ -29,6 +29,8 @@ export function SettingsView({
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
   const [kbValue, setKbValue] = useState('');
 
+  const appOrder = appConfig.appOrder || ['pomodoro', 'sports', 'weather'];
+
   React.useEffect(() => {
     if (!showKeyboard && kbMode === 'weather') {
       setKbValue(localStorage.getItem('weatherLocation') || '');
@@ -44,6 +46,7 @@ export function SettingsView({
   };
 
   const toggleApp = (app: keyof AppConfig) => {
+    if (app === 'appOrder') return;
     onUpdateAppConfig({
       ...appConfig,
       [app]: !appConfig[app]
@@ -129,22 +132,44 @@ export function SettingsView({
               <span className="text-xs font-bold text-white/20 uppercase">{worldClocks.length}/5</span>
             </div>
             
-            <div className="space-y-3">
+            <Reorder.Group 
+              axis="y" 
+              values={worldClocks} 
+              onReorder={(newClocks) => {
+                onUpdateClocks(newClocks);
+                fetch('/api/system/settings', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ worldClocks: newClocks })
+                });
+              }}
+              className="space-y-3"
+            >
               {worldClocks.map(clock => (
-                <div key={clock.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <span className="text-lg font-bold text-white/60">{clock.label}</span>
-                  <button onPointerDown={() => handleRemoveClock(clock.id)} className="text-red-500/40 hover:text-red-500 active:scale-90 p-2 transition-all"><Trash2 size={20} /></button>
-                </div>
-              ))}
-              {worldClocks.length < 5 && (
-                <button 
-                  onPointerDown={() => { setKbMode('clock'); setKbValue(''); setShowKeyboard(true); }}
-                  className="w-full py-4 rounded-2xl border border-dashed border-white/10 text-white/30 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
+                <Reorder.Item 
+                  key={clock.id} 
+                  value={clock}
+                  className="flex items-center gap-3 group"
                 >
-                  + Add Clock
-                </button>
-              )}
-            </div>
+                  <div className="cursor-grab active:cursor-grabbing p-2 text-white/10 group-active:text-blue-400 transition-colors">
+                    <GripVertical size={20} />
+                  </div>
+                  <div className="flex-1 flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <span className="text-lg font-bold text-white/60">{clock.label}</span>
+                    <button onPointerDown={() => handleRemoveClock(clock.id)} className="text-red-500/40 hover:text-red-500 active:scale-90 p-2 transition-all"><Trash2 size={20} /></button>
+                  </div>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+
+            {worldClocks.length < 5 && (
+              <button 
+                onPointerDown={() => { setKbMode('clock'); setKbValue(''); setShowKeyboard(true); }}
+                className="w-full py-4 rounded-2xl border border-dashed border-white/10 text-white/30 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
+              >
+                + Add Clock
+              </button>
+            )}
           </div>
 
           <div className="bg-white/5 p-8 rounded-3xl border border-white/5 flex items-center justify-between">
@@ -160,24 +185,39 @@ export function SettingsView({
         <div className="space-y-8">
           <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
             <h3 className="text-xl font-bold text-white/80">Dashboard Apps</h3>
-            <div className="space-y-4">
-              {(['pomodoro', 'sports', 'weather'] as const).map((app) => (
-                <button
-                  key={app}
-                  onPointerDown={() => toggleApp(app)}
-                  className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
+            
+            <Reorder.Group 
+              axis="y" 
+              values={appOrder} 
+              onReorder={(newOrder) => onUpdateAppConfig({ ...appConfig, appOrder: newOrder })}
+              className="space-y-4"
+            >
+              {appOrder.map((app) => (
+                <Reorder.Item 
+                  key={app} 
+                  value={app}
+                  className="flex items-center gap-4 group"
                 >
-                  <span className="text-xl font-bold capitalize text-white/70">{app}</span>
-                  {appConfig[app] ? (
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black">
-                      <Check size={20} strokeWidth={4} />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-lg border-2 border-white/20" />
-                  )}
-                </button>
+                  <div className="cursor-grab active:cursor-grabbing p-4 text-white/10 group-active:text-blue-400 transition-colors">
+                    <GripVertical size={28} />
+                  </div>
+                  
+                  <button
+                    onPointerDown={() => toggleApp(app as keyof AppConfig)}
+                    className="flex-1 flex items-center justify-between p-5 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
+                  >
+                    <span className="text-xl font-bold capitalize text-white/70">{app}</span>
+                    {appConfig[app as keyof AppConfig] ? (
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black">
+                        <Check size={20} strokeWidth={4} />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg border-2 border-white/20" />
+                    )}
+                  </button>
+                </Reorder.Item>
               ))}
-            </div>
+            </Reorder.Group>
             
             {appConfig.weather && (
               <div className="pt-4 border-t border-white/5 space-y-3">
