@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const API_KEY = process.env.OPENWEATHER_API_KEY;
+const SETTINGS_PATH = path.join(process.cwd(), '.dashboard-settings.json');
 
 interface WeatherData {
   temp: number;
@@ -9,6 +12,9 @@ interface WeatherData {
   icon: string;
   location: string;
   timezone: number;
+  unit: 'C' | 'F';
+  sunrise: string;
+  sunset: string;
   forecast: {
     time: string;
     date: string;
@@ -40,18 +46,31 @@ async function fetchWithRetry(url: string, retries = 3, timeout = 10000) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const locationOverride = searchParams.get('location');
+  
+  let unit: 'C' | 'F' = 'C';
+  try {
+    if (fs.existsSync(SETTINGS_PATH)) {
+      const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+      if (settings.weatherUnit) unit = settings.weatherUnit;
+    }
+  } catch (e) {}
+
+  const openWeatherUnit = unit === 'F' ? 'imperial' : 'metric';
 
   const mockData: WeatherData = {
-    temp: 18,
+    temp: unit === 'C' ? 18 : 64,
     condition: 'Partly Cloudy',
     icon: '02d',
     location: 'London (Mock)',
     timezone: 0,
+    unit,
+    sunrise: '06:15',
+    sunset: '18:45',
     forecast: [
-      { time: '15:00', date: 'Today', temp: 19, condition: 'Sunny', icon: '01d' },
-      { time: '18:00', date: 'Today', temp: 17, condition: 'Cloudy', icon: '03d' },
-      { time: '21:00', date: 'Today', temp: 14, condition: 'Rain', icon: '10d' },
-      { time: '00:00', date: 'Tomorrow', temp: 12, condition: 'Clear', icon: '01n' },
+      { time: '15:00', date: 'Today', temp: unit === 'C' ? 19 : 66, condition: 'Sunny', icon: '01d' },
+      { time: '18:00', date: 'Today', temp: unit === 'C' ? 17 : 62, condition: 'Cloudy', icon: '03d' },
+      { time: '21:00', date: 'Today', temp: unit === 'C' ? 14 : 57, condition: 'Rain', icon: '10d' },
+      { time: '00:00', date: 'Tomorrow', temp: unit === 'C' ? 12 : 53, condition: 'Clear', icon: '01n' },
     ]
   };
 
@@ -71,7 +90,7 @@ export async function GET(request: Request) {
     }
 
     const weatherRes = await fetchWithRetry(
-      `https://api.openweathermap.org/data/2.5/forecast?lat=${geo.lat}&lon=${geo.lon}&units=metric&appid=${API_KEY}`
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${geo.lat}&lon=${geo.lon}&units=${openWeatherUnit}&appid=${API_KEY}`
     );
     const wData = await weatherRes.json();
 
@@ -79,13 +98,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ ...mockData, location: `${geo.name} (Offline)` });
     }
 
+    const formatSunTime = (timestamp: number) => {
+      return new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+
     const current = wData.list[0];
-    
-    // Process full 5-day forecast (up to 40 intervals)
     const forecast = wData.list.map((item: any) => {
       const date = new Date(item.dt * 1000);
       const isToday = date.toDateString() === new Date().toDateString();
-      
       return {
         time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
         date: isToday ? 'Today' : date.toLocaleDateString([], { weekday: 'short' }).toUpperCase(),
@@ -101,6 +121,9 @@ export async function GET(request: Request) {
       icon: current.weather[0].icon,
       location: geo.name,
       timezone: wData.city.timezone,
+      unit,
+      sunrise: formatSunTime(wData.city.sunrise),
+      sunset: formatSunTime(wData.city.sunset),
       forecast
     });
 

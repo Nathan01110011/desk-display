@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, BellOff } from 'lucide-react';
 import { useSpotify } from '@/hooks/useSpotify';
 import { useCalendar } from '@/hooks/useCalendar';
 import { usePomodoro } from '@/hooks/usePomodoro';
@@ -11,6 +11,7 @@ import { useTime } from '@/hooks/useTime';
 import { useWeather } from '@/hooks/useWeather';
 import { useFitbit } from '@/hooks/useFitbit';
 import { useSmartHome } from '@/hooks/useSmartHome';
+import { useTimer } from '@/hooks/useTimer';
 import { CalendarView } from '@/components/CalendarView';
 import { SpotifyPlayer } from '@/components/SpotifyPlayer';
 import { PomodoroView } from '@/components/PomodoroView';
@@ -20,6 +21,7 @@ import { SettingsView } from '@/components/SettingsView';
 import { WeatherView } from '@/components/WeatherView';
 import { FitbitView } from '@/components/FitbitView';
 import { SmartHomeView } from '@/components/SmartHomeView';
+import { TimerView } from '@/components/TimerView';
 import { ViewState, AppConfig } from '@/types';
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -28,7 +30,8 @@ const DEFAULT_CONFIG: AppConfig = {
   weather: true,
   fitbit: false,
   home: true,
-  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit', 'home']
+  timer: true,
+  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer']
 };
 
 export default function Dashboard() {
@@ -40,9 +43,13 @@ export default function Dashboard() {
   const { spotify, handleAction } = useSpotify();
   const { calendar } = useCalendar();
   const { matches } = useSports();
-  const { weather } = useWeather();
+  const { weather, refresh: refreshWeather } = useWeather();
   const { stats: fitbitStats, loading: fitbitLoading } = useFitbit(appConfig.fitbit);
   const { devices: smartDevices, loading: smartLoading, updateDevice } = useSmartHome(appConfig.home);
+  const { 
+    timeLeft: timerSeconds, isActive: timerRunning, isFinished: timerUp,
+    startTimer, pauseTimer, resumeTimer, resetTimer, dismissAlert
+  } = useTimer();
   const { 
     pomoTime, pomoActive, pomoMode, workDuration, breakDuration, 
     togglePomo, resetPomo, switchMode, updateDurations 
@@ -63,12 +70,14 @@ export default function Dashboard() {
           if (mergedConfig.appOrder) {
             if (!mergedConfig.appOrder.includes('fitbit')) mergedConfig.appOrder.push('fitbit');
             if (!mergedConfig.appOrder.includes('home')) mergedConfig.appOrder.push('home');
+            if (!mergedConfig.appOrder.includes('timer')) mergedConfig.appOrder.push('timer');
           }
           setAppConfig(mergedConfig);
         }
         
         if (data.worldClocks) updateClocks(data.worldClocks);
         if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
+        if (data.weatherUnit) localStorage.setItem('weatherUnit', data.weatherUnit);
         if (data.pomoWork) updateDurations(data.pomoWork, data.pomoBreak || 5);
       } catch (e) {
         const savedConfig = localStorage.getItem('appConfig');
@@ -121,37 +130,68 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
+      {/* Global Timer Alert Overlay */}
+      <AnimatePresence>
+        {timerUp && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0.5, 1, 0] }}
+            transition={{ repeat: Infinity, duration: 1 }}
+            className="fixed inset-0 z-[500] bg-red-600/80 backdrop-blur-2xl flex flex-col items-center justify-center gap-12"
+          >
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 0.5 }}
+              className="flex flex-col items-center gap-4"
+            >
+              <BellOff size={120} className="text-white" />
+              <h1 className="text-8xl font-black uppercase tracking-tighter italic">Time's Up!</h1>
+            </motion.div>
+            
+            <button
+              onPointerDown={dismissAlert}
+              className="px-16 py-8 rounded-[3rem] bg-white text-black text-4xl font-black uppercase tracking-widest shadow-2xl active:scale-90 transition-transform"
+            >
+              Dismiss
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative z-10 w-full flex h-full">
         {/* Sidebar (Animated Width) */}
-        <motion.div 
-          animate={{ 
-            width: isFullscreenView ? "0%" : "33.333333%",
-            opacity: isFullscreenView ? 0 : 1,
-            x: isFullscreenView ? -100 : 0
-          }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} 
-          className="border-r border-white/10 flex flex-col bg-black/40 backdrop-blur-3xl overflow-hidden shrink-0 relative"
-        >
-          <div className="p-10 w-[33.33vw] h-full flex flex-col">
-            <div className="mb-10 flex items-start justify-between w-full">
-              <div className="flex-1">
-                <h1 className="text-7xl font-black tracking-tighter leading-none">{time}</h1>
-                <p className="text-xl text-white/40 font-bold uppercase tracking-widest mt-2">{date}</p>
-              </div>
-              {clocks.length > 0 && (
-                <div className="flex flex-col items-end gap-2 pt-1 shrink-0">
-                  {clocks.map(c => (
-                    <div key={c.id} className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{c.label}</span>
-                      <span className="text-base font-bold tabular-nums text-white/60">{c.displayTime}</span>
+        <AnimatePresence>
+          {!isFullscreenView && (
+            <motion.div 
+              key="sidebar"
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ width: isFullscreenView ? "0%" : "33.333333%", opacity: 1, x: 0 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} 
+              className="border-r border-white/10 flex flex-col bg-black/40 backdrop-blur-3xl overflow-hidden shrink-0 relative"
+            >
+              <div className="p-10 w-[33.33vw] h-full flex flex-col">
+                <div className="mb-10 flex items-start justify-between w-full">
+                  <div className="flex-1">
+                    <h1 className="text-7xl font-black tracking-tighter leading-none">{time}</h1>
+                    <p className="text-xl text-white/40 font-bold uppercase tracking-widest mt-2">{date}</p>
+                  </div>
+                  {clocks.length > 0 && (
+                    <div className="flex flex-col items-end gap-2 pt-1 shrink-0">
+                      {clocks.map(c => (
+                        <div key={c.id} className="flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{c.label}</span>
+                          <span className="text-base font-bold tabular-nums text-white/60">{c.displayTime}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
-            <CalendarView calendar={calendar} now={rawTime} />
-          </div>
-        </motion.div>
+                <CalendarView calendar={calendar} now={rawTime} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Area (Flex-1) */}
         <div className="flex-1 p-12 flex flex-col h-full overflow-hidden relative">
@@ -165,6 +205,7 @@ export default function Dashboard() {
                 onPointerDown={() => {
                   setActiveView('dashboard');
                   setWeatherDetail(false);
+                  refreshWeather();
                 }}
                 className="absolute top-6 right-6 z-[100] p-6 text-white/20 hover:text-white/60 active:scale-90 transition-all rounded-full bg-white/5"
               >
@@ -190,6 +231,7 @@ export default function Dashboard() {
                   onOpenWeather={() => setActiveView('weather')}
                   onOpenFitbit={() => setActiveView('fitbit')}
                   onOpenHome={() => setActiveView('home')}
+                  onOpenTimer={() => setActiveView('timer')}
                   pomoActive={pomoActive} 
                   pomoTime={pomoTime} 
                   pomoMode={pomoMode}
@@ -221,6 +263,13 @@ export default function Dashboard() {
                 )}
                 {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={() => setActiveView('dashboard')} />}
+                {activeView === 'timer' && (
+                  <TimerView 
+                    timeLeft={timerSeconds} isActive={timerRunning}
+                    onStart={startTimer} onPause={pauseTimer} onResume={resumeTimer} onReset={resetTimer}
+                    onClose={() => setActiveView('dashboard')}
+                  />
+                )}
                 {activeView === 'settings' && (
                   <SettingsView 
                     workDuration={workDuration} breakDuration={breakDuration}

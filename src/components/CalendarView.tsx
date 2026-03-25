@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { CalendarEvent } from '@/types';
 
@@ -8,7 +8,28 @@ interface CalendarViewProps {
 }
 
 export function CalendarView({ calendar, now }: CalendarViewProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [topFade, setTopFade] = useState(0);
+  const [bottomFade, setBottomFade] = useState(0);
   const currentTime = now.getTime();
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    
+    // Calculate fades (max 40px)
+    const newTop = Math.min(scrollTop, 40);
+    const scrollBottom = scrollHeight - clientHeight - scrollTop;
+    const newBottom = Math.max(0, Math.min(scrollBottom, 40));
+    
+    setTopFade(newTop);
+    setBottomFade(newBottom);
+  };
+
+  // Run once on mount/data change to check if we need initial bottom fade
+  useEffect(() => {
+    handleScroll();
+  }, [calendar]);
 
   // Find the first non-all-day meeting that starts in the future
   const nextMeeting = calendar.find(event => {
@@ -23,12 +44,10 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
     const start = new Date(event.start).getTime();
     const end = new Date(event.end).getTime();
 
-    // 1. Check if Ongoing
     if (currentTime >= start && currentTime < end) {
       return { label: 'NOW', type: 'ongoing' };
     }
 
-    // 2. Check if Next (Upcoming)
     if (event === nextMeeting) {
       const diffMs = start - currentTime;
       const diffMin = Math.ceil(diffMs / 60000);
@@ -54,12 +73,23 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
     return null;
   };
 
+  const maskStyle = {
+    WebkitMaskImage: `linear-gradient(to bottom, transparent 0%, black ${topFade}px, black calc(100% - ${bottomFade}px), transparent 100%)`,
+    maskImage: `linear-gradient(to bottom, transparent 0%, black ${topFade}px, black calc(100% - ${bottomFade}px), transparent 100%)`
+  };
+
   return (
-    <div className="flex-1 space-y-10 overflow-y-auto scrollbar-hide">
-      <h2 className="text-sm uppercase tracking-[0.2em] text-white/30 font-bold flex items-center gap-3">
+    <div className="flex-1 flex flex-col min-h-0">
+      <h2 className="text-sm uppercase tracking-[0.2em] text-white/30 font-bold flex items-center gap-3 mb-8 shrink-0">
         <CalendarIcon size={18} /> Today
       </h2>
-      <div className="space-y-10">
+      
+      <div 
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 space-y-10 overflow-y-auto scrollbar-hide pr-2"
+        style={maskStyle}
+      >
         {calendar.length > 0 ? (
           calendar.map((event, i) => {
             const state = getEventState(event);

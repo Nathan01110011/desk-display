@@ -7,14 +7,20 @@ const execAsync = promisify(exec);
 
 async function sendWizCommand(ip: string, msg: object, retries = 2): Promise<any> {
   const json = JSON.stringify(msg);
+  const isSetCommand = json.includes('setPilot');
   const command = `echo '${json}' | nc -u -w 1 ${ip} 38899`;
   
   for (let i = 0; i < retries; i++) {
     try {
       const { stdout } = await execAsync(command);
+      
       if (!stdout || stdout.trim() === '') {
+        // If it's a SET command, we don't strictly need the response JSON
+        // The bulb often executes the command but is too busy to reply
+        if (isSetCommand) return { result: { success: true } };
         throw new Error('Empty response from bulb');
       }
+      
       return JSON.parse(stdout);
     } catch (e) {
       if (i === retries - 1) throw e;

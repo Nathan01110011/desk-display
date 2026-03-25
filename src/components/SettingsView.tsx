@@ -28,10 +28,10 @@ export function SettingsView({
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
   const [kbValue, setKbValue] = useState('');
+  const [currentUnit, setCurrentUnit] = useState(localStorage.getItem('weatherUnit') || 'C');
 
-  const allAvailableApps = ['pomodoro', 'sports', 'weather', 'fitbit', 'home'] as const;
+  const allAvailableApps = ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer'] as const;
   const savedOrder = appConfig.appOrder || allAvailableApps;
-  // Merge: Start with saved order, then add any missing apps from the full list
   const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter(app => allAvailableApps.includes(app as any));
 
   React.useEffect(() => {
@@ -54,6 +54,13 @@ export function SettingsView({
       ...appConfig,
       [app]: !appConfig[app]
     });
+  };
+
+  const handleUnitToggle = async (unit: 'C' | 'F') => {
+    setCurrentUnit(unit);
+    localStorage.setItem('weatherUnit', unit);
+    await fetch('/api/system/settings', { method: 'POST', body: JSON.stringify({ weatherUnit: unit }) });
+    // Note: No reload here, the next weather fetch will naturally pick up the new unit
   };
 
   const handleAddClock = async (city: string) => {
@@ -93,9 +100,7 @@ export function SettingsView({
   return (
     <motion.div
       key="settings-view"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
       className="w-full max-w-6xl mx-auto flex flex-col space-y-8 py-12 h-full overflow-y-auto pr-4 scrollbar-hide"
     >
       <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
@@ -103,14 +108,13 @@ export function SettingsView({
       </div>
 
       <div className="grid grid-cols-2 gap-8">
-        {/* Left Column */}
         <div className="space-y-8">
           {appConfig.pomodoro && (
             <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
               <h3 className="text-xl font-bold text-white/80">Pomodoro Timer</h3>
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Work</p>
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Work</p>
                   <div className="flex items-center gap-4">
                     <button onPointerDown={() => onUpdateDurations(Math.max(1, workDuration - 1), breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={24} /></button>
                     <span className="text-4xl font-black">{workDuration}</span>
@@ -118,7 +122,7 @@ export function SettingsView({
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Break</p>
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Break</p>
                   <div className="flex items-center gap-4">
                     <button onPointerDown={() => onUpdateDurations(workDuration, Math.max(1, breakDuration - 1))} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={24} /></button>
                     <span className="text-4xl font-black">{breakDuration}</span>
@@ -149,11 +153,7 @@ export function SettingsView({
               className="space-y-3"
             >
               {worldClocks.map(clock => (
-                <Reorder.Item 
-                  key={clock.id} 
-                  value={clock}
-                  className="flex items-center gap-3 group"
-                >
+                <Reorder.Item key={clock.id} value={clock} className="flex items-center gap-3 group">
                   <div className="cursor-grab active:cursor-grabbing p-2 text-white/10 group-active:text-blue-400 transition-colors">
                     <GripVertical size={20} />
                   </div>
@@ -184,7 +184,6 @@ export function SettingsView({
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-8">
           <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
             <h3 className="text-xl font-bold text-white/80">Dashboard Apps</h3>
@@ -196,15 +195,10 @@ export function SettingsView({
               className="space-y-4"
             >
               {appOrder.map((app) => (
-                <Reorder.Item 
-                  key={app} 
-                  value={app}
-                  className="flex items-center gap-4 group"
-                >
+                <Reorder.Item key={app} value={app} className="flex items-center gap-4 group">
                   <div className="cursor-grab active:cursor-grabbing p-4 text-white/10 group-active:text-blue-400 transition-colors">
                     <GripVertical size={28} />
                   </div>
-                  
                   <button
                     onPointerDown={() => toggleApp(app as keyof AppConfig)}
                     className="flex-1 flex items-center justify-between p-5 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
@@ -223,21 +217,41 @@ export function SettingsView({
             </Reorder.Group>
             
             {appConfig.weather && (
-              <div className="pt-4 border-t border-white/5 space-y-3">
-                <p className="text-white/40 uppercase tracking-widest text-xs font-bold">Weather Location</p>
-                <div className="flex gap-3">
-                  <div 
-                    onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xl min-h-[3.5rem] flex items-center overflow-hidden truncate"
-                  >
-                    {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-lg">Auto-locate (IP)</span>}
+              <div className="pt-4 border-t border-white/5 space-y-6">
+                <div className="space-y-3">
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Weather Location</p>
+                  <div className="flex gap-3">
+                    <div 
+                      onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xl min-h-[3.5rem] flex items-center overflow-hidden truncate"
+                    >
+                      {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-lg">Auto-locate</span>}
+                    </div>
+                    <button 
+                      onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
+                      className="p-4 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
+                    >
+                      <Keyboard size={24} />
+                    </button>
                   </div>
-                  <button 
-                    onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
-                    className="p-4 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
-                  >
-                    <Keyboard size={24} />
-                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Temperature Unit</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      onPointerDown={() => handleUnitToggle('C')}
+                      className={`p-4 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold ${currentUnit === 'C' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                    >
+                      Celsius (°C)
+                    </button>
+                    <button 
+                      onPointerDown={() => handleUnitToggle('F')}
+                      className={`p-4 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold ${currentUnit === 'F' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                    >
+                      Fahrenheit (°F)
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

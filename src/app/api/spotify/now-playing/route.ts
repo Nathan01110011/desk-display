@@ -5,7 +5,7 @@ const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 const refresh_token = process.env.SPOTIFY_REFRESH_TOKEN;
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 10000) {
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 15000) {
   for (let i = 0; i < retries; i++) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -16,7 +16,8 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, ti
     } catch (e) {
       if (i === retries - 1) throw e;
       logger.warn(`Spotify: Fetch failed, retrying (${i + 1}/${retries})...`);
-      await new Promise(res => setTimeout(res, 1000));
+      // Increased delay between retries
+      await new Promise(res => setTimeout(res, 2000));
     } finally {
       clearTimeout(id);
     }

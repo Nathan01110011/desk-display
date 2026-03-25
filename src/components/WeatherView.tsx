@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CloudSun, ChevronLeft, List } from 'lucide-react';
+import { CloudSun, ChevronLeft, List, Sunrise, Sunset } from 'lucide-react';
 import { WeatherData } from '@/types';
 
 interface WeatherViewProps {
@@ -13,7 +13,7 @@ interface WeatherViewProps {
 export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: WeatherViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [topFade, setTopFade] = useState(0);
-  const [bottomFade, setBottomFade] = useState(40); // Reduced to 40
+  const [bottomFade, setBottomFade] = useState(40);
 
   const groupedForecast = useMemo(() => {
     if (!weather) return {};
@@ -28,12 +28,9 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    
-    // Smoothly interpolate the fade size between 0 and 40px
     const newTop = Math.min(scrollTop, 40);
     const scrollBottom = scrollHeight - clientHeight - scrollTop;
     const newBottom = Math.min(scrollBottom, 40);
-    
     setTopFade(newTop);
     setBottomFade(newBottom);
   };
@@ -81,7 +78,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
               <CloudSun size={20} /> {weather.location}
             </div>
 
-            <div className="flex items-center gap-12 mb-12">
+            <div className="flex items-center gap-16 mb-12">
               <img 
                 src={`http://openweathermap.org/img/wn/${weather.icon}@4x.png`} 
                 alt={weather.condition}
@@ -91,7 +88,19 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
                 <div className="text-[10rem] font-black tracking-tighter leading-none text-white flex">
                   {weather.temp}<span className="text-[6rem] mt-4 text-white/20">°</span>
                 </div>
-                <p className="text-4xl font-bold text-white/40 uppercase tracking-widest">{weather.condition}</p>
+                <div className="space-y-2">
+                  <p className="text-4xl font-bold text-white/40 uppercase tracking-widest">{weather.condition}</p>
+                  <div className="flex items-center gap-6 pt-2 border-t border-white/5">
+                    <div className="flex items-center gap-2 text-white/30">
+                      <Sunrise size={20} className="text-orange-400/60" />
+                      <span className="text-lg font-bold tabular-nums">{weather.sunrise}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-white/30">
+                      <Sunset size={20} className="text-blue-400/60" />
+                      <span className="text-lg font-bold tabular-nums">{weather.sunset}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -105,7 +114,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
                     className="w-16 h-16"
                   />
                   <div className="text-3xl font-black">{item.temp}°</div>
-                  <p className="text-xs font-bold text-white/20 uppercase tracking-widest truncate w-full text-center">
+                  <p className="text-sm font-bold text-white/40 uppercase tracking-widest truncate w-full text-center">
                     {item.condition}
                   </p>
                 </div>
@@ -127,37 +136,37 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
             exit={{ opacity: 0, scale: 1.05 }}
             className="w-full h-full flex flex-col p-4"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 pr-24">
               <button 
                 onPointerDown={() => onToggleExtended(false)}
                 className="p-4 rounded-2xl bg-white/5 text-white/60 flex items-center gap-3 font-bold active:scale-90 transition-all"
               >
                 <ChevronLeft size={24} /> Back
               </button>
-              <div className="text-white/30 font-bold uppercase tracking-[0.3em] text-sm">5-Day Extended Forecast ({weather.location})</div>
-              <div className="w-24" />
+              <div className="text-white/30 font-bold uppercase tracking-[0.3em] text-sm">5-Day Forecast ({weather.location})</div>
+              <div />
             </div>
 
             <div 
               ref={scrollRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-4"
+              className="flex-1 overflow-y-auto pr-4 scrollbar-hide space-y-6"
               style={maskStyle}
             >
               {Object.entries(groupedForecast).map(([date, hours]) => (
                 <div key={date} className="bg-white/5 rounded-[2.5rem] border border-white/5 p-6 space-y-4">
-                  <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] px-2">{date}</h3>
+                  <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em] px-2">{date}</h3>
                   <div className="grid grid-cols-8 gap-2">
                     {hours.map((item, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-white/[0.02] transition-colors">
+                      <div key={idx} className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-white/[0.02] transition-colors">
                         <span className="text-[10px] font-bold text-white/30 uppercase">{item.time}</span>
                         <img 
                           src={`http://openweathermap.org/img/wn/${item.icon}@2x.png`} 
                           alt={item.condition}
-                          className="w-10 h-10"
+                          className="w-12 h-12"
                         />
-                        <span className="text-lg font-black">{item.temp}°</span>
-                        <span className="text-[7px] font-bold text-white/20 uppercase truncate w-full text-center leading-none">{item.condition}</span>
+                        <span className="text-2xl font-black">{item.temp}°</span>
+                        <span className="text-[12px] font-black text-white/60 uppercase truncate w-full text-center leading-none mt-1">{item.condition}</span>
                       </div>
                     ))}
                     {Array.from({ length: 8 - hours.length }).map((_, i) => (

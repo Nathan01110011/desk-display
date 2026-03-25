@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SmartDevice } from '@/types';
 
 export function useSmartHome(enabled: boolean = false) {
   const [devices, setDevices] = useState<SmartDevice[]>([]);
   const [loading, setLoading] = useState(true);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const fetchDevices = useCallback(async () => {
     if (!enabled) return;
@@ -31,33 +32,37 @@ export function useSmartHome(enabled: boolean = false) {
   }, [fetchDevices, enabled]);
 
   const updateDevice = async (id: string, params: Partial<SmartDevice>) => {
-    // Optimistic UI update
+    // 1. Instant Optimistic UI update
     setDevices(prev => prev.map(d => 
-      d.id === id ? { ...d, ...params, loading: true } : d
+      d.id === id ? { ...d, ...params } : d
     ));
 
-    try {
-      const res = await fetch('/api/home/toggle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          id, 
-          targetState: params.isOn,
-          brightness: params.brightness,
-          colorTemp: params.colorTemp,
-          color: params.color
-        })
-      });
+    // 2. Debounce the actual API call
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    debounceTimer.current = setTimeout(async () => {
+      setDevices(prev => prev.map(d => d.id === id ? { ...d, loading: true } : d));
       
-      const data = await res.json();
-      if (!data.success) throw new Error('Update failed');
-      
-      setDevices(prev => prev.map(d => 
-        d.id === id ? { ...d, loading: false } : d
-      ));
-    } catch (e) {
-      fetchDevices(); // Re-sync on error
-    }
+      try {
+        const res = await fetch('/api/home/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            id, 
+            targetState: params.isOn,
+            brightness: params.brightness,
+            colorTemp: params.colorTemp,
+            color: params.color
+          })
+        });
+        
+        await res.json();
+      } catch (e) {
+        fetchDevices(); // Re-sync on error
+      } finally {
+        setDevices(prev => prev.map(d => d.id === id ? { ...d, loading: false } : d));
+      }
+    }, 100); // 100ms debounce is perfect for sliders
   };
 
   return { devices, loading, updateDevice };

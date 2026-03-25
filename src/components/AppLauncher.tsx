@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
 import { PomodoroMode, AppConfig } from '@/types';
 
@@ -10,6 +10,7 @@ interface AppLauncherProps {
   onOpenWeather: () => void;
   onOpenFitbit: () => void;
   onOpenHome: () => void;
+  onOpenTimer: () => void;
   pomoActive: boolean;
   pomoTime: number;
   pomoMode: PomodoroMode;
@@ -24,6 +25,7 @@ export function AppLauncher({
   onOpenWeather,
   onOpenFitbit,
   onOpenHome,
+  onOpenTimer,
   pomoActive, 
   pomoTime,
   pomoMode,
@@ -31,13 +33,13 @@ export function AppLauncher({
   appConfig
 }: AppLauncherProps) {
   const isPomoFinished = pomoTime === 0 && !pomoActive;
-  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit', 'home'];
+  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer'];
 
   const apps = {
     pomodoro: (
       <button
         onPointerDown={onOpenPomo}
-        className={`w-full h-full rounded-[2.5rem] flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border ${
+        className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
           pomoActive || isPomoFinished
             ? 'bg-white/10 border-white/20' 
             : 'bg-white/5 border-white/5'
@@ -45,19 +47,19 @@ export function AppLauncher({
       >
         <div className="relative">
           {isPomoFinished ? (
-            <CheckCircle2 size={48} className="text-green-500 animate-bounce" />
+            <CheckCircle2 size={40} className="text-green-500 animate-bounce" />
           ) : (
             <>
-              <Timer size={48} className={pomoActive ? 'text-white animate-pulse' : 'text-white/80'} />
+              <Timer size={40} className={pomoActive ? 'text-white animate-pulse' : 'text-white/80'} />
               {pomoActive && (
-                <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-black" />
+                <div className="absolute -top-2 -right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-black" />
               )}
             </>
           )}
         </div>
-        <span className={`text-lg font-bold ${pomoActive || isPomoFinished ? 'text-white' : 'text-white/40'}`}>
+        <span className={`text-base font-bold ${pomoActive || isPomoFinished ? 'text-white' : 'text-white/40'}`}>
           {isPomoFinished 
-            ? (pomoMode === 'work' ? 'Work Done!' : 'Break Done!')
+            ? 'Done!'
             : pomoActive ? formatPomoTime(pomoTime) : 'Pomodoro'
           }
         </span>
@@ -66,74 +68,82 @@ export function AppLauncher({
     sports: (
       <button
         onPointerDown={onOpenSports}
-        className={`w-full h-full rounded-[2.5rem] flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border ${
+        className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
           isSportsLive 
             ? 'bg-red-500/10 border-red-500/20' 
             : 'bg-white/5 border-white/5'
         }`}
       >
         <div className="relative">
-          <Trophy size={48} className={isSportsLive ? 'text-red-500 animate-pulse' : 'text-white/80'} />
+          <Trophy size={40} className={isSportsLive ? 'text-red-500 animate-pulse' : 'text-white/80'} />
           {isSportsLive && (
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-black" />
+            <div className="absolute -top-2 -right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-black" />
           )}
         </div>
-        <span className={`text-lg font-bold ${isSportsLive ? 'text-white' : 'text-white/40'}`}>
-          {isSportsLive ? 'Live Score' : 'Sports'}
+        <span className={`text-base font-bold ${isSportsLive ? 'text-white' : 'text-white/40'}`}>
+          {isSportsLive ? 'Live' : 'Sports'}
         </span>
       </button>
     ),
     weather: (
       <button
         onPointerDown={onOpenWeather}
-        className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
       >
-        <CloudSun size={48} className="text-white/80" />
-        <span className="text-lg font-bold text-white/40">Weather</span>
+        <CloudSun size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Weather</span>
       </button>
     ),
     fitbit: (
       <button
         onPointerDown={onOpenFitbit}
-        className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
       >
-        <Activity size={48} className="text-white/80" />
-        <span className="text-lg font-bold text-white/40">Fitbit</span>
+        <Activity size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Fitbit</span>
       </button>
     ),
     home: (
       <button
         onPointerDown={onOpenHome}
-        className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
       >
-        <Home size={48} className="text-white/80" />
-        <span className="text-lg font-bold text-white/40">Home</span>
+        <Home size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Home</span>
+      </button>
+    ),
+    timer: (
+      <button
+        onPointerDown={onOpenTimer}
+        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+      >
+        <Hourglass size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Timer</span>
       </button>
     )
   };
 
+  const activeApps = order.filter(appId => appConfig[appId as keyof AppConfig]);
+  const totalIcons = activeApps.length + 1; // +1 for Settings
+
   return (
-    <div className="w-full max-w-5xl border-t border-white/5 pt-12">
-      <div className="flex gap-6 overflow-x-auto pb-8 px-4 scrollbar-hide snap-x">
-        {order.map(appId => {
-          if (!appConfig[appId as keyof AppConfig]) return null;
-          return (
-            <div key={appId} className="shrink-0 w-[180px] h-[180px] snap-center">
-              {(apps as any)[appId]}
-            </div>
-          );
-        })}
+    <div className="w-full max-w-5xl border-t border-white/5 pt-10 px-4">
+      <div 
+        className="grid gap-4 w-full" 
+        style={{ gridTemplateColumns: `repeat(${totalIcons}, minmax(0, 1fr))` }}
+      >
+        {activeApps.map(appId => (
+          <div key={appId}>{(apps as any)[appId]}</div>
+        ))}
 
         {/* Settings (Always Visible) */}
-        <div className="shrink-0 w-[180px] h-[180px] snap-center">
-          <button
-            onPointerDown={onOpenSettings}
-            className="w-full h-full rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
-          >
-            <Settings size={48} className="text-white/80" />
-            <span className="text-lg font-bold text-white/40">Settings</span>
-          </button>
-        </div>
+        <button
+          onPointerDown={onOpenSettings}
+          className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+        >
+          <Settings size={40} className="text-white/80" />
+          <span className="text-base font-bold text-white/40">Settings</span>
+        </button>
       </div>
     </div>
   );
