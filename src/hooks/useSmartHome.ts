@@ -26,42 +26,39 @@ export function useSmartHome(enabled: boolean = false) {
       return;
     }
     fetchDevices();
-    const timer = setInterval(fetchDevices, 1000 * 30); // Refresh every 30s
+    const timer = setInterval(fetchDevices, 1000 * 30);
     return () => clearInterval(timer);
   }, [fetchDevices, enabled]);
 
-  const toggleDevice = async (id: string, currentState: boolean) => {
+  const updateDevice = async (id: string, params: Partial<SmartDevice>) => {
     // Optimistic UI update
     setDevices(prev => prev.map(d => 
-      d.id === id ? { ...d, loading: true } : d
+      d.id === id ? { ...d, ...params, loading: true } : d
     ));
 
     try {
       const res = await fetch('/api/home/toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, targetState: !currentState })
+        body: JSON.stringify({ 
+          id, 
+          targetState: params.isOn,
+          brightness: params.brightness,
+          colorTemp: params.colorTemp,
+          color: params.color
+        })
       });
       
       const data = await res.json();
+      if (!data.success) throw new Error('Update failed');
       
-      if (data.success) {
-        setDevices(prev => prev.map(d => 
-          d.id === id ? { ...d, isOn: data.isOn, loading: false } : d
-        ));
-      } else {
-        // Revert on failure
-        setDevices(prev => prev.map(d => 
-          d.id === id ? { ...d, loading: false } : d
-        ));
-      }
-    } catch (e) {
-      // Revert on error
       setDevices(prev => prev.map(d => 
         d.id === id ? { ...d, loading: false } : d
       ));
+    } catch (e) {
+      fetchDevices(); // Re-sync on error
     }
   };
 
-  return { devices, loading, toggleDevice };
+  return { devices, loading, updateDevice };
 }

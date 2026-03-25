@@ -50,6 +50,7 @@ export function useTime(mainOffset?: number) {
   return {
     time: formatTime(mainTime),
     date: formatDate(mainTime),
+    rawTime: mainTime,
     clocks: clocks.map(c => ({
       ...c,
       displayTime: formatTime(getTimeForOffset(c.offset))

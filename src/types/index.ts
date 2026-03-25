@@ -33,10 +33,14 @@ export interface SportMatch {
 
 export interface SmartDevice {
   id: string;
-  type: 'tapo';
+  type: 'wiz' | 'tapo';
   name: string;
   isOn: boolean;
   loading?: boolean;
+  isOffline?: boolean;
+  brightness?: number; // 10-100
+  colorTemp?: number; // 2200-6500
+  color?: { r: number; g: number; b: number };
 }
 
 export interface AppConfig {
@@ -67,6 +71,7 @@ export interface WeatherData {
   timezone: number; // Offset in seconds
   forecast: {
     time: string;
+    date: string;
     temp: number;
     condition: string;
     icon: string;

@@ -11,6 +11,7 @@ interface WeatherData {
   timezone: number;
   forecast: {
     time: string;
+    date: string;
     temp: number;
     condition: string;
     icon: string;
@@ -47,10 +48,10 @@ export async function GET(request: Request) {
     location: 'London (Mock)',
     timezone: 0,
     forecast: [
-      { time: '15:00', temp: 19, condition: 'Sunny', icon: '01d' },
-      { time: '18:00', temp: 17, condition: 'Cloudy', icon: '03d' },
-      { time: '21:00', temp: 14, condition: 'Rain', icon: '10d' },
-      { time: '00:00', temp: 12, condition: 'Clear', icon: '01n' },
+      { time: '15:00', date: 'Today', temp: 19, condition: 'Sunny', icon: '01d' },
+      { time: '18:00', date: 'Today', temp: 17, condition: 'Cloudy', icon: '03d' },
+      { time: '21:00', date: 'Today', temp: 14, condition: 'Rain', icon: '10d' },
+      { time: '00:00', date: 'Tomorrow', temp: 12, condition: 'Clear', icon: '01n' },
     ]
   };
 
@@ -79,14 +80,20 @@ export async function GET(request: Request) {
     }
 
     const current = wData.list[0];
-    logger.debug(`Weather: Mapping ${wData.list.length} intervals starting from index 0`);
-
-    const forecast = wData.list.slice(0, 4).map((item: any) => ({
-      time: new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-      temp: Math.round(item.main.temp),
-      condition: item.weather[0].main,
-      icon: item.weather[0].icon
-    }));
+    
+    // Process full 5-day forecast (up to 40 intervals)
+    const forecast = wData.list.map((item: any) => {
+      const date = new Date(item.dt * 1000);
+      const isToday = date.toDateString() === new Date().toDateString();
+      
+      return {
+        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+        date: isToday ? 'Today' : date.toLocaleDateString([], { weekday: 'short' }).toUpperCase(),
+        temp: Math.round(item.main.temp),
+        condition: item.weather[0].main,
+        icon: item.weather[0].icon
+      };
+    });
 
     return NextResponse.json({
       temp: Math.round(current.main.temp),

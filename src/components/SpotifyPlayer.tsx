@@ -26,7 +26,7 @@ export function SpotifyPlayer({ spotify, onAction }: SpotifyPlayerProps) {
 
   return (
     <div className="w-full flex items-center gap-12 max-w-4xl">
-      <div className="relative w-[240px] h-[240px] shrink-0 shadow-[0_30px_100px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden border border-white/5">
+      <div className="relative w-[240px] h-[240px] shrink-0 shadow-2xl rounded-3xl overflow-hidden border border-white/10">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={spotify.albumImageUrl} alt="Album Art" className="object-cover w-full h-full" />
       </div>
