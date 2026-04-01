@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, BellOff } from 'lucide-react';
+import { X, BellOff, Timer, Hourglass } from 'lucide-react';
 import { useSpotify } from '@/hooks/useSpotify';
 import { useCalendar } from '@/hooks/useCalendar';
 import { usePomodoro } from '@/hooks/usePomodoro';
@@ -22,6 +22,7 @@ import { WeatherView } from '@/components/WeatherView';
 import { FitbitView } from '@/components/FitbitView';
 import { SmartHomeView } from '@/components/SmartHomeView';
 import { TimerView } from '@/components/TimerView';
+import { formatPomoTime } from '@/lib/format';
 import { ViewState, AppConfig } from '@/types';
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -164,13 +165,13 @@ export default function Dashboard() {
           {!isFullscreenView && (
             <motion.div 
               key="sidebar"
-              initial={{ x: -100, opacity: 0 }}
-              animate={{ width: isFullscreenView ? "0%" : "33.333333%", opacity: 1, x: 0 }}
-              exit={{ x: -100, opacity: 0 }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} 
+              initial={{ x: -100, opacity: 0, width: 0 }}
+              animate={{ width: "33.333333%", opacity: 1, x: 0 }}
+              exit={{ x: -100, opacity: 0, width: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} 
               className="border-r border-white/10 flex flex-col bg-black/40 backdrop-blur-3xl overflow-hidden shrink-0 relative"
             >
-              <div className="p-10 w-[33.33vw] h-full flex flex-col">
+              <div className="p-8 w-[33.33vw] h-full flex flex-col">
                 <div className="mb-10 flex items-start justify-between w-full">
                   <div className="flex-1">
                     <h1 className="text-7xl font-black tracking-tighter leading-none">{time}</h1>
@@ -194,7 +195,7 @@ export default function Dashboard() {
         </AnimatePresence>
 
         {/* Main Area (Flex-1) */}
-        <div className="flex-1 p-12 flex flex-col h-full overflow-hidden relative">
+        <motion.div layout className="flex-1 p-8 flex flex-col h-full overflow-hidden relative">
           <AnimatePresence>
             {activeView !== 'dashboard' && (
               <motion.button
@@ -219,8 +220,68 @@ export default function Dashboard() {
               <motion.div
                 key="dashboard-view"
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                className="w-full h-full flex flex-col justify-between items-center py-8"
+                className="w-full h-full flex flex-col justify-between items-center py-8 relative"
               >
+                {/* Active Status Indicators */}
+                <div className="absolute top-0 right-0 flex items-center gap-4">
+                  <AnimatePresence>
+                    {(pomoActive || (pomoTime === 0 && !pomoActive)) && (
+                      <motion.div
+                        key="pomo-status"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-white/60 active:scale-95 transition-all"
+                      >
+                        <div 
+                          onPointerDown={() => setActiveView('pomodoro')}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Timer size={16} className={pomoActive ? "text-red-400 animate-pulse" : "text-green-500"} />
+                          <span className="text-sm font-black tabular-nums">
+                            {pomoActive ? formatPomoTime(pomoTime) : "DONE"}
+                          </span>
+                        </div>
+                        {!pomoActive && (
+                          <button 
+                            onPointerDown={(e) => { e.stopPropagation(); resetPomo(); }}
+                            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </motion.div>
+                    )}
+                    {(timerRunning || (timerSeconds === 0 && !timerRunning && timerUp)) && (
+                      <motion.div
+                        key="timer-status"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-white/60 active:scale-95 transition-all"
+                      >
+                        <div 
+                          onPointerDown={() => setActiveView('timer')}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Hourglass size={16} className={timerRunning ? "text-blue-400 animate-pulse" : "text-green-500"} />
+                          <span className="text-sm font-black tabular-nums">
+                            {timerRunning ? formatPomoTime(timerSeconds) : "DONE"}
+                          </span>
+                        </div>
+                        {!timerRunning && (
+                          <button 
+                            onPointerDown={(e) => { e.stopPropagation(); dismissAlert(); }}
+                            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 <div className="w-full flex-1 flex items-center justify-center">
                   <SpotifyPlayer spotify={spotify} onAction={handleAction} />
                 </div>
@@ -232,9 +293,15 @@ export default function Dashboard() {
                   onOpenFitbit={() => setActiveView('fitbit')}
                   onOpenHome={() => setActiveView('home')}
                   onOpenTimer={() => setActiveView('timer')}
+                  onResetPomo={resetPomo}
+                  onResetTimer={dismissAlert}
                   pomoActive={pomoActive} 
                   pomoTime={pomoTime} 
+                  pomoFinished={pomoTime === 0 && !pomoActive}
                   pomoMode={pomoMode}
+                  timerActive={timerRunning}
+                  timerTime={timerSeconds}
+                  timerFinished={timerUp}
                   isSportsLive={isSportsLive}
                   appConfig={appConfig}
                 />
@@ -265,8 +332,9 @@ export default function Dashboard() {
                 {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'timer' && (
                   <TimerView 
-                    timeLeft={timerSeconds} isActive={timerRunning}
+                    timeLeft={timerSeconds} isActive={timerRunning} isFinished={timerUp}
                     onStart={startTimer} onPause={pauseTimer} onResume={resumeTimer} onReset={resetTimer}
+                    onDismiss={dismissAlert}
                     onClose={() => setActiveView('dashboard')}
                   />
                 )}
@@ -281,7 +349,7 @@ export default function Dashboard() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
     </main>
   );

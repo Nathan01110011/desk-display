@@ -1,25 +1,29 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Timer, Play, Pause, RotateCcw, Plus, Minus } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, Plus, Minus, X, CheckCircle2 } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
 
 interface TimerViewProps {
   timeLeft: number;
   isActive: boolean;
+  isFinished: boolean;
   onStart: (seconds: number) => void;
   onPause: () => void;
   onResume: () => void;
   onReset: () => void;
+  onDismiss: () => void;
   onClose: () => void;
 }
 
 export function TimerView({ 
   timeLeft, 
-  isActive, 
+  isActive,
+  isFinished,
   onStart, 
   onPause, 
   onResume, 
   onReset, 
+  onDismiss,
   onClose 
 }: TimerViewProps) {
   const [customMinutes, setCustomMinutes] = useState(5);
@@ -35,33 +39,55 @@ export function TimerView({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="w-full max-w-5xl flex flex-col items-center justify-center gap-12 py-8"
+      className="w-full max-w-5xl flex flex-col items-center justify-center gap-12 py-8 relative"
     >
       <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm mb-4">
         <Timer size={20} /> Timer
       </div>
 
-      {timeLeft > 0 || isActive ? (
+      {(timeLeft > 0 || isActive || isFinished) ? (
         <div className="flex flex-col items-center gap-12">
-          <h1 className="text-[12rem] font-black tracking-tighter leading-none tabular-nums">
-            {formatPomoTime(timeLeft)}
-          </h1>
+          {isFinished ? (
+            <motion.div 
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+              className="text-red-500 flex flex-col items-center gap-4"
+            >
+              <CheckCircle2 size={120} />
+              <h1 className="text-[10rem] font-black tracking-tighter leading-none italic uppercase">Done!</h1>
+            </motion.div>
+          ) : (
+            <h1 className="text-[12rem] font-black tracking-tighter leading-none tabular-nums">
+              {formatPomoTime(timeLeft)}
+            </h1>
+          )}
           
           <div className="flex items-center gap-8">
-            <button 
-              onPointerDown={isActive ? onPause : onResume}
-              className={`p-10 rounded-full shadow-2xl active:scale-90 transition-all ${
-                isActive ? 'bg-white/10 text-white' : 'bg-white text-black'
-              }`}
-            >
-              {isActive ? <Pause size={64} fill="currentColor" /> : <Play size={64} fill="currentColor" className="ml-2" />}
-            </button>
-            <button 
-              onPointerDown={onReset}
-              className="p-8 rounded-full bg-white/5 text-white/40 hover:bg-white/10 active:scale-90 transition-all border border-white/5"
-            >
-              <RotateCcw size={48} />
-            </button>
+            {isFinished ? (
+              <button 
+                onPointerDown={onDismiss}
+                className="px-16 py-8 rounded-[3rem] bg-white text-black text-4xl font-black uppercase tracking-widest shadow-2xl active:scale-90 transition-transform flex items-center gap-4"
+              >
+                <X size={48} strokeWidth={3} /> Clear
+              </button>
+            ) : (
+              <>
+                <button 
+                  onPointerDown={isActive ? onPause : onResume}
+                  className={`p-10 rounded-full shadow-2xl active:scale-90 transition-all ${
+                    isActive ? 'bg-white/10 text-white' : 'bg-white text-black'
+                  }`}
+                >
+                  {isActive ? <Pause size={64} fill="currentColor" /> : <Play size={64} fill="currentColor" className="ml-2" />}
+                </button>
+                <button 
+                  onPointerDown={onReset}
+                  className="p-8 rounded-full bg-white/5 text-white/40 hover:bg-white/10 active:scale-90 transition-all border border-white/5"
+                >
+                  <RotateCcw size={48} />
+                </button>
+              </>
+            )}
           </div>
         </div>
       ) : (

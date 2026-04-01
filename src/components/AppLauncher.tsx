@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
 import { PomodoroMode, AppConfig } from '@/types';
 
@@ -11,9 +11,15 @@ interface AppLauncherProps {
   onOpenFitbit: () => void;
   onOpenHome: () => void;
   onOpenTimer: () => void;
+  onResetPomo: () => void;
+  onResetTimer: () => void;
   pomoActive: boolean;
   pomoTime: number;
+  pomoFinished: boolean;
   pomoMode: PomodoroMode;
+  timerActive: boolean;
+  timerTime: number;
+  timerFinished: boolean;
   isSportsLive: boolean;
   appConfig: AppConfig;
 }
@@ -26,44 +32,56 @@ export function AppLauncher({
   onOpenFitbit,
   onOpenHome,
   onOpenTimer,
+  onResetPomo,
+  onResetTimer,
   pomoActive, 
   pomoTime,
+  pomoFinished,
   pomoMode,
+  timerActive,
+  timerTime,
+  timerFinished,
   isSportsLive,
   appConfig
 }: AppLauncherProps) {
-  const isPomoFinished = pomoTime === 0 && !pomoActive;
   const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer'];
 
   const apps = {
     pomodoro: (
-      <button
-        onPointerDown={onOpenPomo}
-        className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
-          pomoActive || isPomoFinished
-            ? 'bg-white/10 border-white/20' 
-            : 'bg-white/5 border-white/5'
-        }`}
-      >
-        <div className="relative">
-          {isPomoFinished ? (
-            <CheckCircle2 size={40} className="text-green-500 animate-bounce" />
-          ) : (
-            <>
-              <Timer size={40} className={pomoActive ? 'text-white animate-pulse' : 'text-white/80'} />
-              {pomoActive && (
-                <div className="absolute -top-2 -right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-black" />
-              )}
-            </>
-          )}
-        </div>
-        <span className={`text-base font-bold ${pomoActive || isPomoFinished ? 'text-white' : 'text-white/40'}`}>
-          {isPomoFinished 
-            ? 'Done!'
-            : pomoActive ? formatPomoTime(pomoTime) : 'Pomodoro'
-          }
-        </span>
-      </button>
+      <div className="relative group">
+        <button
+          onPointerDown={onOpenPomo}
+          className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
+            pomoActive || pomoFinished
+              ? 'bg-white/10 border-white/20' 
+              : 'bg-white/5 border-white/5'
+          }`}
+        >
+          <div className="relative">
+            {pomoFinished ? (
+              <CheckCircle2 size={40} className="text-green-500 animate-bounce" />
+            ) : (
+              <>
+                <Timer size={40} className={pomoActive ? 'text-white' : 'text-white/80'} />
+                {pomoActive && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-black animate-pulse" />
+                )}
+              </>
+            )}
+          </div>
+          <span className={`text-base font-bold ${pomoActive || pomoFinished ? 'text-white' : 'text-white/40'}`}>
+            {pomoFinished ? 'Done!' : 'Pomodoro'}
+          </span>
+        </button>
+        {pomoFinished && (
+          <button 
+            onPointerDown={(e) => { e.stopPropagation(); onResetPomo(); }}
+            className="absolute -top-2 -right-2 p-3 bg-white text-black rounded-full shadow-xl active:scale-90 transition-all z-20"
+          >
+            <X size={20} strokeWidth={3} />
+          </button>
+        )}
+      </div>
     ),
     sports: (
       <button
@@ -113,13 +131,40 @@ export function AppLauncher({
       </button>
     ),
     timer: (
-      <button
-        onPointerDown={onOpenTimer}
-        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
-      >
-        <Hourglass size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Timer</span>
-      </button>
+      <div className="relative group">
+        <button
+          onPointerDown={onOpenTimer}
+          className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
+            timerActive || timerFinished
+              ? 'bg-white/10 border-white/20' 
+              : 'bg-white/5 border-white/5'
+          }`}
+        >
+          <div className="relative">
+            {timerFinished ? (
+              <CheckCircle2 size={40} className="text-green-500 animate-bounce" />
+            ) : (
+              <>
+                <Hourglass size={40} className={timerActive ? 'text-white' : 'text-white/80'} />
+                {timerActive && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-black animate-pulse" />
+                )}
+              </>
+            )}
+          </div>
+          <span className={`text-base font-bold ${timerActive || timerFinished ? 'text-white' : 'text-white/40'}`}>
+            {timerFinished ? 'Done!' : 'Timer'}
+          </span>
+        </button>
+        {timerFinished && (
+          <button 
+            onPointerDown={(e) => { e.stopPropagation(); onResetTimer(); }}
+            className="absolute -top-2 -right-2 p-3 bg-white text-black rounded-full shadow-xl active:scale-90 transition-all z-20"
+          >
+            <X size={20} strokeWidth={3} />
+          </button>
+        )}
+      </div>
     )
   };
 

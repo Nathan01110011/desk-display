@@ -101,41 +101,41 @@ export function SettingsView({
     <motion.div
       key="settings-view"
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-      className="w-full max-w-6xl mx-auto flex flex-col space-y-8 py-12 h-full overflow-y-auto pr-4 scrollbar-hide"
+      className="w-full max-w-6xl mx-auto flex flex-col space-y-6 py-8 h-full overflow-y-auto pr-4 scrollbar-hide"
     >
-      <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
-        <Settings size={20} /> Settings
+      <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs">
+        <Settings size={18} /> Settings
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
-        <div className="space-y-8">
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-6">
           {appConfig.pomodoro && (
-            <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
-              <h3 className="text-xl font-bold text-white/80">Pomodoro Timer</h3>
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Work</p>
+            <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+              <h3 className="text-lg font-bold text-white/80">Pomodoro Timer</h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Work Duration</p>
                   <div className="flex items-center gap-4">
-                    <button onPointerDown={() => onUpdateDurations(Math.max(1, workDuration - 1), breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={24} /></button>
-                    <span className="text-4xl font-black">{workDuration}</span>
-                    <button onPointerDown={() => onUpdateDurations(workDuration + 1, breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Plus size={24} /></button>
+                    <button onPointerDown={() => onUpdateDurations(Math.max(1, workDuration - 1), breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={20} /></button>
+                    <span className="text-3xl font-black min-w-[3rem] text-center">{workDuration}</span>
+                    <button onPointerDown={() => onUpdateDurations(workDuration + 1, breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Plus size={20} /></button>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Break</p>
+                <div className="flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Break Duration</p>
                   <div className="flex items-center gap-4">
-                    <button onPointerDown={() => onUpdateDurations(workDuration, Math.max(1, breakDuration - 1))} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={24} /></button>
-                    <span className="text-4xl font-black">{breakDuration}</span>
-                    <button onPointerDown={() => onUpdateDurations(workDuration, breakDuration + 1)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Plus size={24} /></button>
+                    <button onPointerDown={() => onUpdateDurations(workDuration, Math.max(1, breakDuration - 1))} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={20} /></button>
+                    <span className="text-3xl font-black min-w-[3rem] text-center">{breakDuration}</span>
+                    <button onPointerDown={() => onUpdateDurations(workDuration, breakDuration + 1)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Plus size={20} /></button>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white/80 flex items-center gap-3"><Globe size={24} /> World Clocks</h3>
+              <h3 className="text-lg font-bold text-white/80 flex items-center gap-3"><Globe size={20} /> World Clocks</h3>
               <span className="text-xs font-bold text-white/20 uppercase">{worldClocks.length}/5</span>
             </div>
             
@@ -168,48 +168,48 @@ export function SettingsView({
             {worldClocks.length < 5 && (
               <button 
                 onPointerDown={() => { setKbMode('clock'); setKbValue(''); setShowKeyboard(true); }}
-                className="w-full py-4 rounded-2xl border border-dashed border-white/10 text-white/30 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
+                className="w-full py-3 rounded-xl border border-dashed border-white/10 text-white/30 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
               >
                 + Add Clock
               </button>
             )}
           </div>
 
-          <div className="bg-white/5 p-8 rounded-3xl border border-white/5 flex items-center justify-between">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
             <div className="space-y-1">
-              <h3 className="text-xl font-bold text-white/80">System</h3>
-              <p className="text-white/30 text-sm">Return to Pi Desktop</p>
+              <h3 className="text-lg font-bold text-white/80">System</h3>
+              <p className="text-white/30 text-xs">Return to Pi Desktop</p>
             </div>
-            <button onPointerDown={handleExitApp} className="px-6 py-4 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold active:scale-95 transition-all">Exit Kiosk</button>
+            <button onPointerDown={handleExitApp} className="px-5 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold text-sm active:scale-95 transition-all">Exit Kiosk</button>
           </div>
         </div>
 
-        <div className="space-y-8">
-          <div className="bg-white/5 p-8 rounded-3xl border border-white/5 space-y-6">
-            <h3 className="text-xl font-bold text-white/80">Dashboard Apps</h3>
+        <div className="space-y-6">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <h3 className="text-lg font-bold text-white/80">Dashboard Apps</h3>
             
             <Reorder.Group 
               axis="y" 
               values={appOrder} 
               onReorder={(newOrder) => onUpdateAppConfig({ ...appConfig, appOrder: newOrder })}
-              className="space-y-4"
+              className="space-y-3"
             >
               {appOrder.map((app) => (
-                <Reorder.Item key={app} value={app} className="flex items-center gap-4 group">
-                  <div className="cursor-grab active:cursor-grabbing p-4 text-white/10 group-active:text-blue-400 transition-colors">
-                    <GripVertical size={28} />
+                <Reorder.Item key={app} value={app} className="flex items-center gap-3 group">
+                  <div className="cursor-grab active:cursor-grabbing p-3 text-white/10 group-active:text-blue-400 transition-colors">
+                    <GripVertical size={24} />
                   </div>
                   <button
                     onPointerDown={() => toggleApp(app as keyof AppConfig)}
-                    className="flex-1 flex items-center justify-between p-5 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
+                    className="flex-1 flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
                   >
-                    <span className="text-xl font-bold capitalize text-white/70">{app === 'home' ? 'Smart Home' : app}</span>
+                    <span className="text-lg font-bold capitalize text-white/70">{app === 'home' ? 'Smart Home' : app}</span>
                     {appConfig[app as keyof AppConfig] ? (
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black">
-                        <Check size={20} strokeWidth={4} />
+                      <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-black">
+                        <Check size={18} strokeWidth={4} />
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-lg border-2 border-white/20" />
+                      <div className="w-7 h-7 rounded-lg border-2 border-white/20" />
                     )}
                   </button>
                 </Reorder.Item>
@@ -217,37 +217,37 @@ export function SettingsView({
             </Reorder.Group>
             
             {appConfig.weather && (
-              <div className="pt-4 border-t border-white/5 space-y-6">
-                <div className="space-y-3">
+              <div className="pt-4 border-t border-white/5 space-y-4">
+                <div className="space-y-2">
                   <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Weather Location</p>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <div 
                       onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 text-white text-xl min-h-[3.5rem] flex items-center overflow-hidden truncate"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-lg min-h-[3rem] flex items-center overflow-hidden truncate"
                     >
-                      {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-lg">Auto-locate</span>}
+                      {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-base">Auto-locate</span>}
                     </div>
                     <button 
                       onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
-                      className="p-4 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
+                      className="p-3 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
                     >
-                      <Keyboard size={24} />
+                      <Keyboard size={20} />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Temperature Unit</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <button 
                       onPointerDown={() => handleUnitToggle('C')}
-                      className={`p-4 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold ${currentUnit === 'C' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'C' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
                     >
                       Celsius (°C)
                     </button>
                     <button 
                       onPointerDown={() => handleUnitToggle('F')}
-                      className={`p-4 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold ${currentUnit === 'F' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'F' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
                     >
                       Fahrenheit (°F)
                     </button>

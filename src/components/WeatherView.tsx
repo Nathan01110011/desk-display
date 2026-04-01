@@ -60,61 +60,64 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
   return (
     <motion.div
       key="weather-view"
+      layout
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="w-full h-full flex flex-col items-center justify-center py-8 relative"
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full h-full flex flex-col items-center justify-center py-4 relative"
     >
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         {!isExtended ? (
           <motion.div 
             key="at-a-glance"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="w-full flex flex-col items-center"
           >
-            <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm mb-8">
-              <CloudSun size={20} /> {weather.location}
+            <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs mb-4">
+              <CloudSun size={18} /> {weather.location}
             </div>
 
-            <div className="flex items-center gap-16 mb-12">
+            <div className="flex items-center gap-10 mb-8">
               <img 
                 src={`http://openweathermap.org/img/wn/${weather.icon}@4x.png`} 
                 alt={weather.condition}
-                className="w-48 h-48 drop-shadow-2xl"
+                className="w-36 h-36 drop-shadow-2xl"
               />
               <div className="flex flex-col">
-                <div className="text-[10rem] font-black tracking-tighter leading-none text-white flex">
-                  {weather.temp}<span className="text-[6rem] mt-4 text-white/20">°</span>
+                <div className="text-[8rem] font-black tracking-tighter leading-none text-white flex">
+                  {weather.temp}<span className="text-[5rem] mt-2 text-white/20">°</span>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-4xl font-bold text-white/40 uppercase tracking-widest">{weather.condition}</p>
-                  <div className="flex items-center gap-6 pt-2 border-t border-white/5">
+                <div className="space-y-1">
+                  <p className="text-3xl font-bold text-white/40 uppercase tracking-widest">{weather.condition}</p>
+                  <div className="flex items-center gap-5 pt-2 border-t border-white/5">
                     <div className="flex items-center gap-2 text-white/30">
-                      <Sunrise size={20} className="text-orange-400/60" />
-                      <span className="text-lg font-bold tabular-nums">{weather.sunrise}</span>
+                      <Sunrise size={18} className="text-orange-400/60" />
+                      <span className="text-base font-bold tabular-nums">{weather.sunrise}</span>
                     </div>
                     <div className="flex items-center gap-2 text-white/30">
-                      <Sunset size={20} className="text-blue-400/60" />
-                      <span className="text-lg font-bold tabular-nums">{weather.sunset}</span>
+                      <Sunset size={18} className="text-blue-400/60" />
+                      <span className="text-base font-bold tabular-nums">{weather.sunset}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="w-full max-w-5xl grid grid-cols-4 gap-6 pt-8 border-t border-white/5">
+            <div className="w-full max-w-4xl grid grid-cols-4 gap-4 pt-6 border-t border-white/5">
               {atAGlance.map((item, i) => (
-                <div key={i} className="bg-white/5 rounded-3xl p-6 flex flex-col items-center gap-3 border border-white/5">
-                  <p className="text-lg font-bold text-white/30 uppercase tracking-widest">{item.time}</p>
+                <div key={i} className="bg-white/5 rounded-2xl p-4 flex flex-col items-center gap-2 border border-white/5">
+                  <p className="text-base font-bold text-white/30 uppercase tracking-widest">{item.time}</p>
                   <img 
                     src={`http://openweathermap.org/img/wn/${item.icon}@2x.png`} 
                     alt={item.condition}
-                    className="w-16 h-16"
+                    className="w-12 h-12"
                   />
-                  <div className="text-3xl font-black">{item.temp}°</div>
-                  <p className="text-sm font-bold text-white/40 uppercase tracking-widest truncate w-full text-center">
+                  <div className="text-2xl font-black">{item.temp}°</div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest truncate w-full text-center">
                     {item.condition}
                   </p>
                 </div>
@@ -123,9 +126,9 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
 
             <button 
               onPointerDown={() => onToggleExtended(true)}
-              className="mt-12 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white/40 font-bold uppercase tracking-widest flex items-center gap-3 hover:bg-white/10 active:scale-95 transition-all"
+              className="mt-8 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/40 text-sm font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-white/10 active:scale-95 transition-all"
             >
-              <List size={20} /> View 5-Day Forecast
+              <List size={18} /> View 5-Day Forecast
             </button>
           </motion.div>
         ) : (
@@ -134,6 +137,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="w-full h-full flex flex-col p-4"
           >
             <div className="flex items-center justify-between mb-6 pr-24">
@@ -154,7 +158,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
               style={maskStyle}
             >
               {Object.entries(groupedForecast).map(([date, hours]) => (
-                <div key={date} className="bg-white/5 rounded-[2.5rem] border border-white/5 p-6 space-y-4">
+                <motion.div layout key={date} className="bg-white/5 rounded-[2.5rem] border border-white/5 p-6 space-y-4">
                   <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em] px-2">{date}</h3>
                   <div className="grid grid-cols-8 gap-2">
                     {hours.map((item, idx) => (
@@ -173,7 +177,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
                       <div key={`empty-${i}`} className="w-full" />
                     ))}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
