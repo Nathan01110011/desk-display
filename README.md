@@ -12,6 +12,7 @@ A minimalist, high-performance smart display dashboard designed for Raspberry Pi
 - **🌤️ Weather App**: Current conditions and 12-hour forecast with auto-location (IP-based) and manual city overrides.
 - **🌍 World Clocks**: Track up to 5 additional timezones directly on the dashboard.
 - **🏠 Smart Home**: Control your smart devices (starting with TP-Link Tapo) with large, tactile toggle tiles. Supports multiple devices and vendors.
+- **📝 TODO Tracker**: Embedded interactive map and checklist via an external React app, perfectly integrated via a Same-Origin proxy to bypass cross-origin restrictions.
 - **⚙️ Settings Panel**: Fully configurable via an on-screen keyboard. Toggle apps, adjust timers, and exit to the OS.
 
 ---
@@ -56,11 +57,21 @@ SMART_DEVICES=tapo|email:password:IP|Desk Lamp
 SPORTS_LEAGUES=soccer:eng.1,soccer:sco.1,rugby:270557,football:nfl
 # Comma-separated names/aliases of teams to track
 SPORTS_TEAMS=Manchester United,Rangers,Ulster,Giants
+
+# --- TODO Tracker ---
+# URL to your deployed TODO map application
+TODO_APP_URL=https://austin-tracker.vercel.app
 ```
 
 ---
 
 ## 🛠️ App Configuration Guide
+
+### 📝 TODO Tracker
+The TODO app is an embedded external React application that provides interactive maps and lists. 
+- **Source Code**: Designed to work with the `todo-map-app` repository.
+- **Integration**: The dashboard uses a Next.js rewrite proxy (`/todo-proxy`) to tunnel the external app. This makes it "Same-Origin," which allows the dashboard's custom on-screen keyboard to inject text directly into the iframe's DOM without triggering cross-origin security blocks.
+- **Setup**: Deploy your TODO app to Vercel (or another host) and set the `TODO_APP_URL` in your `.env.local` file.
 
 ### 🎾 Sports (ESPN API)
 The sports app uses the unofficial ESPN scoreboard API. 

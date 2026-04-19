@@ -24,6 +24,12 @@ import { SmartHomeView } from '@/components/SmartHomeView';
 import { TimerView } from '@/components/TimerView';
 import { formatPomoTime } from '@/lib/format';
 import { ViewState, AppConfig } from '@/types';
+import dynamic from 'next/dynamic';
+
+const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full opacity-20"><Timer size={48} className="animate-spin" /></div>
+});
 
 const DEFAULT_CONFIG: AppConfig = {
   pomodoro: true,
@@ -32,7 +38,8 @@ const DEFAULT_CONFIG: AppConfig = {
   fitbit: false,
   home: true,
   timer: true,
-  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer']
+  todo: true,
+  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo']
 };
 
 export default function Dashboard() {
@@ -72,6 +79,7 @@ export default function Dashboard() {
             if (!mergedConfig.appOrder.includes('fitbit')) mergedConfig.appOrder.push('fitbit');
             if (!mergedConfig.appOrder.includes('home')) mergedConfig.appOrder.push('home');
             if (!mergedConfig.appOrder.includes('timer')) mergedConfig.appOrder.push('timer');
+            if (!mergedConfig.appOrder.includes('todo')) mergedConfig.appOrder.push('todo');
           }
           setAppConfig(mergedConfig);
         }
@@ -111,7 +119,7 @@ export default function Dashboard() {
 
   if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
-  const isFullscreenView = activeView === 'weather' && weatherDetail;
+  const isFullscreenView = (activeView === 'weather' && weatherDetail) || activeView === 'todo';
 
   return (
     <main className="fixed inset-0 bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased">
@@ -166,7 +174,7 @@ export default function Dashboard() {
             <motion.div 
               key="sidebar"
               initial={{ x: -100, opacity: 0, width: 0 }}
-              animate={{ width: "33.333333%", opacity: 1, x: 0 }}
+              animate={{ width: isFullscreenView ? "0%" : "33.333333%", opacity: 1, x: 0 }}
               exit={{ x: -100, opacity: 0, width: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} 
               className="border-r border-white/10 flex flex-col bg-black/40 backdrop-blur-3xl overflow-hidden shrink-0 relative"
@@ -208,9 +216,9 @@ export default function Dashboard() {
                   setWeatherDetail(false);
                   refreshWeather();
                 }}
-                className="absolute top-6 right-6 z-[100] p-6 text-white/20 hover:text-white/60 active:scale-90 transition-all rounded-full bg-white/5"
+                className="absolute top-6 right-6 z-[100] p-6 text-white/50 hover:text-white active:scale-90 transition-all rounded-full bg-black/20 backdrop-blur-md border border-white/10 shadow-2xl"
               >
-                <X size={48} />
+                <X size={48} strokeWidth={3} />
               </motion.button>
             )}
           </AnimatePresence>
@@ -293,6 +301,7 @@ export default function Dashboard() {
                   onOpenFitbit={() => setActiveView('fitbit')}
                   onOpenHome={() => setActiveView('home')}
                   onOpenTimer={() => setActiveView('timer')}
+                  onOpenTodo={() => setActiveView('todo')}
                   onResetPomo={resetPomo}
                   onResetTimer={dismissAlert}
                   pomoActive={pomoActive} 
@@ -345,6 +354,9 @@ export default function Dashboard() {
                     appConfig={appConfig} onUpdateAppConfig={updateAppConfig}
                     worldClocks={clocks} onUpdateClocks={updateClocks}
                   />
+                )}
+                {activeView === 'todo' && (
+                  <TodoView onClose={() => setActiveView('dashboard')} />
                 )}
               </motion.div>
             )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
 import { PomodoroMode, AppConfig } from '@/types';
 
@@ -11,6 +11,7 @@ interface AppLauncherProps {
   onOpenFitbit: () => void;
   onOpenHome: () => void;
   onOpenTimer: () => void;
+  onOpenTodo: () => void;
   onResetPomo: () => void;
   onResetTimer: () => void;
   pomoActive: boolean;
@@ -32,6 +33,7 @@ export function AppLauncher({
   onOpenFitbit,
   onOpenHome,
   onOpenTimer,
+  onOpenTodo,
   onResetPomo,
   onResetTimer,
   pomoActive, 
@@ -44,7 +46,7 @@ export function AppLauncher({
   isSportsLive,
   appConfig
 }: AppLauncherProps) {
-  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer'];
+  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo'];
 
   const apps = {
     pomodoro: (
@@ -165,6 +167,15 @@ export function AppLauncher({
           </button>
         )}
       </div>
+    ),
+    todo: (
+      <button
+        onPointerDown={onOpenTodo}
+        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+      >
+        <List size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">TODO</span>
+      </button>
     )
   };
 
