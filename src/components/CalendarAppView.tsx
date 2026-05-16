@@ -173,10 +173,6 @@ export function CalendarAppView({ now }: CalendarAppViewProps) {
             </div>
           ))}
         </div>
-
-        <div className="mt-auto pt-6 text-sm font-bold text-white/25">
-          Tap any date to inspect its weekday and full calendar date.
-        </div>
       </aside>
     </div>
   );

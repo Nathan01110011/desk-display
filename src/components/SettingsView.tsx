@@ -218,46 +218,46 @@ export function SettingsView({
 
             <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
               <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Timeout</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center justify-between rounded-2xl bg-black/20 p-3 border border-white/5">
+              <div className="space-y-2">
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button
                     onPointerDown={() => updateRuleLockTime(Math.max(0, ruleLockHours - 1), ruleLockMinutes)}
-                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Decrease hours"
                   >
-                    <Minus size={20} />
+                    <Minus size={18} />
                   </button>
                   <div className="text-center">
-                    <div className="text-3xl font-black tabular-nums">{ruleLockHours}</div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Hours</div>
+                    <div className="text-2xl font-black tabular-nums leading-none">{ruleLockHours}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Hours</div>
                   </div>
                   <button
                     onPointerDown={() => updateRuleLockTime(Math.min(24, ruleLockHours + 1), ruleLockMinutes)}
-                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Increase hours"
                   >
-                    <Plus size={20} />
+                    <Plus size={18} />
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl bg-black/20 p-3 border border-white/5">
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button
                     onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.max(0, ruleLockMinutes - 5))}
-                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Decrease minutes"
                   >
-                    <Minus size={20} />
+                    <Minus size={18} />
                   </button>
                   <div className="text-center">
-                    <div className="text-3xl font-black tabular-nums">{ruleLockMinutes}</div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Minutes</div>
+                    <div className="text-2xl font-black tabular-nums leading-none">{ruleLockMinutes}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Minutes</div>
                   </div>
                   <button
                     onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.min(55, ruleLockMinutes + 5))}
-                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Increase minutes"
                   >
-                    <Plus size={20} />
+                    <Plus size={18} />
                   </button>
                 </div>
               </div>

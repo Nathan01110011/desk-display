@@ -46,41 +46,59 @@ export function PomodoroView({
       transition={{ duration: 0.22, ease: 'easeOut' }}
       className="w-full h-full grid grid-cols-[minmax(0,1fr)_22rem] gap-8"
     >
-      <section className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex items-center justify-center">
-        <div className="relative aspect-square w-[56vh] max-w-[34rem] max-h-[34rem] min-w-[16rem] min-h-[16rem] shrink-0">
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: `conic-gradient(from -90deg, ${accent} ${progress * 360}deg, rgba(255,255,255,0.08) ${progress * 360}deg)`
-            }}
-          />
-          <div className="absolute inset-5 rounded-full bg-black" />
-          <div
-            className="absolute inset-9 rounded-full border border-white/10"
-            style={{ background: softAccent }}
-          />
+      <section className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex flex-col">
+        <div className="flex items-center justify-between gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
+          <span className="flex items-center gap-3"><Timer size={18} /> Pomodoro</span>
+          <span>{isBreak ? 'Break' : 'Focus'}</span>
+        </div>
 
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            {isFinished ? (
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ repeat: Infinity, duration: 1.1 }}
-                className="flex flex-col items-center gap-4 text-emerald-300"
-              >
-                <CheckCircle2 size={104} />
-                <h1 className="text-7xl font-black tracking-tight uppercase">Done</h1>
-              </motion.div>
-            ) : (
-              <>
-                <ModeIcon size={38} className={isBreak ? 'text-blue-300/80' : 'text-rose-300/80'} />
-                <div className="mt-5 text-[7.5rem] font-black tracking-tighter leading-none tabular-nums">
-                  {formatPomoTime(pomoTime)}
-                </div>
-                <div className="mt-5 text-xs font-black uppercase tracking-[0.35em] text-white/35">
-                  {isBreak ? 'Break' : 'Focus'} · {remaining}% left
-                </div>
-              </>
-            )}
+        <div className="flex-1 min-h-0 flex items-center justify-center py-6">
+          <div className="relative aspect-square w-[min(100%,46vh,30rem)] shrink">
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `conic-gradient(from -90deg, ${accent} ${progress * 360}deg, rgba(255,255,255,0.08) ${progress * 360}deg)`
+              }}
+            />
+            <div className="absolute inset-[clamp(0.8rem,4%,1.25rem)] rounded-full bg-black" />
+            <div
+              className="absolute inset-[clamp(1.45rem,7%,2.25rem)] rounded-full border border-white/10"
+              style={{ background: softAccent }}
+            />
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
+              {isFinished ? (
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.1 }}
+                  className="flex flex-col items-center gap-3 text-emerald-300"
+                >
+                  <CheckCircle2 className="size-[clamp(4rem,12vw,6.5rem)]" />
+                  <h1 className="text-[clamp(3rem,9vw,6rem)] font-black tracking-tight uppercase leading-none">Done</h1>
+                </motion.div>
+              ) : (
+                <>
+                  <ModeIcon className={`size-[clamp(1.75rem,4vw,2.4rem)] ${isBreak ? 'text-blue-300/80' : 'text-rose-300/80'}`} />
+                  <div className="mt-4 text-[clamp(3.4rem,10vw,7rem)] font-black tracking-tighter leading-none tabular-nums">
+                    {formatPomoTime(pomoTime)}
+                  </div>
+                  <div className="mt-4 text-[clamp(0.65rem,1.3vw,0.75rem)] font-black uppercase tracking-[0.28em] text-white/35">
+                    {remaining}% left
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Elapsed</p>
+            <p className="mt-1 text-2xl font-black tabular-nums">{Math.round(progress * 100)}%</p>
+          </div>
+          <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Left</p>
+            <p className="mt-1 text-2xl font-black tabular-nums">{remaining}%</p>
           </div>
         </div>
       </section>
