@@ -33,8 +33,8 @@ import {
   Snowflake,
   Sparkles,
   Square,
-  Star,
   Sun,
+  Target,
   Triangle,
   Waves
 } from 'lucide-react';
@@ -63,7 +63,7 @@ type ResponseId =
   | 'satellite'
   | 'snow'
   | 'spark'
-  | 'star'
+  | 'target'
   | 'waves';
 
 interface Challenge {
@@ -120,19 +120,19 @@ const responses: IconMeta<ResponseId>[] = [
   { id: 'satellite', label: 'Satellite', Icon: Satellite },
   { id: 'snow', label: 'Snow', Icon: Snowflake },
   { id: 'spark', label: 'Spark', Icon: Sparkles },
-  { id: 'star', label: 'Star', Icon: Star },
+  { id: 'target', label: 'Target', Icon: Target },
   { id: 'waves', label: 'Waves', Icon: Waves }
 ];
 
 const responseMap = new Map(responses.map(response => [response.id, response]));
 
-const selectionTiles: ResponseId[] = ['star', 'satellite', 'aperture', 'spark', 'diamond', 'brain', 'puzzle', 'key'];
+const selectionTiles: ResponseId[] = ['target', 'satellite', 'aperture', 'spark', 'diamond', 'brain', 'puzzle', 'key'];
 
 const rows: Record<PromptHouse, ResponseId[]> = {
-  orbit: ['star', 'satellite', 'aperture', 'spark', 'diamond', 'brain', 'puzzle', 'key'],
-  ember: ['diamond', 'key', 'star', 'brain', 'spark', 'aperture', 'satellite', 'puzzle'],
-  tide: ['brain', 'spark', 'key', 'satellite', 'puzzle', 'diamond', 'star', 'aperture'],
-  signal: ['puzzle', 'diamond', 'brain', 'star', 'key', 'satellite', 'aperture', 'spark']
+  orbit: ['target', 'satellite', 'aperture', 'spark', 'diamond', 'brain', 'puzzle', 'key'],
+  ember: ['diamond', 'key', 'target', 'brain', 'spark', 'aperture', 'satellite', 'puzzle'],
+  tide: ['brain', 'spark', 'key', 'satellite', 'puzzle', 'diamond', 'target', 'aperture'],
+  signal: ['puzzle', 'diamond', 'brain', 'target', 'key', 'satellite', 'aperture', 'spark']
 };
 
 const lensOffsets: Record<PromptLens, number> = {
