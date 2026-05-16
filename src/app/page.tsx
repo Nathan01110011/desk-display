@@ -23,6 +23,7 @@ import { WeatherView } from '@/components/WeatherView';
 import { FitbitView } from '@/components/FitbitView';
 import { SmartHomeView } from '@/components/SmartHomeView';
 import { TimerView } from '@/components/TimerView';
+import { RuleView } from '@/components/RuleView';
 import { formatPomoTime } from '@/lib/format';
 import { ViewState, AppConfig } from '@/types';
 import dynamic from 'next/dynamic';
@@ -41,7 +42,8 @@ const DEFAULT_CONFIG: AppConfig = {
   home: true,
   timer: true,
   todo: true,
-  appOrder: ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo']
+  rule: true,
+  appOrder: ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule']
 };
 
 export default function Dashboard() {
@@ -83,6 +85,7 @@ export default function Dashboard() {
             if (!mergedConfig.appOrder.includes('home')) mergedConfig.appOrder.push('home');
             if (!mergedConfig.appOrder.includes('timer')) mergedConfig.appOrder.push('timer');
             if (!mergedConfig.appOrder.includes('todo')) mergedConfig.appOrder.push('todo');
+            if (!mergedConfig.appOrder.includes('rule')) mergedConfig.appOrder.push('rule');
           }
           setAppConfig(mergedConfig);
         }
@@ -306,6 +309,7 @@ export default function Dashboard() {
                   onOpenHome={() => setActiveView('home')}
                   onOpenTimer={() => setActiveView('timer')}
                   onOpenTodo={() => setActiveView('todo')}
+                  onOpenRule={() => setActiveView('rule')}
                   onResetPomo={resetPomo}
                   onResetTimer={dismissAlert}
                   pomoActive={pomoActive} 
@@ -362,6 +366,9 @@ export default function Dashboard() {
                 )}
                 {activeView === 'todo' && (
                   <TodoView />
+                )}
+                {activeView === 'rule' && (
+                  <RuleView />
                 )}
               </motion.div>
             )}
