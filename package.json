@@ -42,6 +42,11 @@
     "typescript": "^5"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "msw",
+      "sharp",
+      "unrs-resolver"
+    ],
     "overrides": {
       "postcss": "8.5.14"
     }
