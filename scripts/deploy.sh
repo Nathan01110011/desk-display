@@ -17,7 +17,11 @@ sleep 2
 rm -rf "$PROJECT_DIR/.next"
 
 echo "--- 🧰 Step 1.5: Ensuring pnpm is available ---"
-corepack enable pnpm
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "pnpm is not available on PATH."
+  echo "Run ./scripts/setup-pi.sh once, or install pnpm with: sudo corepack enable pnpm"
+  exit 1
+fi
 
 echo "--- 📥 Step 2: Syncing with GitHub ---"
 cd "$PROJECT_DIR"
@@ -35,7 +39,7 @@ echo "--- 🏗️ Step 4: Building Application ---"
 pnpm build
 
 echo "--- 🔄 Step 5: Restarting Backend (PM2) ---"
-pm2 restart $APP_NAME || pm2 start pnpm --name "$APP_NAME" -- start
+pm2 restart "$APP_NAME" || pm2 start "$(command -v pnpm)" --name "$APP_NAME" -- start
 
 echo "--- 🖥️ Step 6: Refreshing Kiosk Browser ---"
 sleep 5
