@@ -2,12 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 export function useTimer() {
   const [timeLeft, setTimeLeft] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const startTimer = useCallback((seconds: number) => {
     setTimeLeft(seconds);
+    setDuration(seconds);
     setIsActive(true);
     setIsFinished(false);
   }, []);
@@ -23,12 +25,14 @@ export function useTimer() {
   const resetTimer = useCallback(() => {
     setIsActive(false);
     setTimeLeft(0);
+    setDuration(0);
     setIsFinished(false);
   }, []);
 
   const dismissAlert = useCallback(() => {
     setIsFinished(false);
     setTimeLeft(0);
+    setDuration(0);
   }, []);
 
   useEffect(() => {
@@ -62,6 +66,7 @@ export function useTimer() {
 
   return {
     timeLeft,
+    duration,
     isActive,
     isFinished,
     startTimer,

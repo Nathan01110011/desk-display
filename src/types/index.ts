@@ -57,7 +57,8 @@ export interface AppConfig {
 }
 
 export interface RuleLockSettings {
-  enabled: boolean;
+  lockOnOpen: boolean;
+  lockOnInactivity: boolean;
   timeoutMinutes: number;
 }
 

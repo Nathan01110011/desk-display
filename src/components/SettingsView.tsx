@@ -5,9 +5,6 @@ import { AppConfig, AdditionalClock, RuleLockSettings } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
 interface SettingsViewProps {
-  workDuration: number;
-  breakDuration: number;
-  onUpdateDurations: (work: number, breakTime: number) => void;
   onClose: () => void;
   appConfig: AppConfig;
   onUpdateAppConfig: (config: AppConfig) => void;
@@ -18,9 +15,6 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ 
-  workDuration, 
-  breakDuration, 
-  onUpdateDurations, 
   appConfig,
   onUpdateAppConfig,
   worldClocks,
@@ -109,7 +103,8 @@ export function SettingsView({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ruleLockEnabled: settings.enabled,
+        ruleLockOnOpen: settings.lockOnOpen,
+        ruleLockOnInactivity: settings.lockOnInactivity,
         ruleLockTimeoutMinutes: settings.timeoutMinutes
       })
     });
@@ -135,30 +130,6 @@ export function SettingsView({
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-6">
-          {appConfig.pomodoro && (
-            <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
-              <h3 className="text-lg font-bold text-white/80">Pomodoro Timer</h3>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Work Duration</p>
-                  <div className="flex items-center gap-4">
-                    <button onPointerDown={() => onUpdateDurations(Math.max(1, workDuration - 1), breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={20} /></button>
-                    <span className="text-3xl font-black min-w-[3rem] text-center">{workDuration}</span>
-                    <button onPointerDown={() => onUpdateDurations(workDuration + 1, breakDuration)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Plus size={20} /></button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Break Duration</p>
-                  <div className="flex items-center gap-4">
-                    <button onPointerDown={() => onUpdateDurations(workDuration, Math.max(1, breakDuration - 1))} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Minus size={20} /></button>
-                    <span className="text-3xl font-black min-w-[3rem] text-center">{breakDuration}</span>
-                    <button onPointerDown={() => onUpdateDurations(workDuration, breakDuration + 1)} className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"><Plus size={20} /></button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white/80 flex items-center gap-3"><Globe size={20} /> World Clocks</h3>
@@ -212,20 +183,37 @@ export function SettingsView({
 
         <div className="space-y-6">
           <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="space-y-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-white/80">Rule Lock</h3>
                 <p className="text-white/30 text-xs">Page load and idle timeout</p>
               </div>
-              <button
-                onPointerDown={() => updateRuleLock({ ...ruleLock, enabled: !ruleLock.enabled })}
-                className={`size-12 rounded-2xl border flex items-center justify-center active:scale-95 transition-all ${
-                  ruleLock.enabled ? 'bg-white text-black border-white' : 'bg-white/5 text-white/20 border-white/10'
-                }`}
-                aria-label="Toggle Rule Lock"
-              >
-                {ruleLock.enabled && <Check size={22} strokeWidth={4} />}
-              </button>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onPointerDown={() => updateRuleLock({ ...ruleLock, lockOnOpen: !ruleLock.lockOnOpen })}
+                  className="flex items-center justify-between rounded-2xl bg-white/[0.03] border border-white/5 p-4 active:scale-[0.98] transition-all"
+                >
+                  <span className="text-sm font-black uppercase tracking-widest text-white/50">On Open</span>
+                  <span className={`size-8 rounded-xl border flex items-center justify-center ${
+                    ruleLock.lockOnOpen ? 'bg-white text-black border-white' : 'border-white/20'
+                  }`}>
+                    {ruleLock.lockOnOpen && <Check size={18} strokeWidth={4} />}
+                  </span>
+                </button>
+
+                <button
+                  onPointerDown={() => updateRuleLock({ ...ruleLock, lockOnInactivity: !ruleLock.lockOnInactivity })}
+                  className="flex items-center justify-between rounded-2xl bg-white/[0.03] border border-white/5 p-4 active:scale-[0.98] transition-all"
+                >
+                  <span className="text-sm font-black uppercase tracking-widest text-white/50">Idle Lock</span>
+                  <span className={`size-8 rounded-xl border flex items-center justify-center ${
+                    ruleLock.lockOnInactivity ? 'bg-white text-black border-white' : 'border-white/20'
+                  }`}>
+                    {ruleLock.lockOnInactivity && <Check size={18} strokeWidth={4} />}
+                  </span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
