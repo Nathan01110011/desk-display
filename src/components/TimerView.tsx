@@ -34,6 +34,8 @@ export function TimerView({
   const progress = totalTime > 0 ? Math.max(0, Math.min(1, 1 - (timeLeft / totalTime))) : isFinished ? 1 : 0;
   const remaining = Math.max(0, 100 - Math.round(progress * 100));
   const accent = isFinished ? '#34d399' : '#38bdf8';
+  const displayTime = formatPomoTime(timeLeft);
+  const timeTextSize = displayTime.length > 4 ? 'text-[clamp(2.75rem,7.5vw,5.25rem)]' : 'text-[clamp(3.4rem,10vw,7rem)]';
 
   const handleAdjustCustom = (amount: number) => {
     setCustomMinutes(prev => Math.max(1, prev + amount));
@@ -76,8 +78,8 @@ export function TimerView({
                   ) : (
                     <>
                       <Timer className="size-[clamp(1.75rem,4vw,2.4rem)] text-sky-300/80" />
-                      <div className="mt-4 text-[clamp(3.4rem,10vw,7rem)] font-black tracking-tighter leading-none tabular-nums">
-                        {formatPomoTime(timeLeft)}
+                      <div className={`mt-4 max-w-[78%] whitespace-nowrap ${timeTextSize} font-black tracking-tighter leading-none tabular-nums`}>
+                        {displayTime}
                       </div>
                       <div className="mt-4 text-[clamp(0.65rem,1.3vw,0.75rem)] font-black uppercase tracking-[0.28em] text-white/35">
                         {remaining}% left

@@ -36,6 +36,8 @@ export function PomodoroView({
   const accent = isBreak ? '#60a5fa' : '#fb7185';
   const softAccent = isBreak ? 'rgba(96, 165, 250, 0.14)' : 'rgba(251, 113, 133, 0.14)';
   const ModeIcon = isBreak ? Coffee : Focus;
+  const displayTime = formatPomoTime(pomoTime);
+  const timeTextSize = displayTime.length > 4 ? 'text-[clamp(2.75rem,7.5vw,5.25rem)]' : 'text-[clamp(3.4rem,10vw,7rem)]';
 
   return (
     <motion.div
@@ -79,8 +81,8 @@ export function PomodoroView({
               ) : (
                 <>
                   <ModeIcon className={`size-[clamp(1.75rem,4vw,2.4rem)] ${isBreak ? 'text-blue-300/80' : 'text-rose-300/80'}`} />
-                  <div className="mt-4 text-[clamp(3.4rem,10vw,7rem)] font-black tracking-tighter leading-none tabular-nums">
-                    {formatPomoTime(pomoTime)}
+                  <div className={`mt-4 max-w-[78%] whitespace-nowrap ${timeTextSize} font-black tracking-tighter leading-none tabular-nums`}>
+                    {displayTime}
                   </div>
                   <div className="mt-4 text-[clamp(0.65rem,1.3vw,0.75rem)] font-black uppercase tracking-[0.28em] text-white/35">
                     {remaining}% left
