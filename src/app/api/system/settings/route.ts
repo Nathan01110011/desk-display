@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(updated, null, 2));
     
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ success: false, error: 'Failed to save settings' }, { status: 500 });
   }
 }

@@ -16,6 +16,9 @@ killall -9 chromium 2>/dev/null || true
 sleep 2
 rm -rf "$PROJECT_DIR/.next"
 
+echo "--- 🧰 Step 1.5: Ensuring pnpm is available ---"
+corepack enable pnpm
+
 echo "--- 📥 Step 2: Syncing with GitHub ---"
 cd "$PROJECT_DIR"
 # Backup settings if they exist to prevent git reset from deleting rotated tokens
@@ -26,13 +29,13 @@ git reset --hard origin/main
 [ -f /tmp/dashboard-settings.json.bak ] && mv /tmp/dashboard-settings.json.bak .dashboard-settings.json
 
 echo "--- 📦 Step 3: Installing Dependencies ---"
-npm install
+pnpm install --frozen-lockfile
 
 echo "--- 🏗️ Step 4: Building Application ---"
-npm run build
+pnpm build
 
 echo "--- 🔄 Step 5: Restarting Backend (PM2) ---"
-pm2 restart $APP_NAME || pm2 start npm --name "$APP_NAME" -- start
+pm2 restart $APP_NAME || pm2 start pnpm --name "$APP_NAME" -- start
 
 echo "--- 🖥️ Step 6: Refreshing Kiosk Browser ---"
 sleep 5

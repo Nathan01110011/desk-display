@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Lightbulb, Zap, Loader2, ChevronLeft, Sun, Thermometer, Palette, Flame, Snowflake } from 'lucide-react';
+import { Home, Lightbulb, Loader2, ChevronLeft, Sun, Thermometer, Palette, Flame, Snowflake } from 'lucide-react';
 import { SmartDevice } from '@/types';
 
 interface SmartHomeViewProps {
@@ -10,7 +10,7 @@ interface SmartHomeViewProps {
   onClose: () => void;
 }
 
-export function SmartHomeView({ devices, loading, onUpdate, onClose }: SmartHomeViewProps) {
+export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps) {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   const selectedDevice = devices.find(d => d.id === selectedDeviceId);
@@ -146,7 +146,7 @@ export function SmartHomeView({ devices, loading, onUpdate, onClose }: SmartHome
                   <input 
                     type="range" min="10" max="100" 
                     value={selectedDevice?.brightness || 100}
-                    onChange={(e) => onUpdate(selectedDeviceId!, { brightness: parseInt(e.target.value) })}
+                    onChange={(e) => onUpdate(selectedDeviceId!, { brightness: parseInt(e.target.value, 10) })}
                     className="w-full h-10 bg-white/10 rounded-xl appearance-none cursor-pointer accent-white"
                   />
                 </div>
@@ -159,7 +159,7 @@ export function SmartHomeView({ devices, loading, onUpdate, onClose }: SmartHome
                   <input 
                     type="range" min="2500" max="6500" step="100"
                     value={selectedDevice?.colorTemp || 4000}
-                    onChange={(e) => onUpdate(selectedDeviceId!, { colorTemp: parseInt(e.target.value) })}
+                    onChange={(e) => onUpdate(selectedDeviceId!, { colorTemp: parseInt(e.target.value, 10) })}
                     className="w-full h-10 rounded-xl appearance-none cursor-pointer"
                     style={{ background: 'linear-gradient(to right, #ff9e33, #ffffff, #a5c9ff)' }}
                   />

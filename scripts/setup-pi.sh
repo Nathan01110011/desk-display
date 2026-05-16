@@ -17,17 +17,20 @@ then
     sudo apt install -y nodejs
 fi
 
-# 3. Install PM2 globally
+# 3. Enable pnpm and install PM2 globally
+echo "--- 📦 Enabling pnpm ---"
+corepack enable pnpm
+
 echo "--- 🟢 Installing PM2 ---"
-sudo npm install -g pm2
+pnpm add --global pm2
 pm2 startup | tail -n 1 | bash # Set PM2 to start on boot
 
 # 4. Initial Build & Start
 echo "--- 🏗️ Initial Build and Start ---"
 cd $TARGET_DIR
-npm install
-npm run build
-pm2 start npm --name "dashboard" -- start
+pnpm install --frozen-lockfile
+pnpm build
+pm2 start pnpm --name "dashboard" -- start
 pm2 save # Save current process list for boot
 
 echo ""

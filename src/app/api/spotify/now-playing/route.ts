@@ -5,6 +5,44 @@ const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 const refresh_token = process.env.SPOTIFY_REFRESH_TOKEN;
 
+interface SpotifyArtist {
+  name: string;
+}
+
+interface SpotifyImage {
+  url: string;
+}
+
+interface SpotifyTrackItem {
+  name?: string;
+  artists?: SpotifyArtist[];
+  album?: {
+    name?: string;
+    images?: SpotifyImage[];
+  };
+  images?: SpotifyImage[];
+  duration_ms?: number;
+}
+
+interface SpotifyEpisodeItem {
+  name?: string;
+  show?: {
+    name?: string;
+    publisher?: string;
+  };
+  images?: SpotifyImage[];
+  duration_ms?: number;
+}
+
+type SpotifyPlayerItem = SpotifyTrackItem | SpotifyEpisodeItem;
+
+interface SpotifyCurrentlyPlaying {
+  is_playing?: boolean;
+  currently_playing_type?: 'track' | 'episode' | string;
+  item?: SpotifyPlayerItem;
+  progress_ms?: number;
+}
+
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 15000) {
   for (let i = 0; i < retries; i++) {
     const controller = new AbortController();
@@ -25,7 +63,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, ti
   throw new Error('All Spotify fetch retries failed');
 }
 
-async function getAccessToken() {
+async function getAccessToken(currentRefreshToken: string) {
   try {
     const response = await fetchWithRetry('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -35,11 +73,11 @@ async function getAccessToken() {
       },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
-        refresh_token: refresh_token!,
+        refresh_token: currentRefreshToken,
       }),
     });
 
-    const data = await response.json();
+    const data = await response.json() as { access_token: string };
     return data.access_token;
   } catch (e) {
     logger.error('Failed to get Spotify access token', e);
@@ -53,7 +91,7 @@ export async function GET() {
   }
 
   try {
-    const access_token = await getAccessToken();
+    const access_token = await getAccessToken(refresh_token);
     const response = await fetchWithRetry('https://api.spotify.com/v1/me/player/currently-playing?additional_types=episode', {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -63,7 +101,7 @@ export async function GET() {
 
     if (response.status === 204) return NextResponse.json({ isPlaying: false, status: 'NO_CONTENT' });
     
-    const song = await response.json();
+    const song = await response.json() as SpotifyCurrentlyPlaying;
 
     if (song.item) {
       logger.debug(`Spotify Data: Type: ${song.currently_playing_type} | Item: ${song.item.name}`);
@@ -79,17 +117,17 @@ export async function GET() {
     
     const title = item.name || 'Unknown Title';
     let artist = 'Unknown Artist';
-    if (type === 'episode') artist = item.show?.name || 'Podcast';
-    else artist = item.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist';
+    if (type === 'episode') artist = (item as SpotifyEpisodeItem).show?.name || 'Podcast';
+    else artist = (item as SpotifyTrackItem).artists?.map((a) => a.name).join(', ') || 'Unknown Artist';
 
     let album = 'Unknown Album';
-    if (type === 'episode') album = item.show?.publisher || 'Podcast';
-    else album = item.album?.name || 'Single';
+    if (type === 'episode') album = (item as SpotifyEpisodeItem).show?.publisher || 'Podcast';
+    else album = (item as SpotifyTrackItem).album?.name || 'Single';
 
     let albumImageUrl = '';
     if (item.images && item.images.length > 0) {
       albumImageUrl = item.images[0].url;
-    } else if (item.album?.images && item.album.images.length > 0) {
+    } else if ('album' in item && item.album?.images && item.album.images.length > 0) {
       albumImageUrl = item.album.images[0].url;
     }
 

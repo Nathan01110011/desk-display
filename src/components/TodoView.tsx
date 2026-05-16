@@ -4,7 +4,14 @@ import React, { useState, useRef } from 'react';
 import { Loader2, Keyboard, AlertCircle } from 'lucide-react';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
-export function TodoView({ onClose }: { onClose: () => void }) {
+interface IframeWindow extends Window {
+  HTMLTextAreaElement: typeof HTMLTextAreaElement;
+  HTMLInputElement: typeof HTMLInputElement;
+  Event: typeof Event;
+  KeyboardEvent: typeof KeyboardEvent;
+}
+
+export function TodoView() {
   const [loading, setLoading] = React.useState(true);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [kbValue, setKbValue] = useState('');
@@ -31,7 +38,7 @@ export function TodoView({ onClose }: { onClose: () => void }) {
       doc.addEventListener('focusin', (e) => {
         const target = e.target as HTMLElement;
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-          lastActiveRef.current = target as any;
+          lastActiveRef.current = target as HTMLInputElement | HTMLTextAreaElement;
           console.log("🎯 Tracked iframe input focus:", (target as HTMLInputElement).type || target.tagName);
         }
       });
@@ -42,7 +49,7 @@ export function TodoView({ onClose }: { onClose: () => void }) {
 
   const handleKeyboardSubmit = () => {
     try {
-      const win = iframeRef.current?.contentWindow as any;
+      const win = iframeRef.current?.contentWindow as IframeWindow | null | undefined;
       
       // Prefer our internally tracked active element, fallback to the document's active element
       const activeEl = lastActiveRef.current || (iframeRef.current?.contentDocument?.activeElement as HTMLInputElement | HTMLTextAreaElement);
@@ -119,6 +126,7 @@ export function TodoView({ onClose }: { onClose: () => void }) {
         <iframe 
           ref={iframeRef}
           src="/todo-proxy"
+          title="TODO tracker"
           className="w-full h-full border-none"
           onLoad={handleIframeLoad}
           allow="geolocation"

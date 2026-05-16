@@ -10,7 +10,7 @@ interface WeatherViewProps {
   onToggleExtended: (val: boolean) => void;
 }
 
-export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: WeatherViewProps) {
+export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [topFade, setTopFade] = useState(0);
   const [bottomFade, setBottomFade] = useState(40);
@@ -37,14 +37,9 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
   };
 
   useEffect(() => {
-    if (!isExtended) {
-      setShowExtended(false);
-      return;
-    }
-
     const timer = window.setTimeout(() => {
-      setShowExtended(true);
-    }, 420);
+      setShowExtended(isExtended);
+    }, isExtended ? 420 : 0);
 
     return () => window.clearTimeout(timer);
   }, [isExtended]);
@@ -96,6 +91,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
             </div>
 
             <div className="flex items-center gap-10 mb-8">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={`http://openweathermap.org/img/wn/${weather.icon}@4x.png`} 
                 alt={weather.condition}
@@ -125,6 +121,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
               {atAGlance.map((item, i) => (
                 <div key={i} className="bg-white/5 rounded-2xl p-4 flex flex-col items-center gap-2 border border-white/5">
                   <p className="text-base font-bold text-white/30 uppercase tracking-widest">{item.time}</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={`http://openweathermap.org/img/wn/${item.icon}@2x.png`} 
                     alt={item.condition}
@@ -178,6 +175,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
                     {hours.map((item, idx) => (
                       <div key={idx} className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-white/[0.02] transition-colors">
                         <span className="text-[10px] font-bold text-white/30 uppercase">{item.time}</span>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img 
                           src={`http://openweathermap.org/img/wn/${item.icon}@2x.png`} 
                           alt={item.condition}

@@ -19,7 +19,6 @@ export function SettingsView({
   workDuration, 
   breakDuration, 
   onUpdateDurations, 
-  onClose,
   appConfig,
   onUpdateAppConfig,
   worldClocks,
@@ -37,7 +36,9 @@ export function SettingsView({
 
   React.useEffect(() => {
     if (!showKeyboard && kbMode === 'weather') {
-      setKbValue(localStorage.getItem('weatherLocation') || '');
+      queueMicrotask(() => {
+        setKbValue(localStorage.getItem('weatherLocation') || '');
+      });
     }
   }, [showKeyboard, kbMode]);
   

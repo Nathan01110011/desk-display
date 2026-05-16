@@ -32,14 +32,27 @@ export function useTimer() {
   }, []);
 
   useEffect(() => {
-    if (isActive && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isActive) {
-      setIsActive(false);
-      setIsFinished(true);
-      if (timerRef.current) clearInterval(timerRef.current);
+    if (!isActive) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          queueMicrotask(() => {
+            setIsActive(false);
+            setIsFinished(true);
+          });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    if (timeLeft <= 0) {
+      queueMicrotask(() => {
+        setIsActive(false);
+        setIsFinished(true);
+      });
     }
 
     return () => {

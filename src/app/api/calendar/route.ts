@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
-// @ts-ignore
 import ICAL from 'ical.js';
 import { logger } from '@/lib/logger';
 
@@ -11,6 +10,41 @@ interface CalendarEvent {
   end: string;
   location?: string;
   isAllDay: boolean;
+}
+
+interface IcalTime {
+  isDate: boolean;
+  hour: number;
+  minute: number;
+  second: number;
+  year: number;
+  month: number;
+  day: number;
+  toJSDate: () => Date;
+  toString: () => string;
+}
+
+interface IcalProperty {
+  getParameter: (name: string) => string | unknown[] | undefined;
+}
+
+interface IcalComponent {
+  getFirstPropertyValue: (prop: string) => unknown;
+  getFirstProperty: (prop: string) => IcalProperty | null;
+  getAllProperties: (prop: string) => IcalProperty[];
+}
+
+interface IcalOccurrence {
+  startDate: IcalTime;
+  item?: {
+    status?: string;
+    location?: string;
+  };
+  location?: string;
+}
+
+interface IcalRecurrenceRule {
+  interval?: number;
 }
 
 const CACHE_PATH = path.join(process.cwd(), '.calendar-cache.json');
@@ -155,24 +189,25 @@ export async function GET() {
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
     const rangeStart = ICAL.Time.fromJSDate(startOfToday);
 
-    let filteredEvents: CalendarEvent[] = [];
+    const filteredEvents: CalendarEvent[] = [];
     const recurrenceOverrides = new Set<string>();
 
-    vevents.forEach((vevent: unknown) => {
-      const v = vevent as { getFirstPropertyValue: (prop: string) => { toString: () => string } };
-      // @ts-ignore
-      const rid = v.getFirstPropertyValue('recurrence-id');
+    vevents.forEach((veventRaw) => {
+      const vevent = veventRaw as unknown as IcalComponent;
+      const rid = vevent.getFirstPropertyValue('recurrence-id');
       if (rid) recurrenceOverrides.add(rid.toString());
     });
 
-    vevents.forEach((vevent: any) => {
-      const event = new ICAL.Event(vevent);
+    vevents.forEach((veventRaw) => {
+      const vevent = veventRaw as unknown as IcalComponent;
+      const event = new ICAL.Event(veventRaw);
       const summary = event.summary || 'No Title';
 
-      const processOccurrence = (occ: any) => {
+      const processOccurrence = (occ: IcalOccurrence) => {
         const icalStart = occ.startDate;
-        const tzid = vevent.getFirstProperty('dtstart')?.getParameter('tzid');
-        const ianaTz = WIN_TO_IANA[tzid] || 'UTC';
+        const tzidParam = vevent.getFirstProperty('dtstart')?.getParameter('tzid');
+        const tzid = typeof tzidParam === 'string' ? tzidParam : undefined;
+        const ianaTz = tzid ? WIN_TO_IANA[tzid] || 'UTC' : 'UTC';
 
         if (!icalStart.isDate && icalStart.hour === 0 && icalStart.minute === 0) {
           const base = event.startDate;
@@ -183,7 +218,7 @@ export async function GET() {
           }
         }
 
-        const convert = (it: any, tz: string) => {
+        const convert = (it: IcalTime, tz: string) => {
           if (it.isDate) return it.toJSDate();
           const fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' });
           const parts = fmt.formatToParts(new Date(it.year, it.month - 1, it.day, it.hour, it.minute));
@@ -196,23 +231,27 @@ export async function GET() {
         const jsEnd = new Date(jsStart.getTime() + event.duration.toSeconds() * 1000);
         
         if (jsStart <= endOfToday && jsEnd >= startOfToday) {
-          const status = (occ.item ? occ.item.status : vevent.getFirstPropertyValue('status')) || '';
-          const busyStatus = vevent.getFirstPropertyValue('x-microsoft-cdo-busystatus') || '';
-          const transparency = vevent.getFirstPropertyValue('transp') || '';
+          const status = String((occ.item ? occ.item.status : vevent.getFirstPropertyValue('status')) || '');
+          const busyStatus = String(vevent.getFirstPropertyValue('x-microsoft-cdo-busystatus') || '');
+          const transparency = String(vevent.getFirstPropertyValue('transp') || '');
 
           const attendees = vevent.getAllProperties('attendee');
-          const isDeclined = attendees.some((a: any) => a.getParameter('partstat')?.toUpperCase() === 'DECLINED');
+          const isDeclined = attendees.some((a) => {
+            const partstat = a.getParameter('partstat');
+            return typeof partstat === 'string' && partstat.toUpperCase() === 'DECLINED';
+          });
 
           if (isDeclined || status.toUpperCase() === 'CANCELLED' || busyStatus.toUpperCase() === 'FREE' || transparency.toUpperCase() === 'TRANSPARENT') {
             return;
           }
 
-          const rrule = vevent.getFirstPropertyValue('rrule');
-          if (rrule && rrule.interval > 1) {
+          const rrule = vevent.getFirstPropertyValue('rrule') as IcalRecurrenceRule | null;
+          const interval = rrule?.interval;
+          if (interval && interval > 1) {
             const baseStart = event.startDate.toJSDate();
             const msDiff = jsStart.getTime() - baseStart.getTime();
             const weeksDiff = Math.floor(msDiff / (1000 * 60 * 60 * 24 * 7));
-            if (weeksDiff % rrule.interval !== 0) return;
+            if (weeksDiff % interval !== 0) return;
           }
 
           filteredEvents.push({
@@ -230,18 +269,19 @@ export async function GET() {
 
       if (event.isRecurring()) {
         const iter = event.iterator(rangeStart);
-        let next;
-        while ((next = iter.next()) && next.toJSDate() <= endOfToday) {
+        let next = iter.next();
+        while (next && next.toJSDate() <= endOfToday) {
           if (recurrenceOverrides.has(next.toString())) continue;
-          const occ = event.getOccurrenceDetails(next);
+          const occ = event.getOccurrenceDetails(next) as IcalOccurrence;
           processOccurrence(occ);
+          next = iter.next();
         }
       } else {
         processOccurrence(event);
       }
     });
 
-    const seen = new Set();
+    const seen = new Set<string>();
     const sortedEvents = filteredEvents
       .filter(el => {
         const key = el.summary + el.start;

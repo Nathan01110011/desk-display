@@ -22,7 +22,9 @@ export function useWeather() {
   }, []);
 
   useEffect(() => {
-    fetchWeather();
+    queueMicrotask(() => {
+      fetchWeather();
+    });
     const timer = setInterval(fetchWeather, 1000 * 60 * 15); // Refresh every 15 mins
     return () => clearInterval(timer);
   }, [fetchWeather]);

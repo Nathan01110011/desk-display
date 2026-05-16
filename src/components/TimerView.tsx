@@ -23,8 +23,7 @@ export function TimerView({
   onPause, 
   onResume, 
   onReset, 
-  onDismiss,
-  onClose 
+  onDismiss
 }: TimerViewProps) {
   const [customMinutes, setCustomMinutes] = useState(5);
 

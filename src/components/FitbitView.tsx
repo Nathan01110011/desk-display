@@ -9,7 +9,7 @@ interface FitbitViewProps {
   onClose: () => void;
 }
 
-export function FitbitView({ stats, loading, onClose }: FitbitViewProps) {
+export function FitbitView({ stats, loading }: FitbitViewProps) {
   if (loading && !stats) {
     return (
       <div className="flex flex-col items-center gap-6 opacity-20">
@@ -30,8 +30,6 @@ export function FitbitView({ stats, loading, onClose }: FitbitViewProps) {
   }
 
   const stepProgress = Math.min(100, (stats.steps / stats.stepGoal) * 100);
-  const floorProgress = Math.min(100, (stats.floors / stats.floorGoal) * 100);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -49,7 +47,7 @@ export function FitbitView({ stats, loading, onClose }: FitbitViewProps) {
           {/* Steps Ring */}
           <div className="bg-white/5 p-10 rounded-[3rem] border border-white/5 flex items-center gap-8 relative overflow-hidden">
             <div className="relative w-32 h-32 flex items-center justify-center">
-              <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90">
+              <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90" aria-hidden="true">
                 <circle cx="64" cy="64" r="54" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-white/5" />
                 <circle 
                   cx="64" cy="64" r="54" stroke="currentColor" strokeWidth="12" fill="transparent" 
