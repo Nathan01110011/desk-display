@@ -30,9 +30,10 @@ export function SettingsView({
   const [kbValue, setKbValue] = useState('');
   const [currentUnit, setCurrentUnit] = useState(localStorage.getItem('weatherUnit') || 'C');
 
-  const allAvailableApps = ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo'] as const;
+  const allAvailableApps = ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo'] as const;
+  type AvailableApp = typeof allAvailableApps[number];
   const savedOrder = appConfig.appOrder || allAvailableApps;
-  const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter(app => allAvailableApps.includes(app as any));
+  const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter((app): app is AvailableApp => allAvailableApps.includes(app as AvailableApp));
 
   React.useEffect(() => {
     if (!showKeyboard && kbMode === 'weather') {
@@ -200,7 +201,7 @@ export function SettingsView({
                     <GripVertical size={24} />
                   </div>
                   <button
-                    onPointerDown={() => toggleApp(app as keyof AppConfig)}
+                    onPointerDown={() => toggleApp(app)}
                     className="flex-1 flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
                   >
                     <span className="text-lg font-bold capitalize text-white/70">{app === 'home' ? 'Smart Home' : app === 'todo' ? 'TODO' : app}</span>

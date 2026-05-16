@@ -16,7 +16,7 @@ export interface SpotifyNowPlaying {
   durationMs: number;
 }
 
-export type ViewState = 'dashboard' | 'pomodoro' | 'settings' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo';
+export type ViewState = 'dashboard' | 'calendar' | 'pomodoro' | 'settings' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo';
 
 export type PomodoroMode = 'work' | 'break';
 
@@ -44,6 +44,7 @@ export interface SmartDevice {
 }
 
 export interface AppConfig {
+  calendar: boolean;
   pomodoro: boolean;
   sports: boolean;
   weather: boolean;
@@ -51,7 +52,7 @@ export interface AppConfig {
   home: boolean;
   timer: boolean;
   todo: boolean;
-  appOrder?: ('pomodoro' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo')[];
+  appOrder?: ('calendar' | 'pomodoro' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo')[];
 }
 
 export interface FitbitStats {

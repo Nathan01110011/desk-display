@@ -13,6 +13,7 @@ import { useFitbit } from '@/hooks/useFitbit';
 import { useSmartHome } from '@/hooks/useSmartHome';
 import { useTimer } from '@/hooks/useTimer';
 import { CalendarView } from '@/components/CalendarView';
+import { CalendarAppView } from '@/components/CalendarAppView';
 import { SpotifyPlayer } from '@/components/SpotifyPlayer';
 import { PomodoroView } from '@/components/PomodoroView';
 import { SportsView } from '@/components/SportsView';
@@ -32,6 +33,7 @@ const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.T
 });
 
 const DEFAULT_CONFIG: AppConfig = {
+  calendar: true,
   pomodoro: true,
   sports: true,
   weather: true,
@@ -39,7 +41,7 @@ const DEFAULT_CONFIG: AppConfig = {
   home: true,
   timer: true,
   todo: true,
-  appOrder: ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo']
+  appOrder: ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo']
 };
 
 export default function Dashboard() {
@@ -76,6 +78,7 @@ export default function Dashboard() {
         if (data.appConfig) {
           const mergedConfig = { ...DEFAULT_CONFIG, ...data.appConfig };
           if (mergedConfig.appOrder) {
+            if (!mergedConfig.appOrder.includes('calendar')) mergedConfig.appOrder.unshift('calendar');
             if (!mergedConfig.appOrder.includes('fitbit')) mergedConfig.appOrder.push('fitbit');
             if (!mergedConfig.appOrder.includes('home')) mergedConfig.appOrder.push('home');
             if (!mergedConfig.appOrder.includes('timer')) mergedConfig.appOrder.push('timer');
@@ -88,7 +91,7 @@ export default function Dashboard() {
         if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
         if (data.weatherUnit) localStorage.setItem('weatherUnit', data.weatherUnit);
         if (data.pomoWork) updateDurations(data.pomoWork, data.pomoBreak || 5);
-      } catch (e) {
+      } catch {
         const savedConfig = localStorage.getItem('appConfig');
         if (savedConfig) {
           const parsed = JSON.parse(savedConfig);
@@ -119,7 +122,7 @@ export default function Dashboard() {
 
   if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
-  const isFullscreenView = (activeView === 'weather' && weatherDetail) || activeView === 'todo';
+  const isFullscreenView = activeView === 'calendar' || (activeView === 'weather' && weatherDetail) || activeView === 'todo';
 
   return (
     <main className="fixed inset-0 bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased">
@@ -154,7 +157,7 @@ export default function Dashboard() {
               className="flex flex-col items-center gap-4"
             >
               <BellOff size={120} className="text-white" />
-              <h1 className="text-8xl font-black uppercase tracking-tighter italic">Time's Up!</h1>
+              <h1 className="text-8xl font-black uppercase tracking-tighter italic">Time&apos;s Up!</h1>
             </motion.div>
             
             <button
@@ -294,6 +297,7 @@ export default function Dashboard() {
                   <SpotifyPlayer spotify={spotify} onAction={handleAction} />
                 </div>
                 <AppLauncher 
+                  onOpenCalendar={() => setActiveView('calendar')}
                   onOpenPomo={() => setActiveView('pomodoro')} 
                   onOpenSettings={() => setActiveView('settings')}
                   onOpenSports={() => setActiveView('sports')}
@@ -328,6 +332,7 @@ export default function Dashboard() {
                     onClose={() => setActiveView('dashboard')}
                   />
                 )}
+                {activeView === 'calendar' && <CalendarAppView now={rawTime} />}
                 {activeView === 'sports' && <SportsView matches={matches} onClose={() => setActiveView('dashboard')} />}
                 {activeView === 'weather' && (
                   <WeatherView 
