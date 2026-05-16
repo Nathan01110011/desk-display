@@ -42,68 +42,132 @@ export function DashboardTimerPanel({
       transition={{ duration: 0.22, ease: 'easeOut' }}
       className={`${compact ? 'h-full p-4 rounded-[1.5rem]' : 'h-full p-5 rounded-[2rem]'} min-h-0 min-w-0 overflow-hidden border border-white/10 bg-white/[0.045] flex items-center justify-center`}
     >
-      <div className={`w-full max-w-full min-w-0 min-h-0 flex items-center ${compact ? 'gap-4' : 'gap-5'}`}>
-        <button
-          onPointerDown={onOpen}
-          className={`relative aspect-square shrink-0 rounded-full active:scale-95 transition-transform ${compact ? 'w-[clamp(5.5rem,18vh,7rem)]' : 'w-[clamp(8rem,18vw,12rem)]'}`}
-          aria-label="Open Timer"
-        >
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: `conic-gradient(from -90deg, ${accent} ${degrees}deg, rgba(255,255,255,0.08) ${degrees}deg)`
-            }}
-          />
-          <div className="absolute inset-3 rounded-full bg-black" />
-          <div className="absolute inset-5 rounded-full border border-white/10 bg-sky-300/10" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {finished ? <CheckCircle2 size={compact ? 18 : 24} className="text-emerald-300/80" /> : <Hourglass size={compact ? 16 : 22} className="text-sky-300/80" />}
-            <div className={`mt-1 font-black tracking-tighter tabular-nums leading-none ${compact ? 'text-2xl' : 'text-[clamp(2rem,4vw,3rem)]'}`}>
-              {formatPomoTime(timeLeft)}
+      {compact ? (
+        <div className="w-full max-w-full min-w-0 min-h-0 flex items-center gap-4">
+          <button
+            onPointerDown={onOpen}
+            className="relative aspect-square w-[clamp(5.5rem,18vh,7rem)] shrink-0 rounded-full active:scale-95 transition-transform"
+            aria-label="Open Timer"
+          >
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `conic-gradient(from -90deg, ${accent} ${degrees}deg, rgba(255,255,255,0.08) ${degrees}deg)`
+              }}
+            />
+            <div className="absolute inset-3 rounded-full bg-black" />
+            <div className="absolute inset-5 rounded-full border border-white/10 bg-sky-300/10" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              {finished ? <CheckCircle2 size={18} className="text-emerald-300/80" /> : <Hourglass size={16} className="text-sky-300/80" />}
+              <div className="mt-1 text-2xl font-black tracking-tighter tabular-nums leading-none">
+                {formatPomoTime(timeLeft)}
+              </div>
+              <div className="mt-1 text-[8px] font-black uppercase tracking-[0.28em] text-white/35">
+                Timer
+              </div>
             </div>
-            <div className={`${compact ? 'mt-1 text-[8px]' : 'mt-2 text-[10px]'} font-black uppercase tracking-[0.28em] text-white/35`}>
-              Timer
-            </div>
-          </div>
-        </button>
+          </button>
 
-        <div className={`min-w-0 flex-1 overflow-hidden ${compact ? 'space-y-2' : 'space-y-4'}`}>
-          <div>
+          <div className="min-w-0 flex-1 overflow-hidden space-y-2">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
               <Bell size={16} />
               Timer
             </div>
-            <h3 className={`${compact ? 'mt-2 text-xl' : 'mt-3 text-[clamp(1.65rem,3vw,2.5rem)]'} font-black tracking-tight leading-none truncate`}>{status}</h3>
-            <p className={`${compact ? 'mt-1 text-xs' : 'mt-2 text-sm'} font-bold text-white/35 truncate`}>{Math.round(progress * 100)}% elapsed</p>
-          </div>
+            <h3 className="mt-2 text-xl font-black tracking-tight leading-none truncate">{status}</h3>
+            <p className="mt-1 text-xs font-bold text-white/35 truncate">{Math.round(progress * 100)}% elapsed</p>
 
-          <div className={`flex items-center ${compact ? 'gap-3' : 'gap-4'}`}>
-            {finished ? (
+            <div className="flex items-center gap-3">
+              {finished ? (
+                <button
+                  onPointerDown={onDismiss}
+                  className="px-4 py-2.5 text-[10px] rounded-full bg-white text-black font-black uppercase tracking-widest shadow-xl active:scale-90 transition-transform"
+                >
+                  Clear
+                </button>
+              ) : (
+                <button
+                  onPointerDown={active ? onPause : onResume}
+                  className="p-3 rounded-full bg-white text-black shadow-xl active:scale-90 transition-transform"
+                  aria-label={active ? 'Pause Timer' : 'Resume Timer'}
+                >
+                  {active ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
+                </button>
+              )}
               <button
-                onPointerDown={onDismiss}
-                className={`${compact ? 'px-4 py-2.5 text-[10px]' : 'px-6 py-4 text-sm'} rounded-full bg-white text-black font-black uppercase tracking-widest shadow-xl active:scale-90 transition-transform`}
+                onPointerDown={onReset}
+                className="p-2.5 rounded-full bg-white/10 text-white shadow-lg active:scale-90 transition-transform"
+                aria-label="Reset Timer"
               >
-                Clear
+                <RotateCcw size={18} />
               </button>
-            ) : (
-              <button
-                onPointerDown={active ? onPause : onResume}
-                className={`${compact ? 'p-3' : 'p-4'} rounded-full bg-white text-black shadow-xl active:scale-90 transition-transform`}
-                aria-label={active ? 'Pause Timer' : 'Resume Timer'}
-              >
-                {active ? <Pause size={compact ? 20 : 28} fill="currentColor" /> : <Play size={compact ? 20 : 28} fill="currentColor" className="ml-1" />}
-              </button>
-            )}
-            <button
-              onPointerDown={onReset}
-              className={`${compact ? 'p-2.5' : 'p-3.5'} rounded-full bg-white/10 text-white shadow-lg active:scale-90 transition-transform`}
-              aria-label="Reset Timer"
-            >
-              <RotateCcw size={compact ? 18 : 22} />
-            </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative w-full h-full min-w-0 flex flex-col items-center justify-center pt-8 pb-2">
+          <div className="absolute left-1 top-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-white/30">
+            <Bell size={15} />
+            Timer
+          </div>
+
+          <button
+            onPointerDown={onOpen}
+            className="relative aspect-square w-[clamp(8.5rem,16vw,11rem)] shrink-0 rounded-full active:scale-95 transition-transform"
+            aria-label="Open Timer"
+          >
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `conic-gradient(from -90deg, ${accent} ${degrees}deg, rgba(255,255,255,0.08) ${degrees}deg)`
+              }}
+            />
+            <div className="absolute inset-3 rounded-full bg-black" />
+            <div className="absolute inset-5 rounded-full border border-white/10 bg-sky-300/10" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              {finished ? <CheckCircle2 size={24} className="text-emerald-300/80" /> : <Hourglass size={22} className="text-sky-300/80" />}
+              <div className="mt-1 text-[clamp(1.9rem,3.4vw,2.6rem)] font-black tracking-tighter tabular-nums leading-none">
+                {formatPomoTime(timeLeft)}
+              </div>
+              <div className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/35">
+                Timer
+              </div>
+            </div>
+          </button>
+
+          <div className="mt-4 w-full flex items-center justify-center gap-5">
+            <div className="min-w-0 text-left">
+              <h3 className="text-[clamp(1.45rem,2.4vw,2rem)] font-black tracking-tight leading-none">{status}</h3>
+              <p className="mt-1 text-sm font-bold text-white/35">{Math.round(progress * 100)}% elapsed</p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-3">
+              {finished ? (
+                <button
+                  onPointerDown={onDismiss}
+                  className="px-6 py-4 text-sm rounded-full bg-white text-black font-black uppercase tracking-widest shadow-xl active:scale-90 transition-transform"
+                >
+                  Clear
+                </button>
+              ) : (
+                <button
+                  onPointerDown={active ? onPause : onResume}
+                  className="p-4 rounded-full bg-white text-black shadow-xl active:scale-90 transition-transform"
+                  aria-label={active ? 'Pause Timer' : 'Resume Timer'}
+                >
+                  {active ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+                </button>
+              )}
+              <button
+                onPointerDown={onReset}
+                className="p-3.5 rounded-full bg-white/10 text-white shadow-lg active:scale-90 transition-transform"
+                aria-label="Reset Timer"
+              >
+                <RotateCcw size={22} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
