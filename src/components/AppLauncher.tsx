@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List, CalendarDays } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List, CalendarDays, ShieldQuestion } from 'lucide-react';
 import { PomodoroMode, AppConfig } from '@/types';
 
 type AppId = NonNullable<AppConfig['appOrder']>[number];
@@ -14,6 +14,7 @@ interface AppLauncherProps {
   onOpenHome: () => void;
   onOpenTimer: () => void;
   onOpenTodo: () => void;
+  onOpenRule: () => void;
   onResetPomo: () => void;
   onResetTimer: () => void;
   pomoActive: boolean;
@@ -37,6 +38,7 @@ export function AppLauncher({
   onOpenHome,
   onOpenTimer,
   onOpenTodo,
+  onOpenRule,
   onResetPomo,
   onResetTimer,
   pomoActive, 
@@ -46,7 +48,7 @@ export function AppLauncher({
   isSportsLive,
   appConfig
 }: AppLauncherProps) {
-  const order: AppId[] = appConfig.appOrder || ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo'];
+  const order: AppId[] = appConfig.appOrder || ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'];
 
   const apps: Record<AppId, React.ReactNode> = {
     calendar: (
@@ -184,6 +186,15 @@ export function AppLauncher({
       >
         <List size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/40">TODO</span>
+      </button>
+    ),
+    rule: (
+      <button
+        onPointerDown={onOpenRule}
+        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+      >
+        <ShieldQuestion size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Rule</span>
       </button>
     )
   };
