@@ -256,7 +256,7 @@ export function RuleView() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="grid h-full w-full max-w-7xl grid-cols-[0.9fr_1.1fr] gap-8 pt-8 pb-20"
+      className="grid h-full w-full grid-cols-[0.9fr_1.1fr] gap-8 p-8"
     >
       <section className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
@@ -318,53 +318,7 @@ export function RuleView() {
             ))}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-            <div className="text-[10px] font-black uppercase tracking-[0.28em] text-white/25">Keys</div>
-            <div
-              className="grid min-h-0 gap-2 overflow-y-auto pr-1 scrollbar-hide"
-              style={{ gridTemplateRows: `repeat(${visibleHouses.length}, minmax(0, 1fr))` }}
-            >
-              {visibleHouses.map(house => {
-                const isActiveHouse = house === challenge.house;
-
-                return (
-                  <div
-                    key={house}
-                    className={`grid min-h-0 grid-cols-8 gap-1.5 rounded-xl ${
-                      showTrace && isActiveHouse ? 'bg-white/[0.03]' : ''
-                    }`}
-                  >
-                    {rows[house].map((id, index) => {
-                      const response = responseMap.get(id);
-                      if (!response) return null;
-                      const { Icon, label } = response;
-                      const isExpected = showTrace && isActiveHouse && expected.includes(id);
-                      const isAnchor = showTrace && isActiveHouse && index === challenge.step - 1;
-
-                      return (
-                        <div
-                          key={id}
-                          role="img"
-                          className={`relative flex min-h-0 items-center justify-center rounded-2xl border ${
-                            isExpected
-                              ? 'border-sky-300/40 bg-sky-300/10 text-sky-100'
-                              : isAnchor
-                                ? 'border-white/25 bg-white/10 text-white'
-                                : 'border-white/10 bg-black/20 text-white/35'
-                          }`}
-                          aria-label={label}
-                          title={label}
-                        >
-                          <Icon className="size-[clamp(1rem,4vh,1.45rem)]" strokeWidth={1.9} />
-                          <span className="absolute left-1 top-0.5 text-[8px] font-black text-white/25">{index + 1}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <div className="min-h-0 flex-1" />
         </div>
 
         <div className="grid min-h-12 flex-[0.12_1_0] grid-cols-3 gap-3">
@@ -395,8 +349,8 @@ export function RuleView() {
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-col gap-5 pb-8">
-        <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-2 gap-4">
+      <section className="flex min-h-0 flex-col gap-5">
+        <div className="grid min-h-0 flex-[1.05_1_0] grid-cols-4 grid-rows-2 gap-4">
           {choices.map(({ id, label, Icon }) => {
             const isSelected = selected.includes(id);
             const isExpected = showTrace && expected.includes(id);
@@ -419,6 +373,54 @@ export function RuleView() {
               </button>
             );
           })}
+        </div>
+
+        <div className="flex min-h-0 flex-[1.2_1_0] flex-col gap-3 overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-white/25">Keys</div>
+          <div
+            className="grid min-h-0 flex-1 gap-2 overflow-y-auto scrollbar-hide"
+            style={{ gridTemplateRows: `repeat(${visibleHouses.length}, minmax(0, 1fr))` }}
+          >
+            {visibleHouses.map(house => {
+              const isActiveHouse = house === challenge.house;
+
+              return (
+                <div
+                  key={house}
+                  className={`grid h-full min-h-0 grid-cols-8 gap-2 rounded-xl ${
+                    showTrace && isActiveHouse ? 'bg-white/[0.03]' : ''
+                  }`}
+                >
+                  {rows[house].map((id, index) => {
+                    const response = responseMap.get(id);
+                    if (!response) return null;
+                    const { Icon, label } = response;
+                    const isExpected = showTrace && isActiveHouse && expected.includes(id);
+                    const isAnchor = showTrace && isActiveHouse && index === challenge.step - 1;
+
+                    return (
+                      <div
+                        key={id}
+                        role="img"
+                        className={`relative flex h-full min-h-0 items-center justify-center rounded-2xl border ${
+                          isExpected
+                            ? 'border-sky-300/40 bg-sky-300/10 text-sky-100'
+                            : isAnchor
+                              ? 'border-white/25 bg-white/10 text-white'
+                              : 'border-white/10 bg-black/20 text-white/35'
+                        }`}
+                        aria-label={label}
+                        title={label}
+                      >
+                        <Icon className="size-[clamp(1.6rem,6vh,2.65rem)]" strokeWidth={1.9} />
+                        <span className="absolute left-1.5 top-1 text-[9px] font-black text-white/25">{index + 1}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div

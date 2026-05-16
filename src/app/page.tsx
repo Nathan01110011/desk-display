@@ -125,7 +125,7 @@ export default function Dashboard() {
 
   if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
-  const isFullscreenView = activeView === 'calendar' || (activeView === 'weather' && weatherDetail) || activeView === 'todo';
+  const isFullscreenView = activeView === 'calendar' || (activeView === 'weather' && weatherDetail) || activeView === 'todo' || activeView === 'rule';
 
   return (
     <main className="fixed inset-0 bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased">
