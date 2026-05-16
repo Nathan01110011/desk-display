@@ -373,12 +373,12 @@ export default function Dashboard() {
 
                 <div className="w-full flex-1 min-h-0 flex items-center justify-center">
                   {hasPomodoroHero || hasTimerHero ? (
-                    <div className="grid w-full h-full max-h-[24rem] grid-cols-2 gap-8 items-stretch">
-                      <div className="min-w-0 rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 flex items-center">
+                    <div className="grid w-full h-full max-h-[24rem] min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5 items-stretch overflow-hidden">
+                      <div className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-5 flex items-center">
                         <SpotifyPlayer spotify={spotify} onAction={handleAction} compact />
                       </div>
                       {hasBothTimerHeroes ? (
-                        <div className="grid min-h-0 grid-rows-2 gap-4">
+                        <div className="grid min-h-0 min-w-0 grid-rows-2 gap-4 overflow-hidden">
                           <DashboardPomodoroPanel
                             compact
                             timeLeft={pomoTime}

@@ -38,18 +38,16 @@ export function DashboardPomodoroPanel({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 18 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className={`${compact ? 'h-full p-4 rounded-[1.5rem]' : 'h-full p-6 rounded-[2rem]'} min-h-0 border border-white/10 bg-white/[0.045] flex items-center justify-center`}
+      className={`${compact ? 'h-full p-4 rounded-[1.5rem]' : 'h-full p-5 rounded-[2rem]'} min-h-0 min-w-0 overflow-hidden border border-white/10 bg-white/[0.045] flex items-center justify-center`}
     >
-      <div className={`w-full max-w-xl flex items-center ${compact ? 'gap-4' : 'gap-8'}`}>
+      <div className={`w-full max-w-full min-w-0 min-h-0 flex items-center ${compact ? 'gap-4' : 'gap-5'}`}>
         <button
           onPointerDown={onOpen}
-          className={`relative shrink-0 rounded-full active:scale-95 transition-transform ${compact ? 'size-32' : 'size-56'}`}
+          className={`relative aspect-square shrink-0 rounded-full active:scale-95 transition-transform ${compact ? 'w-[clamp(5.5rem,18vh,7rem)]' : 'w-[clamp(8rem,18vw,12rem)]'}`}
           aria-label="Open Pomodoro"
         >
-          <motion.div
+          <div
             className="absolute inset-0 rounded-full"
-            animate={active ? { rotate: 360 } : { rotate: 0 }}
-            transition={active ? { repeat: Infinity, duration: 12, ease: 'linear' } : { duration: 0.2 }}
             style={{
               background: `conic-gradient(from -90deg, ${accent} ${degrees}deg, rgba(255,255,255,0.08) ${degrees}deg)`
             }}
@@ -60,8 +58,8 @@ export function DashboardPomodoroPanel({
             style={{ background: softAccent }}
           />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <Timer size={compact ? 18 : 26} className={isBreak ? 'text-blue-300/70' : 'text-rose-300/70'} />
-            <div className={`mt-2 font-black tracking-tighter tabular-nums leading-none ${compact ? 'text-3xl' : 'text-5xl'}`}>
+            <Timer size={compact ? 16 : 22} className={isBreak ? 'text-blue-300/70' : 'text-rose-300/70'} />
+            <div className={`mt-1 font-black tracking-tighter tabular-nums leading-none ${compact ? 'text-2xl' : 'text-[clamp(2rem,4vw,3rem)]'}`}>
               {formatPomoTime(timeLeft)}
             </div>
             <div className={`${compact ? 'mt-1 text-[8px]' : 'mt-2 text-[10px]'} font-black uppercase tracking-[0.28em] text-white/35`}>
@@ -70,16 +68,16 @@ export function DashboardPomodoroPanel({
           </div>
         </button>
 
-        <div className={`min-w-0 flex-1 ${compact ? 'space-y-3' : 'space-y-6'}`}>
+        <div className={`min-w-0 flex-1 overflow-hidden ${compact ? 'space-y-2' : 'space-y-4'}`}>
           <div>
-            <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.28em] text-white/30">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
               <Timer size={16} />
               Pomodoro
             </div>
-            <h3 className={`${compact ? 'mt-2 text-2xl' : 'mt-3 text-4xl'} font-black tracking-tight leading-none`}>
+            <h3 className={`${compact ? 'mt-2 text-xl' : 'mt-3 text-[clamp(1.65rem,3vw,2.5rem)]'} font-black tracking-tight leading-none truncate`}>
               {active ? 'In progress' : timeLeft === 0 ? 'Complete' : 'Paused'}
             </h3>
-            <p className={`${compact ? 'mt-1 text-sm' : 'mt-2 text-lg'} font-bold text-white/35`}>
+            <p className={`${compact ? 'mt-1 text-xs' : 'mt-2 text-sm'} font-bold text-white/35 truncate`}>
               {isBreak ? 'Break timer' : 'Focus timer'} · {Math.round((1 - progress) * 100)}%
             </p>
           </div>
@@ -87,17 +85,17 @@ export function DashboardPomodoroPanel({
           <div className={`flex items-center ${compact ? 'gap-3' : 'gap-4'}`}>
             <button
               onPointerDown={onToggle}
-              className={`${compact ? 'p-4' : 'p-6'} rounded-full bg-white text-black shadow-xl active:scale-90 transition-transform`}
+              className={`${compact ? 'p-3' : 'p-4'} rounded-full bg-white text-black shadow-xl active:scale-90 transition-transform`}
               aria-label={active ? 'Pause Pomodoro' : 'Start Pomodoro'}
             >
-              {active ? <Pause size={compact ? 24 : 34} fill="currentColor" /> : <Play size={compact ? 24 : 34} fill="currentColor" className="ml-1" />}
+              {active ? <Pause size={compact ? 20 : 28} fill="currentColor" /> : <Play size={compact ? 20 : 28} fill="currentColor" className="ml-1" />}
             </button>
             <button
               onPointerDown={onReset}
-              className={`${compact ? 'p-3.5' : 'p-5'} rounded-full bg-white/10 text-white shadow-lg active:scale-90 transition-transform`}
+              className={`${compact ? 'p-2.5' : 'p-3.5'} rounded-full bg-white/10 text-white shadow-lg active:scale-90 transition-transform`}
               aria-label="Reset Pomodoro"
             >
-              <RotateCcw size={compact ? 20 : 28} />
+              <RotateCcw size={compact ? 18 : 22} />
             </button>
           </div>
         </div>

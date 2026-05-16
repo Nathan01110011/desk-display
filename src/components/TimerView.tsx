@@ -48,7 +48,7 @@ export function TimerView({
     >
       <section className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex items-center justify-center">
         {hasTimer ? (
-          <div className="relative size-[min(62vh,34rem)]">
+          <div className="relative aspect-square w-[56vh] max-w-[34rem] max-h-[34rem] min-w-[16rem] min-h-[16rem] shrink-0">
             <div
               className="absolute inset-0 rounded-full"
               style={{
