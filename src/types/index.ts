@@ -56,6 +56,11 @@ export interface AppConfig {
   appOrder?: ('calendar' | 'pomodoro' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule')[];
 }
 
+export interface RuleLockSettings {
+  enabled: boolean;
+  timeoutMinutes: number;
+}
+
 export interface FitbitStats {
   steps: number;
   stepGoal: number;

@@ -69,11 +69,10 @@ export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherVi
   return (
     <motion.div
       key="weather-view"
-      layout
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="w-full h-full flex flex-col items-center justify-center py-4 relative"
     >
       <AnimatePresence mode="wait">
@@ -83,7 +82,7 @@ export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherVi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: isExtended ? 0 : 1, y: isExtended ? -12 : 0, scale: isExtended ? 0.98 : 1 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: isExtended ? 0.35 : 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
             className="w-full flex flex-col items-center"
           >
             <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs mb-4">
@@ -145,10 +144,10 @@ export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherVi
         ) : (
           <motion.div 
             key="extended"
-            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            initial={{ opacity: 0, y: 12, scale: 0.99 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: 18, scale: 0.98 }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, y: 12, scale: 0.99 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
             className="w-full h-full flex flex-col p-4"
           >
             <div className="flex items-center justify-between mb-6 pr-24">
@@ -169,7 +168,7 @@ export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherVi
               style={maskStyle}
             >
               {Object.entries(groupedForecast).map(([date, hours]) => (
-                <motion.div layout key={date} className="bg-white/5 rounded-[2.5rem] border border-white/5 p-6 space-y-4">
+                <div key={date} className="bg-white/5 rounded-[2.5rem] border border-white/5 p-6 space-y-4">
                   <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em] px-2">{date}</h3>
                   <div className="grid grid-cols-8 gap-2">
                     {hours.map((item, idx) => (
@@ -189,7 +188,7 @@ export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherVi
                       <div key={`empty-${i}`} className="w-full" />
                     ))}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </motion.div>

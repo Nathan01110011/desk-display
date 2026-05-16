@@ -218,16 +218,16 @@ export function AppLauncher({
   const totalIcons = launcherItems.length;
   const isMultiRow = totalIcons > 5;
   const columnCount = isMultiRow ? Math.ceil(totalIcons / 2) : totalIcons;
-  const multiRowTileMaxWidth = '9rem';
+  const multiRowTileMaxWidth = '8rem';
   const rows = isMultiRow
     ? [launcherItems.slice(0, columnCount), launcherItems.slice(columnCount)]
     : [launcherItems];
 
   return (
-    <div className={`w-full border-t border-white/5 px-4 ${isMultiRow ? 'max-w-5xl pt-6' : 'max-w-5xl pt-10'}`}>
-      <div className={`flex flex-col w-full mx-auto ${isMultiRow ? 'gap-4' : 'gap-5'}`}>
+    <div className={`w-full border-t border-white/5 px-4 ${isMultiRow ? 'max-w-5xl pt-5' : 'max-w-5xl pt-10'}`}>
+      <div className={`flex flex-col w-full mx-auto ${isMultiRow ? 'gap-3' : 'gap-5'}`}>
         {rows.map((row, index) => (
-          <div key={index} className={`flex justify-center ${isMultiRow ? 'gap-4' : 'gap-5'}`}>
+          <div key={index} className={`flex justify-center ${isMultiRow ? 'gap-3' : 'gap-5'}`}>
             {row.map(item => (
               <div
                 key={item.id}

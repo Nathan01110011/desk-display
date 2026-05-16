@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Anchor,
   Aperture,
@@ -211,9 +211,14 @@ const choicesFor = (): IconMeta<ResponseId>[] =>
 
 const keyFor = (items: string[]) => [...items].sort().join('|');
 
-export function RuleView() {
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
-  const [challenge, setChallenge] = useState<Challenge>(() => makeChallenge('easy'));
+interface RuleViewProps {
+  lockMode?: boolean;
+  onSolved?: () => void;
+}
+
+export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
+  const [difficulty, setDifficulty] = useState<Difficulty>(lockMode ? 'hard' : 'easy');
+  const [challenge, setChallenge] = useState<Challenge>(() => makeChallenge(lockMode ? 'hard' : 'easy'));
   const [selected, setSelected] = useState<ResponseId[]>([]);
   const [showTrace, setShowTrace] = useState(false);
 
@@ -222,6 +227,13 @@ export function RuleView() {
   const visibleHouses = difficultyConfig[difficulty].houses;
   const solved = selected.length === expected.length && keyFor(selected) === keyFor(expected);
   const missed = selected.length >= expected.length && !solved;
+
+  useEffect(() => {
+    if (!lockMode || !solved) return;
+
+    const timeout = window.setTimeout(() => onSolved?.(), 350);
+    return () => window.clearTimeout(timeout);
+  }, [lockMode, onSolved, solved]);
 
   const promptItems = [
     iconFor(houses, challenge.house),
@@ -265,19 +277,21 @@ export function RuleView() {
             Rule
           </div>
 
-          <div className="grid shrink-0 grid-cols-3 gap-2 rounded-[1.25rem] border border-white/10 bg-black/20 p-2">
-            {(Object.keys(difficultyConfig) as Difficulty[]).map(level => (
-              <button
-                key={level}
-                onPointerDown={() => setLevel(level)}
-                className={`min-h-10 rounded-2xl py-2 text-sm font-black uppercase tracking-[0.18em] transition-all active:scale-95 ${
-                  difficulty === level ? 'bg-white text-black' : 'text-white/40'
-                }`}
-              >
-                {difficultyConfig[level].label}
-              </button>
-            ))}
-          </div>
+          {!lockMode && (
+            <div className="grid shrink-0 grid-cols-3 gap-2 rounded-[1.25rem] border border-white/10 bg-black/20 p-2">
+              {(Object.keys(difficultyConfig) as Difficulty[]).map(level => (
+                <button
+                  key={level}
+                  onPointerDown={() => setLevel(level)}
+                  className={`min-h-10 rounded-2xl py-2 text-sm font-black uppercase tracking-[0.18em] transition-all active:scale-95 ${
+                    difficulty === level ? 'bg-white text-black' : 'text-white/40'
+                  }`}
+                >
+                  {difficultyConfig[level].label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="grid min-h-0 flex-[1.15_1_0] grid-cols-3 gap-3">
             {promptItems.map(({ id, label, Icon }) => (
@@ -321,7 +335,7 @@ export function RuleView() {
           <div className="min-h-0 flex-1" />
         </div>
 
-        <div className="grid min-h-12 flex-[0.12_1_0] grid-cols-3 gap-3">
+        <div className={`grid min-h-12 flex-[0.12_1_0] gap-3 ${lockMode ? 'grid-cols-2' : 'grid-cols-3'}`}>
           <button
             onPointerDown={() => setSelected([])}
             className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white/[0.04] text-white/50 active:scale-95"
@@ -330,14 +344,16 @@ export function RuleView() {
           >
             <RotateCcw className="size-[clamp(1.35rem,4vh,1.85rem)]" />
           </button>
-          <button
-            onPointerDown={() => setShowTrace(value => !value)}
-            className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white/[0.04] text-white/50 active:scale-95"
-            aria-label="Reveal"
-            title="Reveal"
-          >
-            <ScanEye className="size-[clamp(1.35rem,4vh,1.85rem)]" />
-          </button>
+          {!lockMode && (
+            <button
+              onPointerDown={() => setShowTrace(value => !value)}
+              className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white/[0.04] text-white/50 active:scale-95"
+              aria-label="Reveal"
+              title="Reveal"
+            >
+              <ScanEye className="size-[clamp(1.35rem,4vh,1.85rem)]" />
+            </button>
+          )}
           <button
             onPointerDown={resetChallenge}
             className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white text-black active:scale-95"

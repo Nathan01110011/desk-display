@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical } from 'lucide-react';
-import { AppConfig, AdditionalClock } from '@/types';
+import { AppConfig, AdditionalClock, RuleLockSettings } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
 interface SettingsViewProps {
@@ -13,6 +13,8 @@ interface SettingsViewProps {
   onUpdateAppConfig: (config: AppConfig) => void;
   worldClocks: AdditionalClock[];
   onUpdateClocks: (clocks: AdditionalClock[]) => void;
+  ruleLock: RuleLockSettings;
+  onUpdateRuleLock: (settings: RuleLockSettings) => void;
 }
 
 export function SettingsView({ 
@@ -22,7 +24,9 @@ export function SettingsView({
   appConfig,
   onUpdateAppConfig,
   worldClocks,
-  onUpdateClocks
+  onUpdateClocks,
+  ruleLock,
+  onUpdateRuleLock
 }: SettingsViewProps) {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
@@ -98,6 +102,26 @@ export function SettingsView({
       body: JSON.stringify({ worldClocks: updatedClocks })
     });
   };
+
+  const updateRuleLock = async (settings: RuleLockSettings) => {
+    onUpdateRuleLock(settings);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ruleLockEnabled: settings.enabled,
+        ruleLockTimeoutMinutes: settings.timeoutMinutes
+      })
+    });
+  };
+
+  const updateRuleLockTime = (hours: number, minutes: number) => {
+    const timeoutMinutes = Math.max(1, Math.min(24 * 60, (hours * 60) + minutes));
+    updateRuleLock({ ...ruleLock, timeoutMinutes });
+  };
+
+  const ruleLockHours = Math.floor(ruleLock.timeoutMinutes / 60);
+  const ruleLockMinutes = ruleLock.timeoutMinutes % 60;
 
   return (
     <motion.div
@@ -187,6 +211,71 @@ export function SettingsView({
         </div>
 
         <div className="space-y-6">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white/80">Rule Lock</h3>
+                <p className="text-white/30 text-xs">Page load and idle timeout</p>
+              </div>
+              <button
+                onPointerDown={() => updateRuleLock({ ...ruleLock, enabled: !ruleLock.enabled })}
+                className={`size-12 rounded-2xl border flex items-center justify-center active:scale-95 transition-all ${
+                  ruleLock.enabled ? 'bg-white text-black border-white' : 'bg-white/5 text-white/20 border-white/10'
+                }`}
+                aria-label="Toggle Rule Lock"
+              >
+                {ruleLock.enabled && <Check size={22} strokeWidth={4} />}
+              </button>
+            </div>
+
+            <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Timeout</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center justify-between rounded-2xl bg-black/20 p-3 border border-white/5">
+                  <button
+                    onPointerDown={() => updateRuleLockTime(Math.max(0, ruleLockHours - 1), ruleLockMinutes)}
+                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    aria-label="Decrease hours"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-3xl font-black tabular-nums">{ruleLockHours}</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Hours</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateRuleLockTime(Math.min(24, ruleLockHours + 1), ruleLockMinutes)}
+                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    aria-label="Increase hours"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between rounded-2xl bg-black/20 p-3 border border-white/5">
+                  <button
+                    onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.max(0, ruleLockMinutes - 5))}
+                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    aria-label="Decrease minutes"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-3xl font-black tabular-nums">{ruleLockMinutes}</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Minutes</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.min(55, ruleLockMinutes + 5))}
+                    className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                    aria-label="Increase minutes"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
             <h3 className="text-lg font-bold text-white/80">Dashboard Apps</h3>
             
