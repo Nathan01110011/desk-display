@@ -1,10 +1,12 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List } from 'lucide-react';
-import { formatPomoTime } from '@/lib/format';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List, CalendarDays } from 'lucide-react';
 import { PomodoroMode, AppConfig } from '@/types';
+
+type AppId = NonNullable<AppConfig['appOrder']>[number];
 
 interface AppLauncherProps {
   onOpenPomo: () => void;
+  onOpenCalendar: () => void;
   onOpenSettings: () => void;
   onOpenSports: () => void;
   onOpenWeather: () => void;
@@ -27,6 +29,7 @@ interface AppLauncherProps {
 
 export function AppLauncher({ 
   onOpenPomo, 
+  onOpenCalendar,
   onOpenSettings, 
   onOpenSports, 
   onOpenWeather,
@@ -37,18 +40,24 @@ export function AppLauncher({
   onResetPomo,
   onResetTimer,
   pomoActive, 
-  pomoTime,
   pomoFinished,
-  pomoMode,
   timerActive,
-  timerTime,
   timerFinished,
   isSportsLive,
   appConfig
 }: AppLauncherProps) {
-  const order = appConfig.appOrder || ['pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo'];
+  const order: AppId[] = appConfig.appOrder || ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo'];
 
-  const apps = {
+  const apps: Record<AppId, React.ReactNode> = {
+    calendar: (
+      <button
+        onPointerDown={onOpenCalendar}
+        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+      >
+        <CalendarDays size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Calendar</span>
+      </button>
+    ),
     pomodoro: (
       <div className="relative group">
         <button
@@ -179,20 +188,12 @@ export function AppLauncher({
     )
   };
 
-  const activeApps = order.filter(appId => appConfig[appId as keyof AppConfig]);
-  const totalIcons = activeApps.length + 1; // +1 for Settings
-
-  return (
-    <div className="w-full max-w-5xl border-t border-white/5 pt-10 px-4">
-      <div 
-        className="grid gap-4 w-full" 
-        style={{ gridTemplateColumns: `repeat(${totalIcons}, minmax(0, 1fr))` }}
-      >
-        {activeApps.map(appId => (
-          <div key={appId}>{(apps as any)[appId]}</div>
-        ))}
-
-        {/* Settings (Always Visible) */}
+  const activeApps = order.filter(appId => appConfig[appId]);
+  const launcherItems = [
+    ...activeApps.map(appId => ({ id: appId, content: apps[appId] })),
+    {
+      id: 'settings',
+      content: (
         <button
           onPointerDown={onOpenSettings}
           className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
@@ -200,6 +201,33 @@ export function AppLauncher({
           <Settings size={40} className="text-white/80" />
           <span className="text-base font-bold text-white/40">Settings</span>
         </button>
+      )
+    }
+  ];
+  const totalIcons = launcherItems.length;
+  const isMultiRow = totalIcons > 5;
+  const columnCount = isMultiRow ? Math.ceil(totalIcons / 2) : totalIcons;
+  const multiRowTileMaxWidth = '9rem';
+  const rows = isMultiRow
+    ? [launcherItems.slice(0, columnCount), launcherItems.slice(columnCount)]
+    : [launcherItems];
+
+  return (
+    <div className={`w-full border-t border-white/5 px-4 ${isMultiRow ? 'max-w-5xl pt-6' : 'max-w-5xl pt-10'}`}>
+      <div className={`flex flex-col w-full mx-auto ${isMultiRow ? 'gap-4' : 'gap-5'}`}>
+        {rows.map((row, index) => (
+          <div key={index} className={`flex justify-center ${isMultiRow ? 'gap-4' : 'gap-5'}`}>
+            {row.map(item => (
+              <div
+                key={item.id}
+                className="w-full"
+                style={{ maxWidth: isMultiRow ? multiRowTileMaxWidth : undefined }}
+              >
+                {item.content}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );

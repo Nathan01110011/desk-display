@@ -14,6 +14,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [topFade, setTopFade] = useState(0);
   const [bottomFade, setBottomFade] = useState(40);
+  const [showExtended, setShowExtended] = useState(isExtended);
 
   const groupedForecast = useMemo(() => {
     if (!weather) return {};
@@ -36,10 +37,23 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
   };
 
   useEffect(() => {
-    if (isExtended) {
+    if (!isExtended) {
+      setShowExtended(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowExtended(true);
+    }, 420);
+
+    return () => window.clearTimeout(timer);
+  }, [isExtended]);
+
+  useEffect(() => {
+    if (showExtended) {
       setTimeout(handleScroll, 100);
     }
-  }, [isExtended]);
+  }, [showExtended]);
 
   if (!weather) {
     return (
@@ -67,14 +81,14 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       className="w-full h-full flex flex-col items-center justify-center py-4 relative"
     >
-      <AnimatePresence mode="popLayout">
-        {!isExtended ? (
+      <AnimatePresence mode="wait">
+        {!showExtended ? (
           <motion.div 
             key="at-a-glance"
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: isExtended ? 0 : 1, y: isExtended ? -12 : 0, scale: isExtended ? 0.98 : 1 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ duration: isExtended ? 0.35 : 0.6, ease: "easeOut" }}
             className="w-full flex flex-col items-center"
           >
             <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs mb-4">
@@ -134,10 +148,10 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
         ) : (
           <motion.div 
             key="extended"
-            initial={{ opacity: 0, scale: 1.05 }}
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            exit={{ opacity: 0, y: 18, scale: 0.98 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="w-full h-full flex flex-col p-4"
           >
             <div className="flex items-center justify-between mb-6 pr-24">
