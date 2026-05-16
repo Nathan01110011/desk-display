@@ -47,11 +47,9 @@ export function PomodoroView({
       className="w-full h-full grid grid-cols-[minmax(0,1fr)_22rem] gap-8"
     >
       <section className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex items-center justify-center">
-        <div className="relative size-[min(62vh,34rem)]">
-          <motion.div
+        <div className="relative aspect-square w-[56vh] max-w-[34rem] max-h-[34rem] min-w-[16rem] min-h-[16rem] shrink-0">
+          <div
             className="absolute inset-0 rounded-full"
-            animate={pomoActive ? { rotate: 360 } : { rotate: 0 }}
-            transition={pomoActive ? { repeat: Infinity, duration: 16, ease: 'linear' } : { duration: 0.2 }}
             style={{
               background: `conic-gradient(from -90deg, ${accent} ${progress * 360}deg, rgba(255,255,255,0.08) ${progress * 360}deg)`
             }}
