@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Anchor,
   Aperture,
@@ -228,13 +228,6 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
   const solved = selected.length === expected.length && keyFor(selected) === keyFor(expected);
   const missed = selected.length >= expected.length && !solved;
 
-  useEffect(() => {
-    if (!lockMode || !solved) return;
-
-    const timeout = window.setTimeout(() => onSolved?.(), 350);
-    return () => window.clearTimeout(timeout);
-  }, [lockMode, onSolved, solved]);
-
   const promptItems = [
     iconFor(houses, challenge.house),
     counts[challenge.step - 1],
@@ -256,9 +249,17 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
 
   const toggleSelection = (id: ResponseId) => {
     setSelected(current => {
-      if (current.includes(id)) return current.filter(item => item !== id);
-      if (current.length >= expected.length) return [...current.slice(1), id];
-      return [...current, id];
+      const next = current.includes(id)
+        ? current.filter(item => item !== id)
+        : current.length >= expected.length
+          ? [...current.slice(1), id]
+          : [...current, id];
+
+      if (lockMode && next.length === expected.length && keyFor(next) === keyFor(expected)) {
+        window.setTimeout(() => onSolved?.(), 150);
+      }
+
+      return next;
     });
   };
 
