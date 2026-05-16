@@ -24,6 +24,21 @@ interface WeatherData {
   }[];
 }
 
+interface OpenWeatherForecastItem {
+  dt: number;
+  main: { temp: number };
+  weather: { main: string; icon: string }[];
+}
+
+interface OpenWeatherForecastResponse {
+  list?: OpenWeatherForecastItem[];
+  city: {
+    timezone: number;
+    sunrise: number;
+    sunset: number;
+  };
+}
+
 async function fetchWithRetry(url: string, retries = 3, timeout = 10000) {
   for (let i = 0; i < retries; i++) {
     const controller = new AbortController();
@@ -53,7 +68,7 @@ export async function GET(request: Request) {
       const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
       if (settings.weatherUnit) unit = settings.weatherUnit;
     }
-  } catch (e) {}
+  } catch {}
 
   const openWeatherUnit = unit === 'F' ? 'imperial' : 'metric';
 
@@ -92,7 +107,7 @@ export async function GET(request: Request) {
     const weatherRes = await fetchWithRetry(
       `https://api.openweathermap.org/data/2.5/forecast?lat=${geo.lat}&lon=${geo.lon}&units=${openWeatherUnit}&appid=${API_KEY}`
     );
-    const wData = await weatherRes.json();
+    const wData = await weatherRes.json() as OpenWeatherForecastResponse;
 
     if (weatherRes.status !== 200 || !wData.list) {
       return NextResponse.json({ ...mockData, location: `${geo.name} (Offline)` });
@@ -103,7 +118,7 @@ export async function GET(request: Request) {
     };
 
     const current = wData.list[0];
-    const forecast = wData.list.map((item: any) => {
+    const forecast = wData.list.map((item) => {
       const date = new Date(item.dt * 1000);
       const isToday = date.toDateString() === new Date().toDateString();
       return {

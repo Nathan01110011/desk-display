@@ -36,8 +36,8 @@ async function fetchLeagueScoreboard(sport: string, leagueId: string, date: stri
 
     data.events?.forEach((event: { id: string; competitions: { competitors: { homeAway: string; team: { displayName: string; shortDisplayName?: string; logo: string }; score: string }[] }[]; status: { type: { detail: string; state: string } }; date: string }) => {
       const competition = event.competitions[0];
-      const home = competition.competitors.find((c: { homeAway: string }) => c.homeAway === 'home')!;
-      const away = competition.competitors.find((c: { homeAway: string }) => c.homeAway === 'away')!;
+      const home = competition.competitors.find((c: { homeAway: string }) => c.homeAway === 'home');
+      const away = competition.competitors.find((c: { homeAway: string }) => c.homeAway === 'away');
 
       if (!home || !away) return;
 

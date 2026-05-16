@@ -32,7 +32,7 @@ SMART_DEVICES=tapo|myemail@gmail.com:MySecretPassword123:192.168.1.50|Desk Lamp,
 
 The Smart Home app is designed to be modular. To add support for a new vendor (e.g., Phillips Hue, Kasa, Govee):
 
-1. **Install the SDK**: Find a Node.js library for the vendor (e.g., `npm install node-hue-api`).
+1. **Install the SDK**: Find a Node.js library for the vendor (e.g., `pnpm add node-hue-api`).
 2. **Update `src/types/index.ts`**: Add the new vendor string to the `SmartDevice['type']` union (e.g., `type: 'tapo' | 'hue'`).
 3. **Update the Devices API (`src/app/api/home/devices/route.ts`)**:
    - Add a new `if (type === 'hue')` block.

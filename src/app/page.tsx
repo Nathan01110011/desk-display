@@ -361,7 +361,7 @@ export default function Dashboard() {
                   />
                 )}
                 {activeView === 'todo' && (
-                  <TodoView onClose={() => setActiveView('dashboard')} />
+                  <TodoView />
                 )}
               </motion.div>
             )}

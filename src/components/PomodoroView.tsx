@@ -20,8 +20,7 @@ export function PomodoroView({
   pomoMode, 
   onToggle, 
   onReset, 
-  onSwitchMode, 
-  onClose 
+  onSwitchMode
 }: PomodoroViewProps) {
   const isFinished = pomoTime === 0 && !pomoActive;
 

@@ -5,7 +5,30 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-async function sendWizCommand(ip: string, msg: object, retries = 2): Promise<any> {
+interface WizCommandResponse {
+  result?: {
+    success?: boolean;
+  };
+}
+
+interface WizSetPilotParams {
+  state?: boolean;
+  dimming?: number;
+  temp?: number;
+  r?: number;
+  g?: number;
+  b?: number;
+}
+
+interface ToggleRequestBody {
+  id?: string;
+  targetState?: boolean;
+  brightness?: number;
+  colorTemp?: number;
+  color?: { r: number; g: number; b: number };
+}
+
+async function sendWizCommand(ip: string, msg: object, retries = 2): Promise<WizCommandResponse> {
   const json = JSON.stringify(msg);
   const isSetCommand = json.includes('setPilot');
   const command = `echo '${json}' | nc -u -w 1 ${ip} 38899`;
@@ -21,17 +44,19 @@ async function sendWizCommand(ip: string, msg: object, retries = 2): Promise<any
         throw new Error('Empty response from bulb');
       }
       
-      return JSON.parse(stdout);
+      return JSON.parse(stdout) as WizCommandResponse;
     } catch (e) {
       if (i === retries - 1) throw e;
       await new Promise(res => setTimeout(res, 500));
     }
   }
+
+  throw new Error('WiZ command exhausted retries');
 }
 
 export async function POST(request: Request) {
   try {
-    const { id, targetState, brightness, colorTemp, color } = await request.json();
+    const { id, targetState, brightness, colorTemp, color } = await request.json() as ToggleRequestBody;
     const devicesEnv = process.env.SMART_DEVICES;
     if (!devicesEnv) return NextResponse.json({ error: 'No devices configured' }, { status: 400 });
 
@@ -44,7 +69,7 @@ export async function POST(request: Request) {
       if (configId === id && type === 'wiz') {
         const ip = creds;
         try {
-          const params: any = {};
+          const params: WizSetPilotParams = {};
           if (targetState !== undefined) params.state = targetState;
           if (brightness !== undefined) params.dimming = brightness;
           if (colorTemp !== undefined) params.temp = colorTemp;
@@ -61,8 +86,9 @@ export async function POST(request: Request) {
           });
           
           return NextResponse.json({ success: true });
-        } catch (e: any) {
-          logger.error(`Smart Home: WiZ command failed for ${displayName}: ${e.message}`);
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : 'Unknown error';
+          logger.error(`Smart Home: WiZ command failed for ${displayName}: ${message}`);
           return NextResponse.json({ error: 'UDP connection failed' }, { status: 503 });
         }
       }

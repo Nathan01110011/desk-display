@@ -22,10 +22,14 @@ export function useFitbit(enabled: boolean = false) {
 
   useEffect(() => {
     if (!enabled) {
-      setLoading(false);
+      queueMicrotask(() => {
+        setLoading(false);
+      });
       return;
     }
-    fetchStats();
+    queueMicrotask(() => {
+      fetchStats();
+    });
     const timer = setInterval(fetchStats, 1000 * 60 * 5); // Refresh every 5 minutes
     return () => clearInterval(timer);
   }, [fetchStats, enabled]);

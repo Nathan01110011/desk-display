@@ -3,7 +3,7 @@
 This file contains foundational instructions for Gemini CLI when working on the **Desk Display** project. These rules take precedence over general defaults.
 
 ## 🛠️ Build & Validation
-- **Always Test Builds**: After making any non-trivial code changes (especially adding new libraries or changing types), you **MUST** run `npm run build` to verify that there are no TypeScript or Next.js build errors. Never assume a change is finished until it compiles.
+- **Always Test Builds**: After making any non-trivial code changes (especially adding new libraries or changing types), you **MUST** run `pnpm build` to verify that there are no TypeScript or Next.js build errors. Never assume a change is finished until it compiles.
 - **Aggressive Cleanup**: If temporary debug logs or buttons are added, ensure they are gated by `process.env.NODE_ENV === 'development'` or removed before finalizing the task.
 
 ## 🥧 Raspberry Pi Optimization

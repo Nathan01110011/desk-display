@@ -23,10 +23,14 @@ export function useSmartHome(enabled: boolean = false) {
 
   useEffect(() => {
     if (!enabled) {
-      setLoading(false);
+      queueMicrotask(() => {
+        setLoading(false);
+      });
       return;
     }
-    fetchDevices();
+    queueMicrotask(() => {
+      fetchDevices();
+    });
     const timer = setInterval(fetchDevices, 1000 * 30);
     return () => clearInterval(timer);
   }, [fetchDevices, enabled]);
@@ -57,7 +61,7 @@ export function useSmartHome(enabled: boolean = false) {
         });
         
         await res.json();
-      } catch (e) {
+      } catch {
         fetchDevices(); // Re-sync on error
       } finally {
         setDevices(prev => prev.map(d => d.id === id ? { ...d, loading: false } : d));

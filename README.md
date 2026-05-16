@@ -21,6 +21,7 @@ A minimalist, high-performance smart display dashboard designed for Raspberry Pi
 
 ### 1. Prerequisites
 - Node.js 20+
+- pnpm via Corepack
 - A Spotify Developer account
 - A free OpenWeatherMap API key
 - A private iCal URL (iCloud, Outlook, or Google)
@@ -29,7 +30,8 @@ A minimalist, high-performance smart display dashboard designed for Raspberry Pi
 ```bash
 git clone https://github.com/Nathan01110011/desk-display.git
 cd desk-display
-npm install
+corepack enable pnpm
+pnpm install
 ```
 
 ### 3. Environment Setup

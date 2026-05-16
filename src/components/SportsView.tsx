@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, X } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { SportMatch } from '@/types';
 
 interface SportsViewProps {
@@ -19,7 +19,7 @@ function formatMatchDate(dateStr: string) {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-export function SportsView({ matches, onClose }: SportsViewProps) {
+export function SportsView({ matches }: SportsViewProps) {
   return (
     <motion.div
       key="sports-view"
