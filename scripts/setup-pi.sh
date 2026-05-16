@@ -19,10 +19,10 @@ fi
 
 # 3. Enable pnpm and install PM2 globally
 echo "--- 📦 Enabling pnpm ---"
-corepack enable pnpm
+sudo corepack enable pnpm
 
 echo "--- 🟢 Installing PM2 ---"
-pnpm add --global pm2
+sudo pnpm add --global pm2
 pm2 startup | tail -n 1 | bash # Set PM2 to start on boot
 
 # 4. Initial Build & Start
