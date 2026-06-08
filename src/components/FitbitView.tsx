@@ -14,7 +14,7 @@ export function FitbitView({ stats, loading }: FitbitViewProps) {
     return (
       <div className="flex flex-col items-center gap-6 opacity-20">
         <Activity size={80} className="animate-pulse" />
-        <p className="text-xl font-bold uppercase tracking-widest">Loading Fitbit...</p>
+        <p className="text-xl font-bold uppercase tracking-widest">Loading Health...</p>
       </div>
     );
   }
@@ -23,8 +23,8 @@ export function FitbitView({ stats, loading }: FitbitViewProps) {
     return (
       <div className="flex flex-col items-center gap-6 opacity-20">
         <Activity size={80} />
-        <p className="text-xl font-bold uppercase tracking-widest text-red-500">Fitbit Error</p>
-        <p className="text-sm">Check your Refresh Token</p>
+        <p className="text-xl font-bold uppercase tracking-widest text-red-500">Health Error</p>
+        <p className="text-sm">Check your Google Health token</p>
       </div>
     );
   }
@@ -38,7 +38,7 @@ export function FitbitView({ stats, loading }: FitbitViewProps) {
       className="w-full max-w-5xl flex flex-col items-center justify-center min-h-[600px] gap-8"
     >
       <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm mb-2">
-        <Activity size={20} /> Fitbit Today
+        <Activity size={20} /> Google Health Today
       </div>
 
       <div className="grid grid-cols-2 gap-12 w-full">

@@ -131,7 +131,7 @@ export function AppLauncher({
         className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
       >
         <Activity size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Fitbit</span>
+        <span className="text-base font-bold text-white/40">Health</span>
       </button>
     ),
     home: (

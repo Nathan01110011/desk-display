@@ -1,27 +1,27 @@
 import { NextResponse } from 'next/server';
 
-const client_id = process.env.FITBIT_CLIENT_ID;
-const redirect_uri = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:3000/api/fitbit/callback'
-  : 'http://localhost:3000/api/fitbit/callback'; // Adjust if production URL differs
+const clientId = process.env.GOOGLE_HEALTH_CLIENT_ID;
+const scopes = [
+  'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly',
+  'https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly',
+];
 
-export async function GET() {
-  if (!client_id) {
-    return NextResponse.json({ error: 'FITBIT_CLIENT_ID not configured in .env.local' }, { status: 500 });
+export async function GET(request: Request) {
+  if (!clientId) {
+    return NextResponse.json({ error: 'GOOGLE_HEALTH_CLIENT_ID not configured in .env.local' }, { status: 500 });
   }
 
-  const scope = 'activity heartrate profile sleep weight';
-  
+  const redirectUri = process.env.GOOGLE_HEALTH_REDIRECT_URI
+    || new URL('/api/fitbit/callback', request.url).toString();
+
   const queryParams = new URLSearchParams({
+    access_type: 'offline',
+    client_id: clientId,
+    prompt: 'consent',
+    redirect_uri: redirectUri,
     response_type: 'code',
-    client_id: client_id,
-    scope: scope,
-    redirect_uri: redirect_uri,
+    scope: scopes.join(' '),
   });
 
-  console.log('Fitbit: Redirecting to auth with ID:', client_id);
-  const authUrl = `https://www.fitbit.com/oauth2/authorize?${queryParams.toString()}`;
-  console.log('Fitbit: Full Auth URL:', authUrl);
-
-  return NextResponse.redirect(authUrl);
+  return NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${queryParams.toString()}`);
 }

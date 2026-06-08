@@ -29,6 +29,17 @@ export function SettingsView({
 
   const allAvailableApps = ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'] as const;
   type AvailableApp = typeof allAvailableApps[number];
+  const appLabels: Record<AvailableApp, string> = {
+    calendar: 'Calendar',
+    pomodoro: 'Pomodoro',
+    sports: 'Sports',
+    weather: 'Weather',
+    fitbit: 'Health',
+    home: 'Smart Home',
+    timer: 'Timer',
+    todo: 'TODO',
+    rule: 'Rule',
+  };
   const savedOrder = appConfig.appOrder || allAvailableApps;
   const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter((app): app is AvailableApp => allAvailableApps.includes(app as AvailableApp));
 
@@ -283,7 +294,7 @@ export function SettingsView({
                     onPointerDown={() => toggleApp(app)}
                     className="flex-1 flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
                   >
-                    <span className="text-lg font-bold capitalize text-white/70">{app === 'home' ? 'Smart Home' : app === 'todo' ? 'TODO' : app}</span>
+                    <span className="text-lg font-bold text-white/70">{appLabels[app]}</span>
                     {appConfig[app as keyof AppConfig] ? (
                       <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-black">
                         <Check size={18} strokeWidth={4} />
