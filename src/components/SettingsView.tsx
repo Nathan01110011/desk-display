@@ -72,7 +72,8 @@ export function SettingsView({
           id: Math.random().toString(36).substr(2, 9),
           label: data.city,
           city: data.city,
-          offset: data.offset
+          offset: data.offset,
+          timeZone: data.timeZone
         };
         const updatedClocks = [...worldClocks, newClock].slice(0, 5);
         onUpdateClocks(updatedClocks);

@@ -56,7 +56,9 @@ export function useSmartHome(enabled: boolean = false) {
             targetState: params.isOn,
             brightness: params.brightness,
             colorTemp: params.colorTemp,
-            color: params.color
+            color: params.color,
+            sceneId: params.sceneId,
+            speed: params.speed
           })
         });
         

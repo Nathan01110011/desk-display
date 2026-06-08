@@ -18,6 +18,8 @@ interface WizSetPilotParams {
   r?: number;
   g?: number;
   b?: number;
+  sceneId?: number;
+  speed?: number;
 }
 
 interface ToggleRequestBody {
@@ -26,6 +28,8 @@ interface ToggleRequestBody {
   brightness?: number;
   colorTemp?: number;
   color?: { r: number; g: number; b: number };
+  sceneId?: number;
+  speed?: number;
 }
 
 async function sendWizCommand(ip: string, msg: object, retries = 2): Promise<WizCommandResponse> {
@@ -56,7 +60,7 @@ async function sendWizCommand(ip: string, msg: object, retries = 2): Promise<Wiz
 
 export async function POST(request: Request) {
   try {
-    const { id, targetState, brightness, colorTemp, color } = await request.json() as ToggleRequestBody;
+    const { id, targetState, brightness, colorTemp, color, sceneId, speed } = await request.json() as ToggleRequestBody;
     const devicesEnv = process.env.SMART_DEVICES;
     if (!devicesEnv) return NextResponse.json({ error: 'No devices configured' }, { status: 400 });
 
@@ -73,11 +77,17 @@ export async function POST(request: Request) {
           if (targetState !== undefined) params.state = targetState;
           if (brightness !== undefined) params.dimming = brightness;
           if (colorTemp !== undefined) params.temp = colorTemp;
+          if (sceneId !== undefined) {
+            params.sceneId = sceneId;
+            delete params.temp;
+          }
+          if (speed !== undefined) params.speed = speed;
           if (color !== undefined) {
             params.r = color.r;
             params.g = color.g;
             params.b = color.b;
             delete params.temp;
+            delete params.sceneId;
           }
 
           await sendWizCommand(ip, {

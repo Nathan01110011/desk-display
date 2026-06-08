@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { inferTimeZone } from '@/lib/timeZones';
 
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'City not found' }, { status: 404 });
     }
 
-    const { lat, lon, name } = geoData[0];
+    const { lat, lon, name, country, state } = geoData[0];
 
     // 2. Get Timezone offset via Weather API
     const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
@@ -27,7 +28,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       city: name,
-      offset: wData.timezone // seconds from UTC
+      offset: wData.timezone, // seconds from UTC
+      timeZone: inferTimeZone(name, country, state)
     });
   } catch {
     return NextResponse.json({ error: 'Failed to resolve city' }, { status: 500 });

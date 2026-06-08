@@ -13,6 +13,8 @@ interface WizPilotResponse {
     r?: number;
     g?: number;
     b?: number;
+    sceneId?: number;
+    speed?: number;
   };
 }
 
@@ -26,6 +28,8 @@ interface SmartHomeApiDevice {
   brightness?: number;
   colorTemp?: number;
   color?: { r: number; g: number; b: number };
+  sceneId?: number;
+  speed?: number;
 }
 
 async function sendWizCommand(ip: string, msg: object, retries = 2): Promise<WizPilotResponse> {
@@ -74,7 +78,9 @@ export async function GET() {
           ip: ip,
           brightness: result.dimming,
           colorTemp: result.temp,
-          color: result.r !== undefined && result.g !== undefined && result.b !== undefined ? { r: result.r, g: result.g, b: result.b } : undefined
+          color: result.r !== undefined && result.g !== undefined && result.b !== undefined ? { r: result.r, g: result.g, b: result.b } : undefined,
+          sceneId: result.sceneId,
+          speed: result.speed
         });
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

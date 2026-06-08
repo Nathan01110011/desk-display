@@ -41,6 +41,8 @@ export interface SmartDevice {
   brightness?: number; // 10-100
   colorTemp?: number; // 2200-6500
   color?: { r: number; g: number; b: number };
+  sceneId?: number;
+  speed?: number; // 20-200
 }
 
 export interface AppConfig {
@@ -96,4 +98,6 @@ export interface AdditionalClock {
   label: string;
   city: string;
   offset: number; // Offset in seconds from UTC
+  timeZone?: string; // IANA timezone, used when available so DST is handled
+  displayTime?: string;
 }
