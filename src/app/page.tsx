@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, BellOff, Timer, Hourglass } from 'lucide-react';
 import { useSpotify } from '@/hooks/useSpotify';
@@ -54,6 +54,15 @@ const DEFAULT_RULE_LOCK: RuleLockSettings = {
   timeoutMinutes: 10
 };
 
+const FULLSCREEN_APP_EXIT_MS = 240;
+const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
+
+type FullscreenReturnPhase = 'idle' | 'app-exit' | 'sidebar-enter';
+
+function isFullscreenAppView(view: ViewState, weatherDetail: boolean) {
+  return view === 'calendar' || view === 'fitbit' || (view === 'weather' && weatherDetail) || view === 'todo' || view === 'rule';
+}
+
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
@@ -62,6 +71,8 @@ export default function Dashboard() {
   const [isRuleLocked, setIsRuleLocked] = useState(false);
   const [lastActivity, setLastActivity] = useState(() => Date.now());
   const [weatherDetail, setWeatherDetail] = useState(false);
+  const [fullscreenReturnPhase, setFullscreenReturnPhase] = useState<FullscreenReturnPhase>('idle');
+  const fullscreenReturnTimers = useRef<number[]>([]);
 
   const { spotify, handleAction } = useSpotify();
   const { calendar } = useCalendar();
@@ -153,6 +164,15 @@ export default function Dashboard() {
     return () => window.clearTimeout(timeout);
   }, [isRuleLocked, lastActivity, mounted, ruleLock.lockOnInactivity, ruleLock.timeoutMinutes]);
 
+  useEffect(() => {
+    return () => {
+      fullscreenReturnTimers.current.forEach(timer => {
+        window.clearTimeout(timer);
+      });
+      fullscreenReturnTimers.current = [];
+    };
+  }, []);
+
   const updateAppConfig = async (newConfig: AppConfig) => {
     setAppConfig(newConfig);
     localStorage.setItem('appConfig', JSON.stringify(newConfig));
@@ -183,9 +203,49 @@ export default function Dashboard() {
     setLastActivity(Date.now());
   };
 
+  const clearFullscreenReturnTimers = () => {
+    fullscreenReturnTimers.current.forEach(timer => {
+      window.clearTimeout(timer);
+    });
+    fullscreenReturnTimers.current = [];
+  };
+
+  const openView = (view: ViewState) => {
+    clearFullscreenReturnTimers();
+    setFullscreenReturnPhase('idle');
+    setActiveView(view);
+  };
+
+  const closeActiveView = () => {
+    const wasFullscreen = isFullscreenAppView(activeView, weatherDetail);
+    clearFullscreenReturnTimers();
+
+    if (wasFullscreen) {
+      setFullscreenReturnPhase('app-exit');
+      fullscreenReturnTimers.current = [
+        window.setTimeout(() => {
+          setFullscreenReturnPhase('sidebar-enter');
+        }, FULLSCREEN_APP_EXIT_MS),
+        window.setTimeout(() => {
+          setFullscreenReturnPhase('idle');
+          fullscreenReturnTimers.current = [];
+        }, FULLSCREEN_APP_EXIT_MS + FULLSCREEN_SIDEBAR_RETURN_MS),
+      ];
+    } else {
+      setFullscreenReturnPhase('idle');
+    }
+
+    setActiveView('dashboard');
+    setWeatherDetail(false);
+    refreshWeather();
+  };
+
   if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
-  const isFullscreenView = activeView === 'calendar' || activeView === 'fitbit' || (activeView === 'weather' && weatherDetail) || activeView === 'todo' || activeView === 'rule';
+  const isActiveFullscreenView = isFullscreenAppView(activeView, weatherDetail);
+  const isReturningFromFullscreen = fullscreenReturnPhase !== 'idle';
+  const showSidebar = !isActiveFullscreenView && fullscreenReturnPhase !== 'app-exit';
+  const showDashboardHome = activeView === 'dashboard' && !isReturningFromFullscreen;
 
   return (
     <main className="fixed inset-0 bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased">
@@ -250,7 +310,7 @@ export default function Dashboard() {
       <div className="relative z-10 w-full flex h-full">
         {/* Sidebar (Animated Width) */}
         <AnimatePresence>
-          {!isFullscreenView && (
+          {showSidebar && (
             <motion.div 
               key="sidebar"
               initial={{ x: -64, opacity: 0 }}
@@ -291,11 +351,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                onPointerDown={() => {
-                  setActiveView('dashboard');
-                  setWeatherDetail(false);
-                  refreshWeather();
-                }}
+                onPointerDown={closeActiveView}
                 className="absolute top-6 right-6 z-[100] p-6 text-white/50 hover:text-white active:scale-90 transition-all rounded-full bg-black/70 border border-white/10 shadow-2xl"
               >
                 <X size={48} strokeWidth={3} />
@@ -304,7 +360,7 @@ export default function Dashboard() {
           </AnimatePresence>
 
           <AnimatePresence mode="wait">
-            {activeView === 'dashboard' ? (
+            {showDashboardHome ? (
               <motion.div
                 key="dashboard-view"
                 initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
@@ -323,7 +379,7 @@ export default function Dashboard() {
                         className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-white/60 active:scale-95 transition-all"
                       >
                         <div 
-                          onPointerDown={() => setActiveView('pomodoro')}
+                          onPointerDown={() => openView('pomodoro')}
                           className="flex items-center gap-2 cursor-pointer"
                         >
                           <Timer size={16} className={pomoActive ? "text-red-400 animate-pulse" : "text-green-500"} />
@@ -350,7 +406,7 @@ export default function Dashboard() {
                         className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-white/60 active:scale-95 transition-all"
                       >
                         <div 
-                          onPointerDown={() => setActiveView('timer')}
+                          onPointerDown={() => openView('timer')}
                           className="flex items-center gap-2 cursor-pointer"
                         >
                           <Hourglass size={16} className={timerRunning ? "text-blue-400 animate-pulse" : "text-green-500"} />
@@ -385,7 +441,7 @@ export default function Dashboard() {
                             totalTime={(pomoMode === 'work' ? workDuration : breakDuration) * 60}
                             active={pomoActive}
                             mode={pomoMode}
-                            onOpen={() => setActiveView('pomodoro')}
+                            onOpen={() => openView('pomodoro')}
                             onToggle={togglePomo}
                             onReset={resetPomo}
                           />
@@ -395,7 +451,7 @@ export default function Dashboard() {
                             totalTime={timerDuration}
                             active={timerRunning}
                             finished={timerUp}
-                            onOpen={() => setActiveView('timer')}
+                            onOpen={() => openView('timer')}
                             onPause={pauseTimer}
                             onResume={resumeTimer}
                             onReset={resetTimer}
@@ -410,7 +466,7 @@ export default function Dashboard() {
                               totalTime={(pomoMode === 'work' ? workDuration : breakDuration) * 60}
                               active={pomoActive}
                               mode={pomoMode}
-                              onOpen={() => setActiveView('pomodoro')}
+                              onOpen={() => openView('pomodoro')}
                               onToggle={togglePomo}
                               onReset={resetPomo}
                             />
@@ -421,7 +477,7 @@ export default function Dashboard() {
                               totalTime={timerDuration}
                               active={timerRunning}
                               finished={timerUp}
-                              onOpen={() => setActiveView('timer')}
+                              onOpen={() => openView('timer')}
                               onPause={pauseTimer}
                               onResume={resumeTimer}
                               onReset={resetTimer}
@@ -436,16 +492,16 @@ export default function Dashboard() {
                   )}
                 </div>
                 <AppLauncher 
-                  onOpenCalendar={() => setActiveView('calendar')}
-                  onOpenPomo={() => setActiveView('pomodoro')} 
-                  onOpenSettings={() => setActiveView('settings')}
-                  onOpenSports={() => setActiveView('sports')}
-                  onOpenWeather={() => setActiveView('weather')}
-                  onOpenFitbit={() => setActiveView('fitbit')}
-                  onOpenHome={() => setActiveView('home')}
-                  onOpenTimer={() => setActiveView('timer')}
-                  onOpenTodo={() => setActiveView('todo')}
-                  onOpenRule={() => setActiveView('rule')}
+                  onOpenCalendar={() => openView('calendar')}
+                  onOpenPomo={() => openView('pomodoro')} 
+                  onOpenSettings={() => openView('settings')}
+                  onOpenSports={() => openView('sports')}
+                  onOpenWeather={() => openView('weather')}
+                  onOpenFitbit={() => openView('fitbit')}
+                  onOpenHome={() => openView('home')}
+                  onOpenTimer={() => openView('timer')}
+                  onOpenTodo={() => openView('todo')}
+                  onOpenRule={() => openView('rule')}
                   onResetPomo={resetPomo}
                   onResetTimer={dismissAlert}
                   pomoActive={pomoActive} 
@@ -459,6 +515,15 @@ export default function Dashboard() {
                   appConfig={appConfig}
                 />
               </motion.div>
+            ) : activeView === 'dashboard' ? (
+              <motion.div
+                key="returning-to-dashboard"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.12, ease: "easeOut" }}
+                className="w-full h-full"
+              />
             ) : (
               <motion.div
                 key="app-view"
@@ -472,32 +537,32 @@ export default function Dashboard() {
                     workDuration={workDuration} breakDuration={breakDuration}
                     onToggle={togglePomo} onReset={resetPomo} onSwitchMode={() => switchMode()}
                     onUpdateDurations={handleUpdateDurations}
-                    onClose={() => setActiveView('dashboard')}
+                    onClose={closeActiveView}
                   />
                 )}
                 {activeView === 'calendar' && <CalendarAppView now={rawTime} />}
-                {activeView === 'sports' && <SportsView matches={matches} onClose={() => setActiveView('dashboard')} />}
+                {activeView === 'sports' && <SportsView matches={matches} onClose={closeActiveView} />}
                 {activeView === 'weather' && (
                   <WeatherView 
                     weather={weather} 
-                    onClose={() => setActiveView('dashboard')} 
+                    onClose={closeActiveView} 
                     isExtended={weatherDetail}
                     onToggleExtended={setWeatherDetail}
                   />
                 )}
-                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onClose={() => setActiveView('dashboard')} />}
-                {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={() => setActiveView('dashboard')} />}
+                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onClose={closeActiveView} />}
+                {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={closeActiveView} />}
                 {activeView === 'timer' && (
                   <TimerView 
                     timeLeft={timerSeconds} totalTime={timerDuration} isActive={timerRunning} isFinished={timerUp}
                     onStart={startTimer} onPause={pauseTimer} onResume={resumeTimer} onReset={resetTimer}
                     onDismiss={dismissAlert}
-                    onClose={() => setActiveView('dashboard')}
+                    onClose={closeActiveView}
                   />
                 )}
                 {activeView === 'settings' && (
                   <SettingsView 
-                    onClose={() => setActiveView('dashboard')}
+                    onClose={closeActiveView}
                     appConfig={appConfig} onUpdateAppConfig={updateAppConfig}
                     worldClocks={clocks} onUpdateClocks={updateClocks}
                     ruleLock={ruleLock} onUpdateRuleLock={handleUpdateRuleLock}
