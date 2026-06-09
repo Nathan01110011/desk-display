@@ -76,9 +76,9 @@ export default function Dashboard() {
 
   const { spotify, handleAction } = useSpotify();
   const { calendar } = useCalendar();
-  const { matches } = useSports();
+  const { matches, loading: sportsLoading, refresh: refreshSports } = useSports();
   const { weather, refresh: refreshWeather } = useWeather();
-  const { stats: fitbitStats, loading: fitbitLoading } = useFitbit(appConfig.fitbit);
+  const { stats: fitbitStats, loading: fitbitLoading, refresh: refreshFitbit } = useFitbit(appConfig.fitbit);
   const { devices: smartDevices, loading: smartLoading, updateDevice } = useSmartHome(appConfig.home);
   const { 
     timeLeft: timerSeconds, duration: timerDuration, isActive: timerRunning, isFinished: timerUp,
@@ -541,7 +541,7 @@ export default function Dashboard() {
                   />
                 )}
                 {activeView === 'calendar' && <CalendarAppView now={rawTime} />}
-                {activeView === 'sports' && <SportsView matches={matches} onClose={closeActiveView} />}
+                {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
                 {activeView === 'weather' && (
                   <WeatherView 
                     weather={weather} 
@@ -550,7 +550,7 @@ export default function Dashboard() {
                     onToggleExtended={setWeatherDetail}
                   />
                 )}
-                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onClose={closeActiveView} />}
+                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onRefresh={refreshFitbit} onClose={closeActiveView} />}
                 {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={closeActiveView} />}
                 {activeView === 'timer' && (
                   <TimerView 

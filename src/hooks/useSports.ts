@@ -3,10 +3,12 @@ import { SportMatch } from '@/types';
 
 export function useSports() {
   const [matches, setMatches] = useState<SportMatch[]>([]);
+  const [loading, setLoading] = useState(false);
   const matchesRef = useRef<SportMatch[]>([]);
 
   const fetchSports = useCallback(async () => {
     try {
+      setLoading(true);
       const res = await fetch('/api/sports');
       if (res.ok) {
         const data = await res.json();
@@ -15,6 +17,8 @@ export function useSports() {
       }
     } catch (e) {
       console.error("Sports Fetch Error:", e);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -32,5 +36,5 @@ export function useSports() {
     return () => clearInterval(timer);
   }, [fetchSports]);
 
-  return { matches };
+  return { matches, loading, refresh: fetchSports };
 }

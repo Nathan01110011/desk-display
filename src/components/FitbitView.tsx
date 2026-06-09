@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, CalendarRange, Droplets } from 'lucide-react';
+import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, CalendarRange, Droplets, RefreshCw } from 'lucide-react';
 import { FitbitStats } from '@/types';
 
 interface FitbitViewProps {
   stats: FitbitStats | null;
   loading: boolean;
+  onRefresh: () => void;
   onClose: () => void;
 }
 
@@ -96,7 +97,7 @@ function ExerciseDaysTile({
   );
 }
 
-export function FitbitView({ stats, loading }: FitbitViewProps) {
+export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
   const weightGraph = useMemo(() => {
     const history = [...(stats?.weightHistory || [])].sort((a, b) => a.date.localeCompare(b.date));
     const values = history.map(point => point.weightKg);
@@ -185,11 +186,21 @@ export function FitbitView({ stats, loading }: FitbitViewProps) {
           <h2 className="mt-3 text-6xl font-black tracking-tight leading-none">Health</h2>
         </div>
 
-        <div className="text-right">
-          <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Last synced</p>
-          <p className="mt-2 text-2xl font-black text-white/70">
-            {new Date(stats.lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Last synced</p>
+            <p className="mt-2 text-2xl font-black text-white/70">
+              {new Date(stats.lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+          <button
+            onPointerDown={onRefresh}
+            disabled={loading}
+            aria-label="Refresh health data"
+            className="size-14 rounded-2xl bg-white/[0.06] border border-white/10 text-white/55 flex items-center justify-center active:scale-90 disabled:opacity-40 disabled:active:scale-100 transition-all"
+          >
+            <RefreshCw size={24} className={loading ? 'animate-spin text-sky-300' : ''} />
+          </button>
         </div>
       </header>
 

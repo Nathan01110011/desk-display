@@ -57,7 +57,7 @@ type GoogleHealthSessionInterval = {
   endTime?: string;
 };
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 10000) {
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 10000, logApiErrors = true) {
   for (let i = 0; i < retries; i++) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -65,7 +65,9 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, ti
       const response = await fetch(url, { ...options, signal: controller.signal });
       if (!response.ok) {
         const errText = await response.clone().text();
-        logger.error(`Google Health API Error [${response.status}] for ${url}: ${errText}`);
+        if (logApiErrors) {
+          logger.error(`Google Health API Error [${response.status}] for ${url}: ${errText}`);
+        }
         return response;
       }
       return response;
@@ -220,10 +222,14 @@ async function fetchSettings(accessToken: string) {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
-  });
+  }, 3, 10000, false);
 
   const data = await response.json();
   if (!response.ok) {
+    if (response.status === 403 && data?.error?.status === 'PERMISSION_DENIED') {
+      logger.info('Google Health: Settings scope unavailable; using local goal defaults.');
+      return {};
+    }
     throw new Error('Google Health settings fetch failed');
   }
 

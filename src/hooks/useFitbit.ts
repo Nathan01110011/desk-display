@@ -8,6 +8,7 @@ export function useFitbit(enabled: boolean = false) {
   const fetchStats = useCallback(async () => {
     if (!enabled) return;
     try {
+      setLoading(true);
       const res = await fetch('/api/fitbit/stats');
       if (res.ok) {
         const data = await res.json();

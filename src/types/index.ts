@@ -20,15 +20,48 @@ export type ViewState = 'dashboard' | 'calendar' | 'pomodoro' | 'settings' | 'sp
 
 export type PomodoroMode = 'work' | 'break';
 
+export type SportKind = 'soccer' | 'rugby' | 'football';
+
+export interface SportLeagueConfig {
+  sport: SportKind;
+  id: string;
+  name: string;
+}
+
+export interface SportTeamConfig {
+  id?: string;
+  name: string;
+  shortName?: string;
+  logo?: string;
+  leagueId?: string;
+  leagueName?: string;
+  sport?: SportKind;
+  aliases?: string[];
+}
+
+export interface SportsConfig {
+  leagues: SportLeagueConfig[];
+  teams: SportTeamConfig[];
+  daysBack: number;
+  daysAhead: number;
+}
+
+export interface SportTeamSearchResult extends SportTeamConfig {
+  leagueName: string;
+}
+
 export interface SportMatch {
   id: string;
-  sport: 'soccer' | 'rugby' | 'football';
+  sport: SportKind;
   league: string;
-  homeTeam: { name: string; logo: string; score: string };
-  awayTeam: { name: string; logo: string; score: string };
+  homeTeam: { id?: string; name: string; shortName?: string; logo: string; score: string; winner?: boolean };
+  awayTeam: { id?: string; name: string; shortName?: string; logo: string; score: string; winner?: boolean };
   clock: string;
   status: 'PRE' | 'IN' | 'POST';
   startTime: string;
+  venue?: string;
+  detail?: string;
+  possession?: string;
 }
 
 export interface SmartDevice {
