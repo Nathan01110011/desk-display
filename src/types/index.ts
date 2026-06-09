@@ -72,6 +72,17 @@ export interface FitbitStats {
   calories: number;
   activeMinutes: number;
   restingHeartRate: number;
+  sleepMinutes: number;
+  exerciseDays: number;
+  exerciseHistory: {
+    date: string;
+    exercised: boolean;
+  }[];
+  bloodOxygen: number;
+  weightHistory: {
+    date: string;
+    weightKg: number;
+  }[];
   lastSyncTime: string;
 }
 

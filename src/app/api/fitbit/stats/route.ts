@@ -18,10 +18,12 @@ type DateParts = {
 };
 
 type GoogleHealthRollupPoint = {
+  civilStartTime?: DateParts | { date?: DateParts };
   steps?: { countSum?: string };
   floors?: { countSum?: string };
   totalCalories?: { kcalSum?: number };
   activeEnergyBurned?: { kcalSum?: number };
+  weight?: { weightGramsAvg?: number };
   activeMinutes?: {
     activeMinutesRollupByActivityLevel?: {
       activeMinutesSum?: string;
@@ -34,6 +36,26 @@ type GoogleHealthDataPoint = {
   dailyRestingHeartRate?: {
     beatsPerMinute?: string;
   };
+  dailyOxygenSaturation?: {
+    date?: DateParts;
+    averagePercentage?: number;
+  };
+  exercise?: {
+    interval?: GoogleHealthSessionInterval;
+  };
+  sleep?: {
+    interval?: GoogleHealthSessionInterval;
+    summary?: {
+      minutesAsleep?: string;
+    };
+  };
+};
+
+type GoogleHealthSessionInterval = {
+  civilStartTime?: DateParts | { date?: DateParts };
+  civilEndTime?: DateParts | { date?: DateParts };
+  startTime?: string;
+  endTime?: string;
 };
 
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 10000) {
@@ -82,15 +104,16 @@ async function getAccessToken() {
     throw new Error('GOOGLE_HEALTH_CLIENT_ID and GOOGLE_HEALTH_CLIENT_SECRET must be configured');
   }
 
-  let refreshToken = process.env.GOOGLE_HEALTH_REFRESH_TOKEN?.trim();
+  let refreshToken = '';
   try {
     const settings = readSettings();
-    if (!refreshToken && typeof settings.googleHealthRefreshToken === 'string') {
+    if (typeof settings.googleHealthRefreshToken === 'string') {
       refreshToken = settings.googleHealthRefreshToken.trim();
     }
   } catch (e) {
     logger.error('Failed to read Google Health token from settings', e);
   }
+  refreshToken ||= process.env.GOOGLE_HEALTH_REFRESH_TOKEN?.trim() || '';
 
   if (!refreshToken) {
     throw new Error('GOOGLE_HEALTH_REFRESH_TOKEN must be configured');
@@ -149,6 +172,28 @@ function formatDate(date: DateParts) {
   ].join('-');
 }
 
+function datePartsToLocalIso(date: DateParts) {
+  return new Date(date.year, date.month - 1, date.day).toISOString();
+}
+
+function rollupDate(point: GoogleHealthRollupPoint, fallback: DateParts): DateParts {
+  const civilStart = point.civilStartTime;
+  if (!civilStart) return fallback;
+  if ('date' in civilStart && civilStart.date) return civilStart.date;
+  if ('year' in civilStart) return civilStart;
+  return fallback;
+}
+
+function sessionDate(value: DateParts | { date?: DateParts } | undefined, fallback?: string) {
+  if (value) {
+    if ('date' in value && value.date) return formatDate(value.date);
+    if ('year' in value) return formatDate(value);
+  }
+
+  if (!fallback) return '';
+  return fallback.slice(0, 10);
+}
+
 function toNumber(value: unknown) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : 0;
@@ -186,6 +231,39 @@ async function fetchDailyRollup(
   return (data.rollupDataPoints?.[0] || {}) as GoogleHealthRollupPoint;
 }
 
+async function fetchDailyRollupSeries(
+  accessToken: string,
+  dataType: 'weight',
+  start: DateParts,
+  end: DateParts,
+) {
+  const response = await fetchWithRetry(
+    `${GOOGLE_HEALTH_BASE_URL}/users/me/dataTypes/${dataType}/dataPoints:dailyRollUp`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        range: {
+          start: { date: start },
+          end: { date: end },
+        },
+        windowSizeDays: 1,
+        dataSourceFamily: 'users/me/dataSourceFamilies/all-sources',
+      }),
+    },
+  );
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(`Google Health ${dataType} rollup failed`);
+  }
+
+  return (data.rollupDataPoints || []) as GoogleHealthRollupPoint[];
+}
+
 async function fetchRestingHeartRate(accessToken: string, start: DateParts, end: DateParts) {
   const filter = `daily_resting_heart_rate.date >= "${formatDate(start)}" AND daily_resting_heart_rate.date < "${formatDate(end)}"`;
   const url = new URL(`${GOOGLE_HEALTH_BASE_URL}/users/me/dataTypes/daily-resting-heart-rate/dataPoints`);
@@ -206,13 +284,97 @@ async function fetchRestingHeartRate(accessToken: string, start: DateParts, end:
   return Math.round(toNumber(dataPoint.dailyRestingHeartRate?.beatsPerMinute));
 }
 
+async function fetchDataPoints(accessToken: string, dataType: 'daily-oxygen-saturation' | 'exercise' | 'sleep', filter?: string) {
+  const url = new URL(`${GOOGLE_HEALTH_BASE_URL}/users/me/dataTypes/${dataType}/dataPoints`);
+  if (filter) {
+    url.searchParams.set('filter', filter);
+  }
+  url.searchParams.set('pageSize', '25');
+
+  const response = await fetchWithRetry(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(`Google Health ${dataType} fetch failed`);
+  }
+
+  return (data.dataPoints || []) as GoogleHealthDataPoint[];
+}
+
+async function fetchSleepMinutes(accessToken: string, start: DateParts, end: DateParts) {
+  const startMs = new Date(datePartsToLocalIso(start)).getTime();
+  const endMs = new Date(datePartsToLocalIso(end)).getTime();
+  const points = await fetchDataPoints(accessToken, 'sleep');
+  const sorted = points
+    .filter(point => point.sleep)
+    .sort((a, b) => (b.sleep?.interval?.endTime || '').localeCompare(a.sleep?.interval?.endTime || ''));
+  const recentSleep = sorted.find(point => {
+    const endTime = point.sleep?.interval?.endTime;
+    if (!endTime) return false;
+    const endTimeMs = new Date(endTime).getTime();
+    return Number.isFinite(endTimeMs) && endTimeMs >= startMs && endTimeMs < endMs;
+  }) || sorted[0];
+
+  return Math.round(toNumber(recentSleep?.sleep?.summary?.minutesAsleep));
+}
+
+async function fetchExerciseDays(accessToken: string, start: DateParts, end: DateParts) {
+  const filter = `exercise.interval.civil_start_time >= "${formatDate(start)}" AND exercise.interval.civil_start_time < "${formatDate(end)}"`;
+  const points = await fetchDataPoints(accessToken, 'exercise', filter);
+  const dates = new Set(
+    points
+      .map(point => sessionDate(point.exercise?.interval?.civilStartTime, point.exercise?.interval?.startTime))
+      .filter(Boolean),
+  );
+
+  const exerciseHistory = Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(start, index);
+    const dateString = formatDate(date);
+    return {
+      date: dateString,
+      exercised: dates.has(dateString),
+    };
+  });
+
+  return {
+    exerciseDays: exerciseHistory.filter(day => day.exercised).length,
+    exerciseHistory,
+  };
+}
+
+async function fetchBloodOxygen(accessToken: string, start: DateParts, end: DateParts) {
+  const filter = `daily_oxygen_saturation.date >= "${formatDate(start)}" AND daily_oxygen_saturation.date < "${formatDate(end)}"`;
+  const points = await fetchDataPoints(accessToken, 'daily-oxygen-saturation', filter);
+  const sorted = points
+    .filter(point => point.dailyOxygenSaturation?.averagePercentage)
+    .sort((a, b) => formatDate(b.dailyOxygenSaturation?.date || start).localeCompare(formatDate(a.dailyOxygenSaturation?.date || start)));
+
+  return Math.round(toNumber(sorted[0]?.dailyOxygenSaturation?.averagePercentage));
+}
+
 export async function GET() {
   try {
     const accessToken = await getAccessToken();
     const start = todayParts();
     const end = addDays(start, 1);
+    const weekStart = addDays(start, -6);
+    const fortnightStart = addDays(start, -13);
 
-    const [stepsData, floorsData, caloriesData, activeMinutesData, restingHeartRate] = await Promise.all([
+    const [
+      stepsData,
+      floorsData,
+      caloriesData,
+      activeMinutesData,
+      restingHeartRate,
+      sleepMinutes,
+      exerciseSummary,
+      bloodOxygen,
+      weightHistory,
+    ] = await Promise.all([
       fetchDailyRollup(accessToken, 'steps', start, end),
       fetchDailyRollup(accessToken, 'floors', start, end),
       fetchDailyRollup(accessToken, 'total-calories', start, end),
@@ -220,6 +382,36 @@ export async function GET() {
       fetchRestingHeartRate(accessToken, start, end).catch(error => {
         logger.warn('Google Health: Resting heart rate unavailable', error);
         return 0;
+      }),
+      fetchSleepMinutes(accessToken, weekStart, end).catch(error => {
+        logger.warn('Google Health: Sleep unavailable', error);
+        return 0;
+      }),
+      fetchExerciseDays(accessToken, weekStart, end).catch(error => {
+        logger.warn('Google Health: Exercise days unavailable', error);
+        return {
+          exerciseDays: 0,
+          exerciseHistory: Array.from({ length: 7 }, (_, index) => ({
+            date: formatDate(addDays(weekStart, index)),
+            exercised: false,
+          })),
+        };
+      }),
+      fetchBloodOxygen(accessToken, fortnightStart, end).catch(error => {
+        logger.warn('Google Health: Blood oxygen unavailable', error);
+        return 0;
+      }),
+      fetchDailyRollupSeries(accessToken, 'weight', fortnightStart, end).then(points => (
+        points
+          .map(point => ({
+            date: formatDate(rollupDate(point, fortnightStart)),
+            weightKg: Math.round((toNumber(point.weight?.weightGramsAvg) / 1000) * 10) / 10,
+          }))
+          .filter(point => point.weightKg > 0)
+          .sort((a, b) => a.date.localeCompare(b.date))
+      )).catch(error => {
+        logger.warn('Google Health: Weight history unavailable', error);
+        return [];
       }),
     ]);
 
@@ -235,6 +427,11 @@ export async function GET() {
       calories: Math.round(toNumber(caloriesData.totalCalories?.kcalSum ?? caloriesData.activeEnergyBurned?.kcalSum)),
       activeMinutes: Math.round(activeMinutes),
       restingHeartRate,
+      sleepMinutes,
+      exerciseDays: exerciseSummary.exerciseDays,
+      exerciseHistory: exerciseSummary.exerciseHistory,
+      bloodOxygen,
+      weightHistory,
       lastSyncTime: new Date().toISOString(),
     });
   } catch (error) {
