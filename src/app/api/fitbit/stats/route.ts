@@ -8,7 +8,6 @@ const SETTINGS_PATH = path.join(process.cwd(), '.dashboard-settings.json');
 
 const clientId = process.env.GOOGLE_HEALTH_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_HEALTH_CLIENT_SECRET;
-const stepGoal = Number(process.env.GOOGLE_HEALTH_STEP_GOAL || 10000);
 const floorGoal = Number(process.env.GOOGLE_HEALTH_FLOOR_GOAL || 10);
 
 type DateParts = {
@@ -199,6 +198,38 @@ function toNumber(value: unknown) {
   return Number.isFinite(numberValue) ? numberValue : 0;
 }
 
+function findNumericSetting(value: unknown, requiredKeyParts: string[]): number | null {
+  if (!value || typeof value !== 'object') return null;
+
+  for (const [key, childValue] of Object.entries(value)) {
+    const normalizedKey = key.toLowerCase();
+    if (requiredKeyParts.every(part => normalizedKey.includes(part))) {
+      const numericValue = toNumber(childValue);
+      if (numericValue > 0) return Math.round(numericValue);
+    }
+
+    const nestedValue = findNumericSetting(childValue, requiredKeyParts);
+    if (nestedValue) return nestedValue;
+  }
+
+  return null;
+}
+
+async function fetchSettings(accessToken: string) {
+  const response = await fetchWithRetry(`${GOOGLE_HEALTH_BASE_URL}/users/me/settings`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error('Google Health settings fetch failed');
+  }
+
+  return data as Record<string, unknown>;
+}
+
 async function fetchDailyRollup(
   accessToken: string,
   dataType: 'steps' | 'floors' | 'total-calories' | 'active-minutes',
@@ -370,6 +401,7 @@ export async function GET() {
       caloriesData,
       activeMinutesData,
       restingHeartRate,
+      healthSettings,
       sleepMinutes,
       exerciseSummary,
       bloodOxygen,
@@ -382,6 +414,10 @@ export async function GET() {
       fetchRestingHeartRate(accessToken, start, end).catch(error => {
         logger.warn('Google Health: Resting heart rate unavailable', error);
         return 0;
+      }),
+      fetchSettings(accessToken).catch(error => {
+        logger.warn('Google Health: Settings unavailable', error);
+        return {};
       }),
       fetchSleepMinutes(accessToken, weekStart, end).catch(error => {
         logger.warn('Google Health: Sleep unavailable', error);
@@ -418,12 +454,14 @@ export async function GET() {
     const activeMinutes = activeMinutesData.activeMinutes?.activeMinutesRollupByActivityLevel
       ?.filter(item => item.activityLevel === 'MODERATE' || item.activityLevel === 'VIGOROUS')
       .reduce((total, item) => total + toNumber(item.activeMinutesSum), 0) || 0;
+    const googleStepGoal = findNumericSetting(healthSettings, ['step', 'goal']);
+    const googleFloorGoal = findNumericSetting(healthSettings, ['floor', 'goal']);
 
     return NextResponse.json({
       steps: Math.round(toNumber(stepsData.steps?.countSum)),
-      stepGoal,
+      stepGoal: googleStepGoal,
       floors: Math.round(toNumber(floorsData.floors?.countSum)),
-      floorGoal,
+      floorGoal: googleFloorGoal || floorGoal,
       calories: Math.round(toNumber(caloriesData.totalCalories?.kcalSum ?? caloriesData.activeEnergyBurned?.kcalSum)),
       activeMinutes: Math.round(activeMinutes),
       restingHeartRate,

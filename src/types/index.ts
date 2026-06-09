@@ -66,7 +66,7 @@ export interface RuleLockSettings {
 
 export interface FitbitStats {
   steps: number;
-  stepGoal: number;
+  stepGoal: number | null;
   floors: number;
   floorGoal: number;
   calories: number;

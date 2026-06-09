@@ -58,8 +58,7 @@ GOOGLE_HEALTH_CLIENT_SECRET=your_google_oauth_client_secret
 GOOGLE_HEALTH_REFRESH_TOKEN=your_google_health_refresh_token
 # Optional. Must exactly match an authorized redirect URI in Google Cloud if set.
 GOOGLE_HEALTH_REDIRECT_URI=http://localhost:3000/api/fitbit/callback
-# Optional dashboard goals.
-GOOGLE_HEALTH_STEP_GOAL=10000
+# Optional dashboard goal fallback. Step goals are read from Google Health settings when available.
 GOOGLE_HEALTH_FLOOR_GOAL=10
 
 # --- Smart Home ---

@@ -49,9 +49,11 @@ function StatTile({
         {icon}
         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 truncate">{label}</span>
       </div>
-      <div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-black tabular-nums text-white/90 leading-none truncate">{value}</span>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="min-w-0 max-w-full break-words text-[2.35rem] font-black tabular-nums text-white/90 leading-[0.95]">
+            {value}
+          </span>
           {suffix && <span className="text-sm font-black uppercase tracking-widest text-white/25 shrink-0">{suffix}</span>}
         </div>
         {sublabel && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/20 truncate">{sublabel}</p>}
@@ -161,7 +163,7 @@ export function FitbitView({ stats, loading }: FitbitViewProps) {
     );
   }
 
-  const stepProgress = Math.min(100, (stats.steps / stats.stepGoal) * 100);
+  const stepProgress = stats.stepGoal ? Math.min(100, (stats.steps / stats.stepGoal) * 100) : null;
   const latestWeight = weightGraph.latest?.weightKg;
   const weightDelta = weightGraph.delta;
   const hasWeightHistory = weightGraph.points.length > 0;
@@ -202,7 +204,14 @@ export function FitbitView({ stats, loading }: FitbitViewProps) {
           </div>
 
           <div className="mt-7 grid min-h-0 flex-1 grid-cols-4 grid-rows-2 gap-5">
-            <StatTile icon={<Footprints size={24} />} label="Steps" value={stats.steps.toLocaleString()} suffix={`/ ${Math.round(stepProgress)}%`} sublabel={`Goal ${stats.stepGoal.toLocaleString()}`} accent="text-sky-200/70" />
+            <StatTile
+              icon={<Footprints size={24} />}
+              label="Steps"
+              value={stats.steps.toLocaleString()}
+              suffix={stepProgress === null ? undefined : `/ ${Math.round(stepProgress)}%`}
+              sublabel={stats.stepGoal ? `Goal ${stats.stepGoal.toLocaleString()}` : 'No goal from Health'}
+              accent="text-sky-200/70"
+            />
             <StatTile icon={<Mountain size={24} />} label="Floors" value={stats.floors.toLocaleString()} suffix={`/ ${stats.floorGoal}`} accent="text-violet-200/70" />
             <StatTile icon={<Flame size={24} />} label="Calories" value={stats.calories.toLocaleString()} accent="text-orange-200/70" />
             <StatTile icon={<TrendingUp size={24} />} label="Active" value={stats.activeMinutes.toLocaleString()} suffix="min" accent="text-emerald-200/70" />
