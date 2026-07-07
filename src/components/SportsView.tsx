@@ -34,6 +34,10 @@ function getTeamKey(team: SportTeamConfig) {
   return `${team.sport || 'any'}:${team.leagueId || 'any'}:${team.id || team.name}`.toLowerCase();
 }
 
+function getTeamGroupKey(team: SportTeamConfig) {
+  return `${team.sport || 'any'}:${team.id || team.name}`.toLowerCase();
+}
+
 function getSportLabel(sport?: SportLeagueConfig['sport']) {
   if (sport === 'football') return 'NFL';
   if (sport === 'rugby') return 'Rugby';
@@ -81,6 +85,54 @@ export function SportsView({ matches, loading = false, onRefresh }: SportsViewPr
       return groups;
     }, {});
   }, [matches]);
+
+  const groupedTeams = useMemo(() => {
+    if (!config) return [];
+
+    const sports = new Map<string, {
+      key: string;
+      label: string;
+      teams: Map<string, {
+        key: string;
+        name: string;
+        shortName?: string;
+        logo?: string;
+        teams: SportTeamConfig[];
+      }>;
+    }>();
+
+    config.teams.forEach(team => {
+      const sportKey = team.sport || 'any';
+      const sportGroup = sports.get(sportKey) || {
+        key: sportKey,
+        label: getSportLabel(team.sport),
+        teams: new Map(),
+      };
+      const teamGroupKey = getTeamGroupKey(team);
+      const teamGroup = sportGroup.teams.get(teamGroupKey) || {
+        key: teamGroupKey,
+        name: team.name,
+        shortName: team.shortName,
+        logo: team.logo,
+        teams: [],
+      };
+
+      teamGroup.name = teamGroup.name.length <= team.name.length ? teamGroup.name : team.name;
+      teamGroup.shortName ||= team.shortName;
+      teamGroup.logo ||= team.logo;
+      teamGroup.teams.push(team);
+      sportGroup.teams.set(teamGroupKey, teamGroup);
+      sports.set(sportKey, sportGroup);
+    });
+
+    const sportOrder = ['soccer', 'rugby', 'football', 'any'];
+    return Array.from(sports.values())
+      .sort((a, b) => sportOrder.indexOf(a.key) - sportOrder.indexOf(b.key))
+      .map(sport => ({
+        ...sport,
+        teams: Array.from(sport.teams.values()).sort((a, b) => a.name.localeCompare(b.name)),
+      }));
+  }, [config]);
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -272,22 +324,44 @@ export function SportsView({ matches, loading = false, onRefresh }: SportsViewPr
                 <h3 className="text-lg font-black">Tracked Teams</h3>
               </div>
               <div className="space-y-3">
-                {config?.teams.length ? config.teams.map(team => (
-                  <div key={getTeamKey(team)} className="flex items-center gap-3 rounded-2xl bg-black/20 border border-white/5 p-3">
-                    {team.logo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={team.logo} alt="" className="size-10 object-contain shrink-0" />
-                    ) : (
-                      <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-white/20"><Trophy size={18} /></div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-black truncate">{team.name}</p>
-                      <p className="text-[10px] uppercase tracking-widest text-white/25">{getTeamLeagueLabel(team)}</p>
+                {groupedTeams.length ? groupedTeams.map(sport => (
+                  <section key={sport.key} className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">{sport.label}</p>
+                    <div className="space-y-3">
+                      {sport.teams.map(teamGroup => (
+                        <div key={teamGroup.key} className="rounded-2xl bg-black/20 border border-white/5 p-3 space-y-3">
+                          <div className="flex items-center gap-3">
+                            {teamGroup.logo ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={teamGroup.logo} alt="" className="size-10 object-contain shrink-0" />
+                            ) : (
+                              <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-white/20"><Trophy size={18} /></div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-black truncate">{teamGroup.shortName || teamGroup.name}</p>
+                              {teamGroup.shortName && teamGroup.shortName !== teamGroup.name && (
+                                <p className="text-[10px] uppercase tracking-widest text-white/25 truncate">{teamGroup.name}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 pl-[3.25rem]">
+                            {teamGroup.teams
+                              .slice()
+                              .sort((a, b) => getTeamLeagueLabel(a).localeCompare(getTeamLeagueLabel(b)))
+                              .map(team => (
+                                <div key={getTeamKey(team)} className="flex items-center gap-2 rounded-xl bg-white/[0.04] border border-white/10 py-1.5 pl-3 pr-1.5">
+                                  <span className="max-w-[11rem] truncate text-[10px] font-black uppercase tracking-[0.16em] text-white/35">{getTeamLeagueLabel(team)}</span>
+                                  <button onPointerDown={() => removeTeam(team)} className="size-7 rounded-lg bg-red-500/10 text-red-300/80 border border-red-500/15 flex items-center justify-center active:scale-90 transition-all">
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <button onPointerDown={() => removeTeam(team)} className="size-10 rounded-xl bg-red-500/10 text-red-300 border border-red-500/20 flex items-center justify-center active:scale-90 transition-all">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                  </section>
                 )) : (
                   <p className="text-white/30 font-bold py-8 text-center">Add teams to start tracking fixtures and scores.</p>
                 )}

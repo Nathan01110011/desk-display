@@ -43,6 +43,17 @@ Create a `.env.local` file in the root directory and fill in the following:
 # --- Calendar ---
 ICAL_URL=https://outlook.office365.com/.../calendar.ics
 
+# Optional writable personal calendar via CalDAV (Namecheap Private Email, Fastmail, etc.)
+PERSONAL_CALDAV_URL=https://dav.privateemail.com
+PERSONAL_CALDAV_USERNAME=you@yourdomain.com
+PERSONAL_CALDAV_APP_PASSWORD=your_app_password
+# Optional: use these only if automatic calendar discovery does not pick the right calendar.
+PERSONAL_CALDAV_ROOT_URL=https://privateemail.com
+PERSONAL_CALDAV_PRINCIPAL_URL=https://privateemail.com/path/to/principal/
+PERSONAL_CALDAV_HOME_URL=https://privateemail.com/path/to/calendar-home/
+PERSONAL_CALDAV_CALENDAR_NAME=Personal
+PERSONAL_CALDAV_CALENDAR_URL=https://privateemail.com/path/to/calendar/
+
 # --- Spotify ---
 SPOTIFY_CLIENT_ID=your_id
 SPOTIFY_CLIENT_SECRET=your_secret
@@ -57,8 +68,9 @@ GOOGLE_HEALTH_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_HEALTH_CLIENT_SECRET=your_google_oauth_client_secret
 GOOGLE_HEALTH_REFRESH_TOKEN=your_google_health_refresh_token
 # Optional. Must exactly match an authorized redirect URI in Google Cloud if set.
-GOOGLE_HEALTH_REDIRECT_URI=http://localhost:3000/api/fitbit/callback
-# Optional dashboard goal fallback. Step goals are read from Google Health settings when available.
+GOOGLE_HEALTH_REDIRECT_URI=http://localhost:3000/api/google-health/callback
+# Optional dashboard goal fallbacks. Google Health v4 does not currently expose activity goals.
+GOOGLE_HEALTH_STEP_GOAL=12500
 GOOGLE_HEALTH_FLOOR_GOAL=10
 
 # --- Smart Home ---
@@ -109,7 +121,7 @@ The Health dashboard app uses the Google Health API, which replaces the old Fitb
 - Moderate + vigorous active minutes
 - Daily resting heart rate, when available
 
-The internal route names are still `/api/fitbit/*` for compatibility with existing saved dashboard config, but the visible app is labelled **Health**.
+The canonical API route names are `/api/google-health/*`. The old `/api/fitbit/*` paths still exist as compatibility aliases for existing saved dashboard config.
 
 #### Google Cloud setup
 1. Open [Google Cloud Console](https://console.cloud.google.com/) and select the project you want to use.
@@ -122,7 +134,7 @@ The internal route names are still `/api/fitbit/*` for compatibility with existi
    - `https://www.googleapis.com/auth/googlehealth.sleep.readonly`
 6. Create an OAuth client under **Clients** / **Credentials**. Use a web application client.
 7. Add this authorized redirect URI:
-   - `http://localhost:3000/api/fitbit/callback`
+   - `http://localhost:3000/api/google-health/callback`
 
 If you set `GOOGLE_HEALTH_REDIRECT_URI`, the value must exactly match one of the OAuth client's authorized redirect URIs.
 
@@ -131,7 +143,7 @@ OAuth apps left in **Testing** issue offline refresh tokens that expire after ab
 1. Go to **Google Auth Platform** -> **Audience**.
 2. Change **Publishing status** from **Testing** to **In production** by clicking **Publish app**.
 3. Restart the dashboard dev server after adding the Google env vars.
-4. Visit `http://localhost:3000/api/fitbit/login`.
+4. Visit `http://localhost:3000/api/google-health/login`.
 5. Approve the Health scopes.
 6. The callback saves the refresh token to `.dashboard-settings.json` as `googleHealthRefreshToken` and also displays a `GOOGLE_HEALTH_REFRESH_TOKEN=...` line that you can place in `.env.local`.
 

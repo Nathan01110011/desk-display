@@ -9,7 +9,7 @@ export function useFitbit(enabled: boolean = false) {
     if (!enabled) return;
     try {
       setLoading(true);
-      const res = await fetch('/api/fitbit/stats');
+      const res = await fetch('/api/google-health/stats');
       if (res.ok) {
         const data = await res.json();
         setStats(data);
