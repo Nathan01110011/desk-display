@@ -45,11 +45,148 @@ interface IcalOccurrence {
 
 interface IcalRecurrenceRule {
   interval?: number;
+  until?: IcalTime;
 }
 
-const CACHE_PATH = path.join(process.cwd(), '.calendar-cache.json');
+type CalendarRange = 'today' | 'all';
+
+const CACHE_VERSION = 3;
 const CACHE_TTL = 10 * 60 * 1000;
-const ICAL_URL = process.env.ICAL_URL;
+const CANCELLED_SUMMARY_PREFIX = /^cancell?ed:\s*/i;
+const RESCHEDULED_SUMMARY_PREFIX = /^rescheduled:\s*/i;
+
+function getCachePath(range: CalendarRange) {
+  return range === 'all'
+    ? path.join(process.cwd(), 'data', 'work-display', 'calendar-all.json')
+    : path.join(process.cwd(), 'data', 'work-display', 'calendar-today.json');
+}
+
+function isCalendarJcal(jcalData: unknown): jcalData is unknown[] {
+  return Array.isArray(jcalData)
+    && jcalData[0] === 'vcalendar'
+    && Array.isArray(jcalData[1])
+    && Array.isArray(jcalData[2]);
+}
+
+function readCachedEvents(range: CalendarRange, now: Date, requireFresh = true) {
+  const cachePath = getCachePath(range);
+
+  if (!fs.existsSync(cachePath)) return null;
+
+  const stats = fs.statSync(cachePath);
+  if (requireFresh && Date.now() - stats.mtimeMs >= CACHE_TTL) return null;
+
+  const cachedData = JSON.parse(fs.readFileSync(cachePath, 'utf-8')) as {
+    version?: number;
+    range?: CalendarRange;
+    events?: CalendarEvent[];
+  };
+  if (cachedData.version !== CACHE_VERSION || cachedData.range !== range || !Array.isArray(cachedData.events)) return null;
+
+  return filterEventsForRange(cachedData.events, range, now);
+}
+
+function writeCachedEvents(range: CalendarRange, events: CalendarEvent[]) {
+  const cachePath = getCachePath(range);
+  fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+  fs.writeFileSync(cachePath, JSON.stringify({ version: CACHE_VERSION, range, events }));
+}
+
+function filterEventsForRange(events: CalendarEvent[], range: CalendarRange, now: Date) {
+  if (range === 'all') return events;
+
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+  return events.filter(event => {
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    return start <= endOfToday && end >= startOfToday && end > now;
+  });
+}
+
+function getStringProperty(vevent: IcalComponent, prop: string) {
+  const value = vevent.getFirstPropertyValue(prop);
+  return typeof value === 'string' ? value : value?.toString() || '';
+}
+
+function getRecurrenceKey(vevent: IcalComponent) {
+  const recurrenceId = vevent.getFirstPropertyValue('recurrence-id');
+  if (!recurrenceId) return '';
+  return `${getStringProperty(vevent, 'uid')}|${recurrenceId.toString()}`;
+}
+
+function isCancelledEvent(vevent: IcalComponent, summary: string) {
+  const status = getStringProperty(vevent, 'status').toUpperCase();
+  const busyStatus = getStringProperty(vevent, 'x-microsoft-cdo-busystatus').toUpperCase();
+  const transparency = getStringProperty(vevent, 'transp').toUpperCase();
+  const method = getStringProperty(vevent, 'method').toUpperCase();
+
+  return status === 'CANCELLED'
+    || method === 'CANCEL'
+    || CANCELLED_SUMMARY_PREFIX.test(summary)
+    || busyStatus === 'FREE'
+    || transparency === 'TRANSPARENT';
+}
+
+function isPlaceholderReschedule(summary: string) {
+  return RESCHEDULED_SUMMARY_PREFIX.test(summary);
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+}
+
+function endOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+}
+
+function addYears(date: Date, years: number) {
+  return new Date(date.getFullYear() + years, date.getMonth(), date.getDate(), 23, 59, 59);
+}
+
+function getCalendarRange(range: CalendarRange, now: Date, vevents: ICAL.Component[]) {
+  if (range === 'today') {
+    return {
+      start: startOfDay(now),
+      end: endOfDay(now)
+    };
+  }
+
+  let start = startOfDay(now);
+  let end = endOfDay(now);
+  let foundDate = false;
+  const openEndedRecurringEnd = addYears(now, 1);
+
+  vevents.forEach((veventRaw) => {
+    try {
+      const event = new ICAL.Event(veventRaw);
+      const eventStart = event.startDate?.toJSDate();
+      const eventEnd = event.endDate?.toJSDate();
+
+      if (eventStart && !Number.isNaN(eventStart.getTime())) {
+        start = foundDate ? new Date(Math.min(start.getTime(), startOfDay(eventStart).getTime())) : startOfDay(eventStart);
+        foundDate = true;
+      }
+
+      if (eventEnd && !Number.isNaN(eventEnd.getTime())) {
+        end = new Date(Math.max(end.getTime(), endOfDay(eventEnd).getTime()));
+      }
+
+      const rrule = (veventRaw as unknown as IcalComponent).getFirstPropertyValue('rrule') as IcalRecurrenceRule | null;
+      const until = rrule?.until?.toJSDate();
+      if (until && !Number.isNaN(until.getTime())) {
+        end = new Date(Math.max(end.getTime(), endOfDay(until).getTime()));
+      } else if (event.isRecurring()) {
+        end = new Date(Math.max(end.getTime(), openEndedRecurringEnd.getTime()));
+      }
+    } catch (error) {
+      logger.error('Calendar range error', error);
+    }
+  });
+
+  return { start, end };
+}
 
 const WIN_TO_IANA: Record<string, string> = {
   'Dateline Standard Time': 'Etc/GMT+12',
@@ -159,49 +296,54 @@ const WIN_TO_IANA: Record<string, string> = {
   'Line Islands Standard Time': 'Pacific/Kiritimati'
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   const now = new Date();
-  logger.info('Calendar: Request received');
+  const range = new URL(request.url).searchParams.get('range') === 'all' ? 'all' : 'today';
+  logger.info(`Calendar: Request received (${range})`);
 
   try {
-    if (fs.existsSync(CACHE_PATH)) {
-      const stats = fs.statSync(CACHE_PATH);
-      if (Date.now() - stats.mtimeMs < CACHE_TTL) {
-        const fullCachedData: CalendarEvent[] = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf-8'));
-        const activeEvents = fullCachedData.filter(event => new Date(event.end) > now);
-        return NextResponse.json(activeEvents);
-      }
-    }
+    const activeEvents = readCachedEvents(range, now);
+    if (activeEvents) return NextResponse.json(activeEvents);
   } catch (e) { 
     logger.error('Cache error', e); 
   }
 
   try {
-    if (!ICAL_URL) throw new Error('ICAL_URL not defined');
-    const response = await fetch(ICAL_URL);
+    const icalUrl = process.env.ICAL_URL;
+    if (!icalUrl) throw new Error('ICAL_URL not defined');
+
+    const response = await fetch(icalUrl);
+    if (!response.ok) throw new Error(`Calendar fetch failed: ${response.status} ${response.statusText}`);
+
     const icsData = await response.text();
+    if (!icsData.trim()) throw new Error('Calendar feed returned an empty response');
+    if (!icsData.includes('BEGIN:VCALENDAR')) throw new Error('Calendar feed did not return iCalendar data');
 
     const jcalData = ICAL.parse(icsData);
+    if (!isCalendarJcal(jcalData)) throw new Error('Calendar feed returned invalid iCalendar data');
+
     const vcalendar = new ICAL.Component(jcalData);
     const vevents = vcalendar.getAllSubcomponents('vevent');
 
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    const rangeStart = ICAL.Time.fromJSDate(startOfToday);
+    const { start: rangeStart, end: rangeEnd } = getCalendarRange(range, now, vevents);
 
     const filteredEvents: CalendarEvent[] = [];
     const recurrenceOverrides = new Set<string>();
 
     vevents.forEach((veventRaw) => {
       const vevent = veventRaw as unknown as IcalComponent;
-      const rid = vevent.getFirstPropertyValue('recurrence-id');
-      if (rid) recurrenceOverrides.add(rid.toString());
+      const recurrenceKey = getRecurrenceKey(vevent);
+      if (recurrenceKey) recurrenceOverrides.add(recurrenceKey);
     });
 
     vevents.forEach((veventRaw) => {
       const vevent = veventRaw as unknown as IcalComponent;
       const event = new ICAL.Event(veventRaw);
       const summary = event.summary || 'No Title';
+
+      if (isCancelledEvent(vevent, summary) || isPlaceholderReschedule(summary)) {
+        return;
+      }
 
       const processOccurrence = (occ: IcalOccurrence) => {
         const icalStart = occ.startDate;
@@ -230,18 +372,12 @@ export async function GET() {
         const jsStart = convert(icalStart, ianaTz);
         const jsEnd = new Date(jsStart.getTime() + event.duration.toSeconds() * 1000);
         
-        if (jsStart <= endOfToday && jsEnd >= startOfToday) {
+        if (jsStart <= rangeEnd && jsEnd >= rangeStart) {
           const status = String((occ.item ? occ.item.status : vevent.getFirstPropertyValue('status')) || '');
           const busyStatus = String(vevent.getFirstPropertyValue('x-microsoft-cdo-busystatus') || '');
           const transparency = String(vevent.getFirstPropertyValue('transp') || '');
 
-          const attendees = vevent.getAllProperties('attendee');
-          const isDeclined = attendees.some((a) => {
-            const partstat = a.getParameter('partstat');
-            return typeof partstat === 'string' && partstat.toUpperCase() === 'DECLINED';
-          });
-
-          if (isDeclined || status.toUpperCase() === 'CANCELLED' || busyStatus.toUpperCase() === 'FREE' || transparency.toUpperCase() === 'TRANSPARENT') {
+          if (status.toUpperCase() === 'CANCELLED' || busyStatus.toUpperCase() === 'FREE' || transparency.toUpperCase() === 'TRANSPARENT') {
             return;
           }
 
@@ -268,10 +404,14 @@ export async function GET() {
       };
 
       if (event.isRecurring()) {
-        const iter = event.iterator(rangeStart);
+        const iter = event.iterator();
         let next = iter.next();
-        while (next && next.toJSDate() <= endOfToday) {
-          if (recurrenceOverrides.has(next.toString())) continue;
+        while (next && next.toJSDate() <= rangeEnd) {
+          const recurrenceKey = `${event.uid}|${next.toString()}`;
+          if (recurrenceOverrides.has(recurrenceKey)) {
+            next = iter.next();
+            continue;
+          }
           const occ = event.getOccurrenceDetails(next) as IcalOccurrence;
           processOccurrence(occ);
           next = iter.next();
@@ -291,11 +431,18 @@ export async function GET() {
       })
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
-    fs.writeFileSync(CACHE_PATH, JSON.stringify(sortedEvents));
-    return NextResponse.json(sortedEvents.filter(event => new Date(event.end) > now));
+    writeCachedEvents(range, sortedEvents);
+    return NextResponse.json(filterEventsForRange(sortedEvents, range, now));
 
   } catch (error) {
     logger.error('Calendar Error:', error);
+    try {
+      const staleEvents = readCachedEvents(range, now, false);
+      if (staleEvents) return NextResponse.json(staleEvents);
+    } catch (cacheError) {
+      logger.error('Stale cache error', cacheError);
+    }
+
     return NextResponse.json([]);
   }
 }

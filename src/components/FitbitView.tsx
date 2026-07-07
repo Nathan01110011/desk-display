@@ -45,17 +45,17 @@ function StatTile({
   sublabel?: string;
 }) {
   return (
-    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 flex flex-col justify-between overflow-hidden">
+    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 flex flex-col justify-between overflow-hidden @container">
       <div className={`flex items-center gap-3 ${accent}`}>
         {icon}
         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 truncate">{label}</span>
       </div>
       <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="min-w-0 max-w-full break-words text-[2.35rem] font-black tabular-nums text-white/90 leading-[0.95]">
+        <div className="grid min-w-0 grid-cols-[minmax(0,auto)_auto] items-baseline justify-start gap-1.5 overflow-hidden">
+          <span className="min-w-0 whitespace-nowrap text-[clamp(1.65rem,22cqw,2.35rem)] font-black tabular-nums text-white/90 leading-none tracking-normal">
             {value}
           </span>
-          {suffix && <span className="text-sm font-black uppercase tracking-widest text-white/25 shrink-0">{suffix}</span>}
+          {suffix && <span className="min-w-0 whitespace-nowrap text-[clamp(0.6rem,6cqw,0.8rem)] font-black uppercase tracking-normal text-white/25">{suffix}</span>}
         </div>
         {sublabel && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/20 truncate">{sublabel}</p>}
       </div>
@@ -68,6 +68,29 @@ function formatSleepDuration(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return `${hours}h ${remainingMinutes}m`;
+}
+
+function formatWeightDelta(delta: number) {
+  if (delta === 0) return '0.0';
+  const sign = delta > 0 ? '+' : '-';
+  const absoluteDelta = Math.abs(delta);
+  if (absoluteDelta < 0.05) return `${sign}<0.1`;
+  return `${sign}${absoluteDelta.toFixed(1)}`;
+}
+
+function formatStepSublabel(stats: FitbitStats) {
+  const parts = [];
+  if (stats.stepGoal) {
+    parts.push(`${stats.stepGoalSource === 'configured' ? 'Configured goal' : 'Goal'} ${stats.stepGoal.toLocaleString()}`);
+  } else {
+    parts.push('No goal exposed by Health');
+  }
+
+  if (stats.stepsLastSampleTime) {
+    parts.push(`API ${new Date(stats.stepsLastSampleTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+  }
+
+  return parts.join(' · ');
 }
 
 function ExerciseDaysTile({
@@ -214,13 +237,13 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
             <Activity size={34} className="text-sky-300/75" />
           </div>
 
-          <div className="mt-7 grid min-h-0 flex-1 grid-cols-4 grid-rows-2 gap-5">
+          <div className="mt-7 grid min-h-0 flex-1 grid-cols-4 grid-rows-2 gap-4">
             <StatTile
               icon={<Footprints size={24} />}
               label="Steps"
               value={stats.steps.toLocaleString()}
               suffix={stepProgress === null ? undefined : `/ ${Math.round(stepProgress)}%`}
-              sublabel={stats.stepGoal ? `Goal ${stats.stepGoal.toLocaleString()}` : 'No goal from Health'}
+              sublabel={formatStepSublabel(stats)}
               accent="text-sky-200/70"
             />
             <StatTile icon={<Mountain size={24} />} label="Floors" value={stats.floors.toLocaleString()} suffix={`/ ${stats.floorGoal}`} accent="text-violet-200/70" />
@@ -260,7 +283,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               </div>
               <div className="text-right shrink-0">
                 <p className={`text-2xl font-black tabular-nums ${weightDelta > 0 ? 'text-rose-200' : weightDelta < 0 ? 'text-emerald-200' : 'text-white/70'}`}>
-                  {hasWeightHistory && weightGraph.points.length > 1 ? `${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)}` : '--'}
+                  {hasWeightHistory && weightGraph.points.length > 1 ? formatWeightDelta(weightDelta) : '--'}
                 </p>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/25">kg</p>
               </div>

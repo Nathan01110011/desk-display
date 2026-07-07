@@ -75,7 +75,14 @@ export default function Dashboard() {
   const fullscreenReturnTimers = useRef<number[]>([]);
 
   const { spotify, handleAction } = useSpotify();
-  const { calendar } = useCalendar();
+  const {
+    calendar,
+    allCalendar,
+    personalCalendar,
+    personalCalendarLoading,
+    savePersonalCalendarEvent,
+    deletePersonalCalendarEvent
+  } = useCalendar();
   const { matches, loading: sportsLoading, refresh: refreshSports } = useSports();
   const { weather, refresh: refreshWeather } = useWeather();
   const { stats: fitbitStats, loading: fitbitLoading, refresh: refreshFitbit } = useFitbit(appConfig.fitbit);
@@ -329,8 +336,8 @@ export default function Dashboard() {
                     <div className="flex flex-col items-end gap-2 pt-1 shrink-0">
                       {clocks.map(c => (
                         <div key={c.id} className="flex items-center gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{c.label}</span>
-                          <span className="text-base font-bold tabular-nums text-white/60">{c.displayTime}</span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">{c.label}</span>
+                          <span className="text-base font-bold tabular-nums text-white">{c.displayTime}</span>
                         </div>
                       ))}
                     </div>
@@ -540,7 +547,16 @@ export default function Dashboard() {
                     onClose={closeActiveView}
                   />
                 )}
-                {activeView === 'calendar' && <CalendarAppView now={rawTime} />}
+                {activeView === 'calendar' && (
+                  <CalendarAppView
+                    now={rawTime}
+                    calendar={allCalendar}
+                    personalCalendar={personalCalendar}
+                    personalCalendarLoading={personalCalendarLoading}
+                    onSavePersonalEvent={savePersonalCalendarEvent}
+                    onDeletePersonalEvent={deletePersonalCalendarEvent}
+                  />
+                )}
                 {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
                 {activeView === 'weather' && (
                   <WeatherView 

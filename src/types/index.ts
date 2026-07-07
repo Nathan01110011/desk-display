@@ -1,9 +1,24 @@
 export interface CalendarEvent {
+  id?: string;
+  etag?: string;
+  calendarType?: 'work' | 'personal';
   summary: string;
   start: string;
   end: string;
   location?: string;
   isAllDay: boolean;
+  recurrence?: 'none' | 'weekly' | 'monthly' | 'yearly';
+}
+
+export interface CalendarEventInput {
+  id?: string;
+  etag?: string;
+  summary: string;
+  start: string;
+  end: string;
+  location?: string;
+  isAllDay: boolean;
+  recurrence?: 'none' | 'weekly' | 'monthly' | 'yearly';
 }
 
 export interface SpotifyNowPlaying {
@@ -100,6 +115,8 @@ export interface RuleLockSettings {
 export interface FitbitStats {
   steps: number;
   stepGoal: number | null;
+  stepGoalSource?: 'configured' | 'none';
+  stepsLastSampleTime?: string;
   floors: number;
   floorGoal: number;
   calories: number;
