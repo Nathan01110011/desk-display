@@ -12,6 +12,8 @@ interface SettingsViewProps {
   onUpdateClocks: (clocks: AdditionalClock[]) => void;
   ruleLock: RuleLockSettings;
   onUpdateRuleLock: (settings: RuleLockSettings) => void;
+  idleClockTimeoutMinutes: number;
+  onUpdateIdleClockTimeout: (timeoutMinutes: number) => void;
 }
 
 export function SettingsView({ 
@@ -20,7 +22,9 @@ export function SettingsView({
   worldClocks,
   onUpdateClocks,
   ruleLock,
-  onUpdateRuleLock
+  onUpdateRuleLock,
+  idleClockTimeoutMinutes,
+  onUpdateIdleClockTimeout
 }: SettingsViewProps) {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
@@ -127,8 +131,20 @@ export function SettingsView({
     updateRuleLock({ ...ruleLock, timeoutMinutes });
   };
 
+  const updateIdleClockTime = async (hours: number, minutes: number) => {
+    const timeoutMinutes = Math.max(1, Math.min(24 * 60, (hours * 60) + minutes));
+    onUpdateIdleClockTimeout(timeoutMinutes);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idleClockTimeoutMinutes: timeoutMinutes })
+    });
+  };
+
   const ruleLockHours = Math.floor(ruleLock.timeoutMinutes / 60);
   const ruleLockMinutes = ruleLock.timeoutMinutes % 60;
+  const idleClockHours = Math.floor(idleClockTimeoutMinutes / 60);
+  const idleClockMinutes = idleClockTimeoutMinutes % 60;
 
   return (
     <motion.div
@@ -184,6 +200,65 @@ export function SettingsView({
             )}
           </div>
 
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white/80">Screen Clock</h3>
+                <p className="text-white/30 text-xs">Full-screen clock after inactivity</p>
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest text-white/25">
+                {idleClockTimeoutMinutes}m
+              </span>
+            </div>
+
+            <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Clock Timeout</p>
+              <div className="space-y-2">
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                  <button
+                    onPointerDown={() => updateIdleClockTime(Math.max(0, idleClockHours - 1), idleClockMinutes)}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Decrease clock timeout hours"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-2xl font-black tabular-nums leading-none">{idleClockHours}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Hours</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateIdleClockTime(Math.min(24, idleClockHours + 1), idleClockMinutes)}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Increase clock timeout hours"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                  <button
+                    onPointerDown={() => updateIdleClockTime(idleClockHours, Math.max(0, idleClockMinutes - 5))}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Decrease clock timeout minutes"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-2xl font-black tabular-nums leading-none">{idleClockMinutes}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Minutes</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateIdleClockTime(idleClockHours, Math.min(55, idleClockMinutes + 5))}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Increase clock timeout minutes"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white/5 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-white/80">System</h3>
@@ -198,7 +273,7 @@ export function SettingsView({
             <div className="space-y-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-white/80">Rule Lock</h3>
-                <p className="text-white/30 text-xs">Page load and idle timeout</p>
+                <p className="text-white/30 text-xs">Password gate on open or inactivity</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -229,7 +304,7 @@ export function SettingsView({
             </div>
 
             <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Timeout</p>
+              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Lock Timeout</p>
               <div className="space-y-2">
                 <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button

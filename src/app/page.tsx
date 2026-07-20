@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, BellOff, Timer, Hourglass } from 'lucide-react';
 import { useSpotify } from '@/hooks/useSpotify';
@@ -54,6 +54,8 @@ const DEFAULT_RULE_LOCK: RuleLockSettings = {
   timeoutMinutes: 10
 };
 
+const DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES = 15;
+
 const FULLSCREEN_APP_EXIT_MS = 240;
 const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
 
@@ -68,7 +70,9 @@ export default function Dashboard() {
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig>(DEFAULT_CONFIG);
   const [ruleLock, setRuleLock] = useState<RuleLockSettings>(DEFAULT_RULE_LOCK);
+  const [idleClockTimeoutMinutes, setIdleClockTimeoutMinutes] = useState(DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES);
   const [isRuleLocked, setIsRuleLocked] = useState(false);
+  const [showIdleClock, setShowIdleClock] = useState(false);
   const [lastActivity, setLastActivity] = useState(() => Date.now());
   const [weatherDetail, setWeatherDetail] = useState(false);
   const [fullscreenReturnPhase, setFullscreenReturnPhase] = useState<FullscreenReturnPhase>('idle');
@@ -102,6 +106,8 @@ export default function Dashboard() {
   const hasPomodoroHero = pomoActive;
   const hasTimerHero = timerRunning || timerUp;
   const hasBothTimerHeroes = hasPomodoroHero && hasTimerHero;
+  const hasVisibleMusic = Boolean(spotify?.title);
+  const hasDashboardHero = hasVisibleMusic || hasPomodoroHero || hasTimerHero;
 
   useEffect(() => {
     const initSettings = async () => {
@@ -128,6 +134,9 @@ export default function Dashboard() {
           timeoutMinutes: data.ruleLockTimeoutMinutes ?? DEFAULT_RULE_LOCK.timeoutMinutes
         };
         setRuleLock(loadedRuleLock);
+        setIdleClockTimeoutMinutes(
+          data.idleClockTimeoutMinutes ?? data.screenClockTimeoutMinutes ?? DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES
+        );
         setIsRuleLocked(loadedRuleLock.lockOnOpen);
         
         if (data.worldClocks) updateClocks(data.worldClocks);
@@ -147,10 +156,14 @@ export default function Dashboard() {
     initSettings();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (!mounted || !ruleLock.lockOnInactivity || isRuleLocked) return;
+  const markActivity = useCallback(() => {
+    setShowIdleClock(false);
+    setLastActivity(Date.now());
+  }, []);
 
-    const markActivity = () => setLastActivity(Date.now());
+  useEffect(() => {
+    if (!mounted || isRuleLocked) return;
+
     window.addEventListener('pointerdown', markActivity);
     window.addEventListener('keydown', markActivity);
 
@@ -158,7 +171,18 @@ export default function Dashboard() {
       window.removeEventListener('pointerdown', markActivity);
       window.removeEventListener('keydown', markActivity);
     };
-  }, [isRuleLocked, mounted, ruleLock.lockOnInactivity]);
+  }, [isRuleLocked, markActivity, mounted]);
+
+  useEffect(() => {
+    if (!mounted || isRuleLocked || showIdleClock) return;
+
+    const timeout = window.setTimeout(
+      () => setShowIdleClock(true),
+      Math.max(1, idleClockTimeoutMinutes) * 60 * 1000
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [idleClockTimeoutMinutes, isRuleLocked, lastActivity, mounted, showIdleClock]);
 
   useEffect(() => {
     if (!mounted || !ruleLock.lockOnInactivity || isRuleLocked) return;
@@ -202,12 +226,17 @@ export default function Dashboard() {
     if (!settings.lockOnOpen && !settings.lockOnInactivity) {
       setIsRuleLocked(false);
     }
-    setLastActivity(Date.now());
+    markActivity();
+  };
+
+  const handleUpdateIdleClockTimeout = (timeoutMinutes: number) => {
+    setIdleClockTimeoutMinutes(timeoutMinutes);
+    markActivity();
   };
 
   const handleRuleUnlock = () => {
     setIsRuleLocked(false);
-    setLastActivity(Date.now());
+    markActivity();
   };
 
   const clearFullscreenReturnTimers = () => {
@@ -218,12 +247,14 @@ export default function Dashboard() {
   };
 
   const openView = (view: ViewState) => {
+    markActivity();
     clearFullscreenReturnTimers();
     setFullscreenReturnPhase('idle');
     setActiveView(view);
   };
 
   const closeActiveView = () => {
+    markActivity();
     const wasFullscreen = isFullscreenAppView(activeView, weatherDetail);
     clearFullscreenReturnTimers();
 
@@ -257,7 +288,7 @@ export default function Dashboard() {
   return (
     <main className="fixed inset-0 bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased">
       <AnimatePresence mode="wait">
-        {spotify?.albumImageUrl ? (
+        {hasVisibleMusic && spotify?.albumImageUrl ? (
           <div className="absolute inset-0 z-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={spotify.albumImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover blur-[40px] saturate-125 opacity-30" />
@@ -310,6 +341,47 @@ export default function Dashboard() {
             >
               Dismiss
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showIdleClock && !isRuleLocked && (
+          <motion.div
+            key="idle-clock"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            onPointerDown={markActivity}
+            className="fixed inset-0 z-[400] bg-black flex items-center justify-center px-[6vw]"
+          >
+            <motion.div
+              initial={{ y: 16, scale: 0.98 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 16, scale: 0.98 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className={`grid w-full items-center gap-[5vw] ${
+                clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
+              }`}
+            >
+              <div className={`${clocks.length > 0 ? 'text-left' : 'text-center'}`}>
+                <p className="text-[clamp(2.25rem,4vw,5rem)] font-black uppercase tracking-[0.35em] text-white/35">{date}</p>
+                <h1 className={`${clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
+                  {time}
+                </h1>
+              </div>
+              {clocks.length > 0 && (
+                <div className="flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]">
+                  {clocks.map(clock => (
+                    <div key={clock.id} className="flex flex-col items-end gap-1">
+                      <span className="text-[clamp(1.1rem,1.7vw,2rem)] font-black uppercase tracking-[0.22em] text-white/35">{clock.label}</span>
+                      <span className="text-[clamp(2.75rem,5vw,5.75rem)] font-black tabular-nums leading-none text-white/80">{clock.displayTime}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -372,7 +444,10 @@ export default function Dashboard() {
                 key="dashboard-view"
                 initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="w-full h-full flex flex-col justify-between items-center py-8 relative"
+                layout
+                className={`w-full h-full flex flex-col items-center py-8 relative transition-[justify-content] duration-500 ease-out ${
+                  hasDashboardHero ? 'justify-between' : 'justify-center'
+                }`}
               >
                 {/* Active Status Indicators */}
                 <div className="absolute top-0 right-0 flex items-center gap-4">
@@ -434,93 +509,115 @@ export default function Dashboard() {
                   </AnimatePresence>
                 </div>
 
-                <div className="w-full flex-1 min-h-0 flex items-center justify-center">
-                  {hasPomodoroHero || hasTimerHero ? (
-                    <div className="grid w-full h-full max-h-[24rem] min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5 items-stretch overflow-hidden">
-                      <div className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-5 flex items-center">
-                        <SpotifyPlayer spotify={spotify} onAction={handleAction} compact />
-                      </div>
-                      {hasBothTimerHeroes ? (
-                        <div className="grid min-h-0 min-w-0 grid-rows-2 gap-4 overflow-hidden">
-                          <DashboardPomodoroPanel
-                            compact
-                            timeLeft={pomoTime}
-                            totalTime={(pomoMode === 'work' ? workDuration : breakDuration) * 60}
-                            active={pomoActive}
-                            mode={pomoMode}
-                            onOpen={() => openView('pomodoro')}
-                            onToggle={togglePomo}
-                            onReset={resetPomo}
-                          />
-                          <DashboardTimerPanel
-                            compact
-                            timeLeft={timerSeconds}
-                            totalTime={timerDuration}
-                            active={timerRunning}
-                            finished={timerUp}
-                            onOpen={() => openView('timer')}
-                            onPause={pauseTimer}
-                            onResume={resumeTimer}
-                            onReset={resetTimer}
-                            onDismiss={dismissAlert}
-                          />
+                <AnimatePresence initial={false}>
+                  {hasDashboardHero && (
+                    <motion.div
+                      key="dashboard-hero"
+                      layout
+                      initial={{ opacity: 0, y: -24, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -24, scale: 0.98 }}
+                      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                      className="w-full flex-1 min-h-0 flex items-center justify-center"
+                    >
+                      {hasPomodoroHero || hasTimerHero ? (
+                        <div
+                          className={`grid w-full h-full max-h-[24rem] min-w-0 gap-5 items-stretch overflow-hidden ${
+                            hasVisibleMusic ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)]' : 'max-w-2xl grid-cols-1'
+                          }`}
+                        >
+                          {hasVisibleMusic && (
+                            <div className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-5 flex items-center">
+                              <SpotifyPlayer spotify={spotify} onAction={handleAction} compact />
+                            </div>
+                          )}
+                          {hasBothTimerHeroes ? (
+                            <div className="grid min-h-0 min-w-0 grid-rows-2 gap-4 overflow-hidden">
+                              <DashboardPomodoroPanel
+                                compact
+                                timeLeft={pomoTime}
+                                totalTime={(pomoMode === 'work' ? workDuration : breakDuration) * 60}
+                                active={pomoActive}
+                                mode={pomoMode}
+                                onOpen={() => openView('pomodoro')}
+                                onToggle={togglePomo}
+                                onReset={resetPomo}
+                              />
+                              <DashboardTimerPanel
+                                compact
+                                timeLeft={timerSeconds}
+                                totalTime={timerDuration}
+                                active={timerRunning}
+                                finished={timerUp}
+                                onOpen={() => openView('timer')}
+                                onPause={pauseTimer}
+                                onResume={resumeTimer}
+                                onReset={resetTimer}
+                                onDismiss={dismissAlert}
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              {hasPomodoroHero && (
+                                <DashboardPomodoroPanel
+                                  timeLeft={pomoTime}
+                                  totalTime={(pomoMode === 'work' ? workDuration : breakDuration) * 60}
+                                  active={pomoActive}
+                                  mode={pomoMode}
+                                  onOpen={() => openView('pomodoro')}
+                                  onToggle={togglePomo}
+                                  onReset={resetPomo}
+                                />
+                              )}
+                              {hasTimerHero && (
+                                <DashboardTimerPanel
+                                  timeLeft={timerSeconds}
+                                  totalTime={timerDuration}
+                                  active={timerRunning}
+                                  finished={timerUp}
+                                  onOpen={() => openView('timer')}
+                                  onPause={pauseTimer}
+                                  onResume={resumeTimer}
+                                  onReset={resetTimer}
+                                  onDismiss={dismissAlert}
+                                />
+                              )}
+                            </>
+                          )}
                         </div>
                       ) : (
-                        <>
-                          {hasPomodoroHero && (
-                            <DashboardPomodoroPanel
-                              timeLeft={pomoTime}
-                              totalTime={(pomoMode === 'work' ? workDuration : breakDuration) * 60}
-                              active={pomoActive}
-                              mode={pomoMode}
-                              onOpen={() => openView('pomodoro')}
-                              onToggle={togglePomo}
-                              onReset={resetPomo}
-                            />
-                          )}
-                          {hasTimerHero && (
-                            <DashboardTimerPanel
-                              timeLeft={timerSeconds}
-                              totalTime={timerDuration}
-                              active={timerRunning}
-                              finished={timerUp}
-                              onOpen={() => openView('timer')}
-                              onPause={pauseTimer}
-                              onResume={resumeTimer}
-                              onReset={resetTimer}
-                              onDismiss={dismissAlert}
-                            />
-                          )}
-                        </>
+                        <SpotifyPlayer spotify={spotify} onAction={handleAction} />
                       )}
-                    </div>
-                  ) : (
-                    <SpotifyPlayer spotify={spotify} onAction={handleAction} />
+                    </motion.div>
                   )}
-                </div>
-                <AppLauncher 
-                  onOpenCalendar={() => openView('calendar')}
-                  onOpenPomo={() => openView('pomodoro')} 
-                  onOpenSettings={() => openView('settings')}
-                  onOpenSports={() => openView('sports')}
-                  onOpenWeather={() => openView('weather')}
-                  onOpenFitbit={() => openView('fitbit')}
-                  onOpenHome={() => openView('home')}
-                  onOpenTimer={() => openView('timer')}
-                  onOpenTodo={() => openView('todo')}
-                  onOpenRule={() => openView('rule')}
-                  onResetPomo={resetPomo}
-                  onResetTimer={dismissAlert}
-                  pomoActive={pomoActive} 
-                  pomoTime={pomoTime} 
-                  pomoFinished={pomoTime === 0 && !pomoActive}
-                  pomoMode={pomoMode}
-                  timerActive={timerRunning}
-                  timerTime={timerSeconds}
-                  timerFinished={timerUp}
-                  isSportsLive={isSportsLive}
-                  appConfig={appConfig}
-                />
+                </AnimatePresence>
+
+                <motion.div layout transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="w-full flex justify-center">
+                  <AppLauncher 
+                    onOpenCalendar={() => openView('calendar')}
+                    onOpenPomo={() => openView('pomodoro')} 
+                    onOpenSettings={() => openView('settings')}
+                    onOpenSports={() => openView('sports')}
+                    onOpenWeather={() => openView('weather')}
+                    onOpenFitbit={() => openView('fitbit')}
+                    onOpenHome={() => openView('home')}
+                    onOpenTimer={() => openView('timer')}
+                    onOpenTodo={() => openView('todo')}
+                    onOpenRule={() => openView('rule')}
+                    onResetPomo={resetPomo}
+                    onResetTimer={dismissAlert}
+                    pomoActive={pomoActive} 
+                    pomoTime={pomoTime} 
+                    pomoFinished={pomoTime === 0 && !pomoActive}
+                    pomoMode={pomoMode}
+                    timerActive={timerRunning}
+                    timerTime={timerSeconds}
+                    timerFinished={timerUp}
+                    isSportsLive={isSportsLive}
+                    appConfig={appConfig}
+                    centered={!hasDashboardHero}
+                  />
+                </motion.div>
               </motion.div>
             ) : activeView === 'dashboard' ? (
               <motion.div
@@ -579,10 +676,12 @@ export default function Dashboard() {
                 {activeView === 'settings' && (
                   <SettingsView 
                     onClose={closeActiveView}
-                    appConfig={appConfig} onUpdateAppConfig={updateAppConfig}
-                    worldClocks={clocks} onUpdateClocks={updateClocks}
-                    ruleLock={ruleLock} onUpdateRuleLock={handleUpdateRuleLock}
-                  />
+                  appConfig={appConfig} onUpdateAppConfig={updateAppConfig}
+                  worldClocks={clocks} onUpdateClocks={updateClocks}
+                  ruleLock={ruleLock} onUpdateRuleLock={handleUpdateRuleLock}
+                  idleClockTimeoutMinutes={idleClockTimeoutMinutes}
+                  onUpdateIdleClockTimeout={handleUpdateIdleClockTimeout}
+                />
                 )}
                 {activeView === 'todo' && (
                   <TodoView />

@@ -139,23 +139,23 @@ function DateTimeControl({ label, value, isAllDay, onChange }: DateTimeControlPr
   const minute = String(date.getMinutes()).padStart(2, '0');
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-2.5">
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-black uppercase tracking-[0.22em] text-white/30">{label}</span>
         <span className="text-sm font-black text-rose-100/70">{compactDateFormatter.format(date)}</span>
       </div>
 
-      <div className="mt-2 grid grid-cols-[3rem_minmax(0,1fr)_3rem] items-center gap-3">
+      <div className="mt-1.5 grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2.5">
         <button
           type="button"
           onPointerDown={() => onChange(shiftDateTimeValue(value, 'day', -1))}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-white/60 transition-all active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-white/60 transition-all active:scale-95"
           aria-label={`Move ${label.toLowerCase()} back one day`}
         >
-          <ChevronLeft size={24} />
+          <ChevronLeft size={22} />
         </button>
-        <div className="min-w-0 rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-center">
-          <p className="truncate text-xl font-black leading-none text-white">{date.getDate()}</p>
+        <div className="min-w-0 rounded-xl border border-white/5 bg-black/20 px-3 py-1.5 text-center">
+          <p className="truncate text-lg font-black leading-none text-white">{date.getDate()}</p>
           <p className="mt-1 truncate text-xs font-black uppercase tracking-[0.18em] text-white/35">
             {date.toLocaleDateString(undefined, { weekday: 'long', month: 'long' })}
           </p>
@@ -163,35 +163,35 @@ function DateTimeControl({ label, value, isAllDay, onChange }: DateTimeControlPr
         <button
           type="button"
           onPointerDown={() => onChange(shiftDateTimeValue(value, 'day', 1))}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-white/60 transition-all active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-white/60 transition-all active:scale-95"
           aria-label={`Move ${label.toLowerCase()} forward one day`}
         >
-          <ChevronRight size={24} />
+          <ChevronRight size={22} />
         </button>
       </div>
 
       {!isAllDay && (
-        <div className="mt-2 grid grid-cols-2 gap-3">
+        <div className="mt-1.5 grid grid-cols-2 gap-2.5">
           {[
             { name: 'Hour', value: hour, field: 'hour' as const, step: 1 },
             { name: 'Minute', value: minute, field: 'minute' as const, step: 15 }
           ].map(control => (
-            <div key={control.name} className="rounded-xl border border-white/5 bg-black/20 p-2">
+            <div key={control.name} className="rounded-xl border border-white/5 bg-black/20 p-1.5">
               <p className="text-center text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/25">{control.name}</p>
-              <div className="mt-2 grid grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-center gap-2">
+              <div className="mt-1.5 grid grid-cols-[2rem_minmax(0,1fr)_2rem] items-center gap-2">
                 <button
                   type="button"
                   onPointerDown={() => onChange(shiftDateTimeValue(value, control.field, -control.step))}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/55 transition-all active:scale-95"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-white/55 transition-all active:scale-95"
                   aria-label={`Decrease ${label.toLowerCase()} ${control.name.toLowerCase()}`}
                 >
                   <Minus size={16} />
                 </button>
-                <span className="text-center text-xl font-black tabular-nums leading-none text-white">{control.value}</span>
+                <span className="text-center text-lg font-black tabular-nums leading-none text-white">{control.value}</span>
                 <button
                   type="button"
                   onPointerDown={() => onChange(shiftDateTimeValue(value, control.field, control.step))}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/55 transition-all active:scale-95"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-white/55 transition-all active:scale-95"
                   aria-label={`Increase ${label.toLowerCase()} ${control.name.toLowerCase()}`}
                 >
                   <Plus size={16} />
@@ -515,10 +515,10 @@ export function CalendarAppView({
       {draft && (
         <div className="absolute inset-0 z-[150] overflow-hidden rounded-[2rem] border border-white/10 bg-black/95">
           <div className="flex h-full flex-col">
-            <div className="shrink-0 flex items-center justify-between gap-6 border-b border-white/10 px-8 py-6">
+            <div className="shrink-0 flex items-center justify-between gap-4 border-b border-white/10 px-6 py-3">
               <div className="min-w-0">
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-rose-200/45">Personal calendar</p>
-                <h2 className="mt-2 truncate text-5xl font-black leading-none tracking-tight">
+                <p className="text-[0.65rem] font-black uppercase tracking-[0.24em] text-rose-200/45">Personal calendar</p>
+                <h2 className="mt-1 truncate text-3xl font-black leading-none tracking-tight">
                   {isEditingPersonalEvent ? 'Edit event' : 'New event'}
                 </h2>
               </div>
@@ -528,27 +528,28 @@ export function CalendarAppView({
                   setDraft(null);
                 }}
                 disabled={isSaving}
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 transition-all active:scale-95 disabled:opacity-35"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-all active:scale-95 disabled:opacity-35"
                 aria-label="Close personal event editor"
               >
-                <X size={28} />
+                <X size={24} />
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-hidden px-8 py-5">
-              <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_18rem] gap-6">
-                <div className="min-w-0 grid min-h-0 grid-rows-[auto_auto_auto_auto] gap-4">
+            <div className="min-h-0 flex-1 overflow-hidden px-6 py-4">
+              <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_18rem] gap-5">
+                <div className="min-w-0 min-h-0 overflow-y-auto scrollbar-hide pr-1">
+                  <div className="grid min-h-full grid-rows-[auto_auto_auto_auto] gap-3">
                   <label className="block">
-                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/30">Title</span>
+                    <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.22em] text-white/30">Title</span>
                     <input
                       value={draft.summary}
                       onChange={event => updateDraft({ summary: event.target.value })}
-                      className="h-16 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-2xl font-black text-white outline-none transition-colors placeholder:text-white/15 focus:border-rose-200/60"
+                      className="h-14 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-xl font-black text-white outline-none transition-colors placeholder:text-white/15 focus:border-rose-200/60"
                       placeholder="Event title"
                     />
                   </label>
 
-                  <div className="grid min-h-0 grid-cols-2 gap-4">
+                  <div className="grid min-h-0 grid-cols-2 gap-3">
                     <DateTimeControl
                       label="Start"
                       value={draft.start}
@@ -564,19 +565,19 @@ export function CalendarAppView({
                   </div>
 
                   <label className="block min-h-0">
-                    <span className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/30">Location</span>
+                    <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.22em] text-white/30">Location</span>
                     <input
                       value={draft.location || ''}
                       onChange={event => updateDraft({ location: event.target.value })}
-                      className="h-14 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-lg font-bold text-white outline-none transition-colors placeholder:text-white/15 focus:border-rose-200/60"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-base font-bold text-white outline-none transition-colors placeholder:text-white/15 focus:border-rose-200/60"
                       placeholder="Location"
                     />
                   </label>
 
-                  <div className="grid min-h-0 grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-4">
+                  <div className="grid min-h-0 grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3">
                     <button
                       onPointerDown={() => updateDraft({ isAllDay: !draft.isAllDay })}
-                      className={`flex min-h-[5.75rem] items-center justify-between rounded-2xl border px-5 text-left transition-all active:scale-[0.99] ${
+                      className={`flex min-h-20 items-center justify-between rounded-2xl border px-5 text-left transition-all active:scale-[0.99] ${
                         draft.isAllDay
                           ? 'border-rose-200/40 bg-rose-200/15 text-rose-100'
                           : 'border-white/10 bg-white/[0.05] text-white/60'
@@ -589,8 +590,8 @@ export function CalendarAppView({
                       </span>
                     </button>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3">
-                      <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-white/30">
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-2.5">
+                      <div className="mb-1.5 flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-white/30">
                         <Repeat size={16} /> Repeat
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -602,7 +603,7 @@ export function CalendarAppView({
                               key={option.value}
                               type="button"
                               onPointerDown={() => updateDraft({ recurrence: option.value })}
-                              className={`h-11 rounded-xl border text-xs font-black uppercase tracking-[0.16em] transition-all active:scale-95 ${
+                              className={`h-9 rounded-xl border text-xs font-black uppercase tracking-[0.16em] transition-all active:scale-95 ${
                                 isActive
                                   ? 'border-rose-200/40 bg-rose-200/20 text-rose-50'
                                   : 'border-white/10 bg-black/20 text-white/40'
@@ -616,9 +617,10 @@ export function CalendarAppView({
                       </div>
                     </div>
                   </div>
+                  </div>
                 </div>
 
-                <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                   <div className="space-y-2">
                     <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Date</p>
                     <p className="text-3xl font-black leading-tight text-white">{sameDayFormatter.format(fromDateTimeInputValue(draft.start))}</p>

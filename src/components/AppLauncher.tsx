@@ -26,6 +26,7 @@ interface AppLauncherProps {
   timerFinished: boolean;
   isSportsLive: boolean;
   appConfig: AppConfig;
+  centered?: boolean;
 }
 
 export function AppLauncher({ 
@@ -46,7 +47,8 @@ export function AppLauncher({
   timerActive,
   timerFinished,
   isSportsLive,
-  appConfig
+  appConfig,
+  centered = false
 }: AppLauncherProps) {
   const order: AppId[] = appConfig.appOrder || ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'];
 
@@ -224,7 +226,13 @@ export function AppLauncher({
     : [launcherItems];
 
   return (
-    <div className={`w-full border-t border-white/5 px-4 ${isMultiRow ? 'max-w-5xl pt-5' : 'max-w-5xl pt-10'}`}>
+    <div
+      className={`w-full px-4 transition-all duration-500 ease-out ${
+        centered
+          ? 'max-w-5xl'
+          : `border-t border-white/5 ${isMultiRow ? 'max-w-5xl pt-5' : 'max-w-5xl pt-10'}`
+      }`}
+    >
       <div className={`flex flex-col w-full mx-auto ${isMultiRow ? 'gap-3' : 'gap-5'}`}>
         {rows.map((row, index) => (
           <div key={index} className={`flex justify-center ${isMultiRow ? 'gap-3' : 'gap-5'}`}>
