@@ -72,6 +72,11 @@ interface Challenge {
   lens: PromptLens;
 }
 
+interface Attempt {
+  challenge: Challenge;
+  rows: Record<PromptHouse, ResponseId[]>;
+}
+
 interface IconMeta<T extends string> {
   id: T;
   label: string;
@@ -126,20 +131,46 @@ const responses: IconMeta<ResponseId>[] = [
 
 const responseMap = new Map(responses.map(response => [response.id, response]));
 
-const selectionTiles: ResponseId[] = ['target', 'satellite', 'aperture', 'spark', 'diamond', 'brain', 'puzzle', 'key'];
+const promptHouses: PromptHouse[] = ['orbit', 'ember', 'tide', 'signal'];
+const promptLenses: PromptLens[] = ['sun', 'moon', 'compass', 'mirror'];
+const responseIds = new Set(responses.map(response => response.id));
 
-const rows: Record<PromptHouse, ResponseId[]> = {
-  orbit: ['target', 'satellite', 'aperture', 'spark', 'diamond', 'brain', 'puzzle', 'key'],
-  ember: ['diamond', 'key', 'target', 'brain', 'spark', 'aperture', 'satellite', 'puzzle'],
-  tide: ['brain', 'spark', 'key', 'satellite', 'puzzle', 'diamond', 'target', 'aperture'],
-  signal: ['puzzle', 'diamond', 'brain', 'target', 'key', 'satellite', 'aperture', 'spark']
+const parseRows = (): Record<PromptHouse, ResponseId[]> => {
+  const parsed = JSON.parse(process.env.NEXT_PUBLIC_RULE_LOCK_ROWS ?? '{}') as Record<string, unknown>;
+  const entries = promptHouses.map(house => {
+    const row = parsed[house];
+    if (!Array.isArray(row) || row.length !== 8 || row.some(id => typeof id !== 'string' || !responseIds.has(id as ResponseId))) {
+      throw new Error(`NEXT_PUBLIC_RULE_LOCK_ROWS must contain eight valid response IDs for ${house}`);
+    }
+    return [house, row as ResponseId[]] as const;
+  });
+
+  return Object.fromEntries(entries) as Record<PromptHouse, ResponseId[]>;
 };
 
-const lensOffsets: Record<PromptLens, number> = {
-  sun: 1,
-  moon: 3,
-  compass: 5,
-  mirror: 7
+const parseLensOffsets = (): Record<PromptLens, number> => {
+  const parsed = JSON.parse(process.env.NEXT_PUBLIC_RULE_LOCK_LENS_OFFSETS ?? '{}') as Record<string, unknown>;
+  const entries = promptLenses.map(lens => {
+    const offset = parsed[lens];
+    if (!Number.isInteger(offset) || (offset as number) < 0 || (offset as number) > 7) {
+      throw new Error(`NEXT_PUBLIC_RULE_LOCK_LENS_OFFSETS must contain a value from 0 to 7 for ${lens}`);
+    }
+    return [lens, offset as number] as const;
+  });
+
+  return Object.fromEntries(entries) as Record<PromptLens, number>;
+};
+
+const configuredRows = parseRows();
+const lensOffsets = parseLensOffsets();
+
+const shuffle = <T,>(items: T[]): T[] => {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return shuffled;
 };
 
 const difficultyConfig: Record<Difficulty, {
@@ -182,13 +213,25 @@ const makeChallenge = (difficulty: Difficulty): Challenge => {
   };
 };
 
+const makeAttempt = (difficulty: Difficulty): Attempt => ({
+  challenge: makeChallenge(difficulty),
+  rows: Object.fromEntries(promptHouses.map(house => [house, shuffle(configuredRows[house])])) as Record<
+    PromptHouse,
+    ResponseId[]
+  >
+});
+
 const iconFor = <T extends string>(items: IconMeta<T>[], id: T) => items.find(item => item.id === id) ?? items[0];
 
 const unique = <T,>(items: T[]) => Array.from(new Set(items));
 
-const expectedFor = (challenge: Challenge, difficulty: Difficulty): ResponseId[] => {
+const expectedFor = (
+  challenge: Challenge,
+  difficulty: Difficulty,
+  attemptRows: Record<PromptHouse, ResponseId[]>
+): ResponseId[] => {
   const answerCount = difficultyConfig[difficulty].answerCount;
-  const row = rows[challenge.house];
+  const row = attemptRows[challenge.house];
   const anchor = challenge.step - 1;
   const first = row[(anchor + challenge.step) % row.length];
   const second = row[(anchor + lensOffsets[challenge.lens]) % row.length];
@@ -206,8 +249,10 @@ const expectedFor = (challenge: Challenge, difficulty: Difficulty): ResponseId[]
   return expected.slice(0, answerCount);
 };
 
-const choicesFor = (): IconMeta<ResponseId>[] =>
-  selectionTiles.map(id => responseMap.get(id)).filter((response): response is IconMeta<ResponseId> => Boolean(response));
+const choicesFor = (attemptRows: Record<PromptHouse, ResponseId[]>): IconMeta<ResponseId>[] =>
+  shuffle(attemptRows.orbit)
+    .map(id => responseMap.get(id))
+    .filter((response): response is IconMeta<ResponseId> => Boolean(response));
 
 const keyFor = (items: string[]) => [...items].sort().join('|');
 
@@ -218,12 +263,13 @@ interface RuleViewProps {
 
 export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>(lockMode ? 'hard' : 'easy');
-  const [challenge, setChallenge] = useState<Challenge>(() => makeChallenge(lockMode ? 'hard' : 'easy'));
+  const [attempt, setAttempt] = useState<Attempt>(() => makeAttempt(lockMode ? 'hard' : 'easy'));
   const [selected, setSelected] = useState<ResponseId[]>([]);
   const [showTrace, setShowTrace] = useState(false);
 
-  const expected = useMemo(() => expectedFor(challenge, difficulty), [challenge, difficulty]);
-  const choices = useMemo(() => choicesFor(), []);
+  const { challenge, rows } = attempt;
+  const expected = useMemo(() => expectedFor(challenge, difficulty, rows), [challenge, difficulty, rows]);
+  const choices = useMemo(() => choicesFor(rows), [rows]);
   const visibleHouses = difficultyConfig[difficulty].houses;
   const solved = selected.length === expected.length && keyFor(selected) === keyFor(expected);
   const missed = selected.length >= expected.length && !solved;
@@ -235,14 +281,14 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
   ];
 
   const resetChallenge = () => {
-    setChallenge(makeChallenge(difficulty));
+    setAttempt(makeAttempt(difficulty));
     setSelected([]);
     setShowTrace(false);
   };
 
   const setLevel = (nextDifficulty: Difficulty) => {
     setDifficulty(nextDifficulty);
-    setChallenge(makeChallenge(nextDifficulty));
+    setAttempt(makeAttempt(nextDifficulty));
     setSelected([]);
     setShowTrace(false);
   };
@@ -257,6 +303,8 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
 
       if (lockMode && next.length === expected.length && keyFor(next) === keyFor(expected)) {
         window.setTimeout(() => onSolved?.(), 150);
+      } else if (lockMode && next.length === expected.length) {
+        window.setTimeout(resetChallenge, 350);
       }
 
       return next;
