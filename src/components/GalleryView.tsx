@@ -111,31 +111,31 @@ export function GalleryView() {
     <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03]">
       <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-8 py-6 pr-28">
         <div><div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.28em] text-white/30"><Images size={18} /> Gallery</div><h2 className="mt-2 text-4xl font-black tracking-tight">Your photos</h2></div>
-        <div className="flex items-center gap-4"><span className="text-sm font-black text-white/30">{photos.length} photos · {photos.filter(photo => photo.favorite).length} favourites</span><button onPointerDown={() => setShowAdd(true)} className="flex h-14 items-center gap-3 rounded-2xl bg-white px-6 font-black text-black active:scale-95"><ImagePlus size={22} /> Add photos</button></div>
+        <div className="flex items-center gap-4"><span className="text-sm font-black text-white/30">{photos.length} photos · {photos.filter(photo => photo.favorite).length} favourites</span><button onClick={() => setShowAdd(true)} className="flex h-14 items-center gap-3 rounded-2xl bg-white px-6 font-black text-black active:scale-95"><ImagePlus size={22} /> Add photos</button></div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-6 scrollbar-hide">
+      <div className="min-h-0 flex-1 touch-pan-y overscroll-contain overflow-y-auto p-6 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
         {loading ? (
           <div className="flex h-full items-center justify-center text-white/25"><LoaderCircle size={42} className="animate-spin" /></div>
         ) : photos.length > 0 ? (
           <div className="grid grid-cols-5 gap-4">
             {photos.map(photo => (
-              <motion.div layout key={photo.name} className="group relative aspect-square overflow-hidden rounded-3xl bg-white/5">
-                <button onPointerDown={() => setSelected(photo)} className="absolute inset-0"><Image src={photo.url} alt="Gallery photo" fill unoptimized sizes="18vw" className="object-cover transition-transform duration-500 group-hover:scale-105" /></button>
-                <button onPointerDown={() => toggleFavorite(photo)} aria-label={photo.favorite ? 'Remove from favourites' : 'Add to favourites'} className={`absolute bottom-3 right-3 flex size-11 items-center justify-center rounded-2xl backdrop-blur active:scale-90 ${photo.favorite ? 'bg-white text-rose-500' : 'bg-black/65 text-white/65'}`}><Heart size={21} className={photo.favorite ? 'fill-current' : ''} /></button>
-              </motion.div>
+              <div key={photo.name} className="group relative aspect-square overflow-hidden rounded-3xl bg-white/5" style={{ contentVisibility: 'auto', containIntrinsicSize: '220px' }}>
+                <button onClick={() => setSelected(photo)} className="absolute inset-0 touch-pan-y"><Image src={photo.thumbnailUrl} alt="Gallery photo" fill unoptimized sizes="18vw" className="object-cover" /></button>
+                <button onClick={() => toggleFavorite(photo)} aria-label={photo.favorite ? 'Remove from favourites' : 'Add to favourites'} className={`absolute bottom-3 right-3 flex size-11 items-center justify-center rounded-2xl backdrop-blur active:scale-90 ${photo.favorite ? 'bg-white text-rose-500' : 'bg-black/65 text-white/65'}`}><Heart size={21} className={photo.favorite ? 'fill-current' : ''} /></button>
+              </div>
             ))}
           </div>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-5 text-white/20"><Images size={72} strokeWidth={1.2} /><p className="text-xl font-black">Your gallery is empty</p><button onPointerDown={() => setShowAdd(true)} className="rounded-2xl bg-white px-6 py-4 font-black text-black">Add your first photos</button></div>
+          <div className="flex h-full flex-col items-center justify-center gap-5 text-white/20"><Images size={72} strokeWidth={1.2} /><p className="text-xl font-black">Your gallery is empty</p><button onClick={() => setShowAdd(true)} className="rounded-2xl bg-white px-6 py-4 font-black text-black">Add your first photos</button></div>
         )}
       </div>
 
       <AnimatePresence>
         {selected && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[180] flex items-center justify-center bg-black/95 p-8">
-            <div className="relative h-full w-full"><Image src={selected.url} alt="Gallery photo" fill unoptimized sizes="100vw" className="object-contain" /></div>
-            <div className="absolute right-7 top-7 flex gap-3"><button onPointerDown={() => toggleFavorite(selected)} className={`flex size-14 items-center justify-center rounded-2xl ${selected.favorite ? 'bg-white text-rose-500' : 'bg-white/10 text-white'}`}><Heart size={25} className={selected.favorite ? 'fill-current' : ''} /></button><button onPointerDown={() => removePhoto(selected)} className="flex size-14 items-center justify-center rounded-2xl bg-red-500/20 text-red-200"><Trash2 size={24} /></button><button onPointerDown={() => setSelected(null)} className="flex size-14 items-center justify-center rounded-2xl bg-white/10 text-white"><X size={26} /></button></div>
+            <div className="relative h-full w-full"><Image src={selected.screensaverUrl} alt="Gallery photo" fill unoptimized sizes="100vw" className="object-contain" /></div>
+            <div className="absolute right-7 top-7 flex gap-3"><button onClick={() => toggleFavorite(selected)} className={`flex size-14 items-center justify-center rounded-2xl ${selected.favorite ? 'bg-white text-rose-500' : 'bg-white/10 text-white'}`}><Heart size={25} className={selected.favorite ? 'fill-current' : ''} /></button><button onClick={() => removePhoto(selected)} className="flex size-14 items-center justify-center rounded-2xl bg-red-500/20 text-red-200"><Trash2 size={24} /></button><button onClick={() => setSelected(null)} className="flex size-14 items-center justify-center rounded-2xl bg-white/10 text-white"><X size={26} /></button></div>
           </motion.div>
         )}
 
