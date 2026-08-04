@@ -119,7 +119,12 @@ export type ScreensaverPhotoSource = 'all' | 'favorites';
 export interface GalleryPhoto {
   name: string;
   url: string;
+  thumbnailUrl: string;
+  screensaverUrl: string;
   favorite: boolean;
+  width: number;
+  height: number;
+  orientation: 'portrait' | 'landscape' | 'square';
 }
 
 export type ScreensaverPhoto = GalleryPhoto;
