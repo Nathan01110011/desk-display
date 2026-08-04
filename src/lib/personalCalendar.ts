@@ -114,6 +114,22 @@ function formatIcsDate(date: Date) {
   ].join('');
 }
 
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getExclusiveAllDayEndDate(start: Date, end: Date) {
+  const startDay = startOfDay(start);
+  const inclusiveEndDay = startOfDay(end);
+  return addDays(inclusiveEndDay < startDay ? startDay : inclusiveEndDay, 1);
+}
+
 function foldIcsLine(line: string) {
   const chunks: string[] = [];
   let remaining = line;
@@ -180,7 +196,7 @@ function buildIcsEvent(input: CalendarEventInput, uid: string) {
       ? `DTSTART;VALUE=DATE:${formatIcsDate(new Date(event.start))}`
       : `DTSTART:${formatIcsDateTime(new Date(event.start))}`,
     event.isAllDay
-      ? `DTEND;VALUE=DATE:${formatIcsDate(new Date(event.end))}`
+      ? `DTEND;VALUE=DATE:${formatIcsDate(getExclusiveAllDayEndDate(new Date(event.start), new Date(event.end)))}`
       : `DTEND:${formatIcsDateTime(new Date(event.end))}`,
     event.location ? `LOCATION:${escapeIcsText(event.location)}` : '',
     recurrenceToRrule(event.recurrence),

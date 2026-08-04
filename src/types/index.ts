@@ -31,7 +31,7 @@ export interface SpotifyNowPlaying {
   durationMs: number;
 }
 
-export type ViewState = 'dashboard' | 'calendar' | 'pomodoro' | 'settings' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule';
+export type ViewState = 'dashboard' | 'calendar' | 'gallery' | 'pomodoro' | 'settings' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule';
 
 export type PomodoroMode = 'work' | 'break';
 
@@ -95,6 +95,7 @@ export interface SmartDevice {
 
 export interface AppConfig {
   calendar: boolean;
+  gallery: boolean;
   pomodoro: boolean;
   sports: boolean;
   weather: boolean;
@@ -103,7 +104,7 @@ export interface AppConfig {
   timer: boolean;
   todo: boolean;
   rule: boolean;
-  appOrder?: ('calendar' | 'pomodoro' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule')[];
+  appOrder?: ('calendar' | 'gallery' | 'pomodoro' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule')[];
 }
 
 export interface RuleLockSettings {
@@ -111,6 +112,17 @@ export interface RuleLockSettings {
   lockOnInactivity: boolean;
   timeoutMinutes: number;
 }
+
+export type ScreensaverType = 'clock' | 'photos';
+export type ScreensaverPhotoSource = 'all' | 'favorites';
+
+export interface GalleryPhoto {
+  name: string;
+  url: string;
+  favorite: boolean;
+}
+
+export type ScreensaverPhoto = GalleryPhoto;
 
 export interface FitbitStats {
   steps: number;

@@ -1,10 +1,17 @@
 import type { NextConfig } from "next";
+import { networkInterfaces } from "node:os";
 
 const todoUrl = process.env.TODO_APP_URL?.replace(/\/$/, '');
+const localDevOrigins = Object.values(networkInterfaces())
+  .flatMap(entries => entries || [])
+  .filter(entry => entry.family === 'IPv4' && !entry.internal)
+  .map(entry => entry.address);
+const configuredDevOrigins = process.env.DEV_ALLOWED_ORIGINS?.split(',').map(value => value.trim()).filter(Boolean) || [];
 
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  allowedDevOrigins: [...new Set([...localDevOrigins, ...configuredDevOrigins])],
   async rewrites() {
     if (!todoUrl) {
       console.warn("⚠️ TODO_APP_URL is not set in .env.local. The TODO Tracker app proxy will be disabled.");
