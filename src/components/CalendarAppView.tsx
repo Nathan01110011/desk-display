@@ -60,6 +60,18 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function eventOverlapsDay(event: CalendarEvent, date: Date) {
+  const dayStart = startOfDay(date);
+  const dayEnd = addDays(dayStart, 1);
+  return new Date(event.end) > dayStart && new Date(event.start) < dayEnd;
+}
+
 function formatEventTime(event: CalendarEvent) {
   if (event.isAllDay) return 'All day';
 
@@ -114,12 +126,16 @@ function getDefaultDraft(date: Date): CalendarEventInput {
 }
 
 function eventToDraft(event: CalendarEvent): CalendarEventInput {
+  const start = new Date(event.start);
+  const end = new Date(event.end);
+  const inclusiveEnd = event.isAllDay && startOfDay(end) > startOfDay(start) ? addDays(end, -1) : end;
+
   return {
     id: event.id,
     etag: event.etag,
     summary: event.summary,
-    start: toDateTimeInputValue(new Date(event.start)),
-    end: toDateTimeInputValue(new Date(event.end)),
+    start: toDateTimeInputValue(start),
+    end: toDateTimeInputValue(inclusiveEnd),
     location: event.location || '',
     isAllDay: event.isAllDay,
     recurrence: event.recurrence || 'none'
@@ -218,28 +234,27 @@ export function CalendarAppView({
   const [selectedDate, setSelectedDate] = useState(today);
   const [draft, setDraft] = useState<CalendarEventInput | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState('');
 
   const days = useMemo(() => getCalendarDays(visibleMonth), [visibleMonth]);
   const eventMarkersByDay = useMemo(() => {
     const grouped = new Map<string, { work: boolean; personal: boolean }>();
 
-    calendar.forEach(event => {
-      const eventDate = startOfDay(new Date(event.start));
-      const key = eventDate.toISOString();
-      grouped.set(key, { ...(grouped.get(key) || { work: false, personal: false }), work: true });
-    });
+    days.forEach(date => {
+      const key = startOfDay(date).toISOString();
+      const hasWork = calendar.some(event => eventOverlapsDay(event, date));
+      const hasPersonal = personalCalendar.some(event => eventOverlapsDay(event, date));
 
-    personalCalendar.forEach(event => {
-      const eventDate = startOfDay(new Date(event.start));
-      const key = eventDate.toISOString();
-      grouped.set(key, { ...(grouped.get(key) || { work: false, personal: false }), personal: true });
+      if (hasWork || hasPersonal) {
+        grouped.set(key, { work: hasWork, personal: hasPersonal });
+      }
     });
 
     return grouped;
-  }, [calendar, personalCalendar]);
-  const selectedWorkEvents = calendar.filter(event => isSameDay(new Date(event.start), selectedDate));
-  const selectedPersonalEvents = personalCalendar.filter(event => isSameDay(new Date(event.start), selectedDate));
+  }, [calendar, days, personalCalendar]);
+  const selectedWorkEvents = calendar.filter(event => eventOverlapsDay(event, selectedDate));
+  const selectedPersonalEvents = personalCalendar.filter(event => eventOverlapsDay(event, selectedDate));
   const selectedEvents = [...selectedWorkEvents, ...selectedPersonalEvents];
   const isEditingPersonalEvent = Boolean(draft?.id);
 
@@ -276,27 +291,35 @@ export function CalendarAppView({
 
   const startNewPersonalEvent = () => {
     setSaveStatus('idle');
+    setSaveError('');
     setDraft(getDefaultDraft(selectedDate));
   };
 
   const handleSavePersonalEvent = async () => {
     if (!draft) return;
+    const event = { ...draft, summary: draft.summary.trim() };
+    if (!event.summary) {
+      setSaveStatus('error');
+      setSaveError('Add an event title before saving.');
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus('saving');
+    setSaveError('');
     try {
-      await onSavePersonalEvent(draft);
+      await onSavePersonalEvent(event);
       setSaveStatus('saved');
       await new Promise(resolve => setTimeout(resolve, 650));
       setDraft(null);
+    } catch (error) {
+      console.error('Personal calendar save failed', error);
+      setSaveStatus('error');
+      setSaveError(error instanceof Error ? error.message : 'Unable to save this event.');
     } finally {
       setIsSaving(false);
-      setSaveStatus('idle');
+      setSaveStatus(current => current === 'saving' ? 'idle' : current);
     }
-  };
-
-  const handleDeletePersonalEvent = async (event: CalendarEvent) => {
-    await onDeletePersonalEvent(eventToDraft(event));
-    if (draft?.id === event.id) setDraft(null);
   };
 
   const handleDeleteDraft = async () => {
@@ -483,19 +506,13 @@ export function CalendarAppView({
                       <button
                         onPointerDown={() => {
                           setSaveStatus('idle');
+                          setSaveError('');
                           setDraft(eventToDraft(event));
                         }}
                         className="ml-auto h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 active:scale-95 transition-all"
                         aria-label="Edit personal event"
                       >
                         <Pencil size={15} />
-                      </button>
-                      <button
-                        onPointerDown={() => handleDeletePersonalEvent(event)}
-                        className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 active:scale-95 transition-all"
-                        aria-label="Delete personal event"
-                      >
-                        <Trash2 size={15} />
                       </button>
                     </div>
                     <p className="mt-2 text-base font-bold leading-snug text-white/80 line-clamp-2">{event.summary}</p>
@@ -650,19 +667,27 @@ export function CalendarAppView({
                     <div className={`mt-4 flex items-center gap-3 rounded-2xl border px-4 py-4 ${
                       saveStatus === 'saved'
                         ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-100'
-                        : 'border-rose-200/20 bg-rose-200/10 text-rose-100'
+                        : saveStatus === 'error'
+                          ? 'border-red-300/25 bg-red-300/10 text-red-100'
+                          : 'border-rose-200/20 bg-rose-200/10 text-rose-100'
                     }`}>
                       {saveStatus === 'saved' ? (
                         <Check size={22} className="shrink-0" />
-                      ) : (
+                      ) : saveStatus === 'saving' ? (
                         <LoaderCircle size={22} className="shrink-0 animate-spin" />
+                      ) : (
+                        <X size={22} className="shrink-0" />
                       )}
                       <div className="min-w-0">
                         <p className="text-sm font-black uppercase tracking-[0.18em]">
-                          {saveStatus === 'saved' ? 'Saved' : 'Saving'}
+                          {saveStatus === 'saved' ? 'Saved' : saveStatus === 'error' ? 'Not saved' : 'Saving'}
                         </p>
                         <p className="mt-1 text-sm font-bold opacity-55">
-                          {saveStatus === 'saved' ? 'Personal calendar updated' : 'Writing to personal calendar'}
+                          {saveStatus === 'saved'
+                            ? 'Personal calendar updated'
+                            : saveStatus === 'error'
+                              ? saveError
+                              : 'Writing to personal calendar'}
                         </p>
                       </div>
                     </div>
@@ -670,7 +695,7 @@ export function CalendarAppView({
 
                   <div className="mt-auto space-y-3 pt-6">
                     <button
-                      onPointerDown={handleSavePersonalEvent}
+                      onClick={handleSavePersonalEvent}
                       disabled={isSaving || !draft.summary.trim()}
                       className={`flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-base font-black uppercase tracking-[0.18em] transition-all active:scale-95 disabled:opacity-70 ${
                         saveStatus === 'saved' ? 'bg-emerald-300 text-black' : 'bg-white text-black'

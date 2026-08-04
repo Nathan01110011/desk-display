@@ -26,8 +26,10 @@ import { TimerView } from '@/components/TimerView';
 import { RuleView } from '@/components/RuleView';
 import { DashboardPomodoroPanel } from '@/components/DashboardPomodoroPanel';
 import { DashboardTimerPanel } from '@/components/DashboardTimerPanel';
+import { PhotoScreensaver } from '@/components/PhotoScreensaver';
+import { GalleryView } from '@/components/GalleryView';
 import { formatPomoTime } from '@/lib/format';
-import { ViewState, AppConfig, RuleLockSettings } from '@/types';
+import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import dynamic from 'next/dynamic';
 
 const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), { 
@@ -37,6 +39,7 @@ const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.T
 
 const DEFAULT_CONFIG: AppConfig = {
   calendar: true,
+  gallery: true,
   pomodoro: true,
   sports: true,
   weather: true,
@@ -45,7 +48,7 @@ const DEFAULT_CONFIG: AppConfig = {
   timer: true,
   todo: true,
   rule: true,
-  appOrder: ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule']
+  appOrder: ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule']
 };
 
 const DEFAULT_RULE_LOCK: RuleLockSettings = {
@@ -62,7 +65,7 @@ const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
 type FullscreenReturnPhase = 'idle' | 'app-exit' | 'sidebar-enter';
 
 function isFullscreenAppView(view: ViewState, weatherDetail: boolean) {
-  return view === 'calendar' || view === 'fitbit' || (view === 'weather' && weatherDetail) || view === 'todo' || view === 'rule';
+  return view === 'calendar' || view === 'gallery' || view === 'fitbit' || (view === 'weather' && weatherDetail) || view === 'todo' || view === 'rule';
 }
 
 export default function Dashboard() {
@@ -71,6 +74,8 @@ export default function Dashboard() {
   const [appConfig, setAppConfig] = useState<AppConfig>(DEFAULT_CONFIG);
   const [ruleLock, setRuleLock] = useState<RuleLockSettings>(DEFAULT_RULE_LOCK);
   const [idleClockTimeoutMinutes, setIdleClockTimeoutMinutes] = useState(DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES);
+  const [screensaverType, setScreensaverType] = useState<ScreensaverType>('clock');
+  const [screensaverPhotoSource, setScreensaverPhotoSource] = useState<ScreensaverPhotoSource>('all');
   const [isRuleLocked, setIsRuleLocked] = useState(false);
   const [showIdleClock, setShowIdleClock] = useState(false);
   const [lastActivity, setLastActivity] = useState(() => Date.now());
@@ -119,6 +124,7 @@ export default function Dashboard() {
           const mergedConfig = { ...DEFAULT_CONFIG, ...data.appConfig };
           if (mergedConfig.appOrder) {
             if (!mergedConfig.appOrder.includes('calendar')) mergedConfig.appOrder.unshift('calendar');
+            if (!mergedConfig.appOrder.includes('gallery')) mergedConfig.appOrder.splice(1, 0, 'gallery');
             if (!mergedConfig.appOrder.includes('fitbit')) mergedConfig.appOrder.push('fitbit');
             if (!mergedConfig.appOrder.includes('home')) mergedConfig.appOrder.push('home');
             if (!mergedConfig.appOrder.includes('timer')) mergedConfig.appOrder.push('timer');
@@ -137,6 +143,8 @@ export default function Dashboard() {
         setIdleClockTimeoutMinutes(
           data.idleClockTimeoutMinutes ?? data.screenClockTimeoutMinutes ?? DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES
         );
+        setScreensaverType(data.screensaverType === 'photos' ? 'photos' : 'clock');
+        setScreensaverPhotoSource(data.screensaverPhotoSource === 'favorites' ? 'favorites' : 'all');
         setIsRuleLocked(loadedRuleLock.lockOnOpen);
         
         if (data.worldClocks) updateClocks(data.worldClocks);
@@ -231,6 +239,16 @@ export default function Dashboard() {
 
   const handleUpdateIdleClockTimeout = (timeoutMinutes: number) => {
     setIdleClockTimeoutMinutes(timeoutMinutes);
+    markActivity();
+  };
+
+  const handleUpdateScreensaverType = (type: ScreensaverType) => {
+    setScreensaverType(type);
+    markActivity();
+  };
+
+  const handleUpdateScreensaverPhotoSource = (source: ScreensaverPhotoSource) => {
+    setScreensaverPhotoSource(source);
     markActivity();
   };
 
@@ -348,40 +366,44 @@ export default function Dashboard() {
       <AnimatePresence>
         {showIdleClock && !isRuleLocked && (
           <motion.div
-            key="idle-clock"
+            key="idle-screensaver"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             onPointerDown={markActivity}
-            className="fixed inset-0 z-[400] bg-black flex items-center justify-center px-[6vw]"
+            className="fixed inset-0 z-[400] bg-black flex items-center justify-center"
           >
-            <motion.div
-              initial={{ y: 16, scale: 0.98 }}
-              animate={{ y: 0, scale: 1 }}
-              exit={{ y: 16, scale: 0.98 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className={`grid w-full items-center gap-[5vw] ${
-                clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
-              }`}
-            >
-              <div className={`${clocks.length > 0 ? 'text-left' : 'text-center'}`}>
-                <p className="text-[clamp(2.25rem,4vw,5rem)] font-black uppercase tracking-[0.35em] text-white/35">{date}</p>
-                <h1 className={`${clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
-                  {time}
-                </h1>
-              </div>
-              {clocks.length > 0 && (
-                <div className="flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]">
-                  {clocks.map(clock => (
-                    <div key={clock.id} className="flex flex-col items-end gap-1">
-                      <span className="text-[clamp(1.1rem,1.7vw,2rem)] font-black uppercase tracking-[0.22em] text-white/35">{clock.label}</span>
-                      <span className="text-[clamp(2.75rem,5vw,5.75rem)] font-black tabular-nums leading-none text-white/80">{clock.displayTime}</span>
-                    </div>
-                  ))}
+            {screensaverType === 'photos' ? (
+              <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} />
+            ) : (
+              <motion.div
+                initial={{ y: 16, scale: 0.98 }}
+                animate={{ y: 0, scale: 1 }}
+                exit={{ y: 16, scale: 0.98 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className={`grid w-full items-center gap-[5vw] px-[6vw] ${
+                  clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
+                }`}
+              >
+                <div className={`${clocks.length > 0 ? 'text-left' : 'text-center'}`}>
+                  <p className="text-[clamp(2.25rem,4vw,5rem)] font-black uppercase tracking-[0.35em] text-white/35">{date}</p>
+                  <h1 className={`${clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
+                    {time}
+                  </h1>
                 </div>
-              )}
-            </motion.div>
+                {clocks.length > 0 && (
+                  <div className="flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]">
+                    {clocks.map(clock => (
+                      <div key={clock.id} className="flex flex-col items-end gap-1">
+                        <span className="text-[clamp(1.1rem,1.7vw,2rem)] font-black uppercase tracking-[0.22em] text-white/35">{clock.label}</span>
+                        <span className="text-[clamp(2.75rem,5vw,5.75rem)] font-black tabular-nums leading-none text-white/80">{clock.displayTime}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -595,6 +617,7 @@ export default function Dashboard() {
                 <motion.div layout transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="w-full flex justify-center">
                   <AppLauncher 
                     onOpenCalendar={() => openView('calendar')}
+                    onOpenGallery={() => openView('gallery')}
                     onOpenPomo={() => openView('pomodoro')} 
                     onOpenSettings={() => openView('settings')}
                     onOpenSports={() => openView('sports')}
@@ -654,6 +677,7 @@ export default function Dashboard() {
                     onDeletePersonalEvent={deletePersonalCalendarEvent}
                   />
                 )}
+                {activeView === 'gallery' && <GalleryView />}
                 {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
                 {activeView === 'weather' && (
                   <WeatherView 
@@ -681,6 +705,10 @@ export default function Dashboard() {
                   ruleLock={ruleLock} onUpdateRuleLock={handleUpdateRuleLock}
                   idleClockTimeoutMinutes={idleClockTimeoutMinutes}
                   onUpdateIdleClockTimeout={handleUpdateIdleClockTimeout}
+                  screensaverType={screensaverType}
+                  onUpdateScreensaverType={handleUpdateScreensaverType}
+                  screensaverPhotoSource={screensaverPhotoSource}
+                  onUpdateScreensaverPhotoSource={handleUpdateScreensaverPhotoSource}
                 />
                 )}
                 {activeView === 'todo' && (

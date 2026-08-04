@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical } from 'lucide-react';
-import { AppConfig, AdditionalClock, RuleLockSettings } from '@/types';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3 } from 'lucide-react';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
 interface SettingsViewProps {
@@ -14,6 +14,10 @@ interface SettingsViewProps {
   onUpdateRuleLock: (settings: RuleLockSettings) => void;
   idleClockTimeoutMinutes: number;
   onUpdateIdleClockTimeout: (timeoutMinutes: number) => void;
+  screensaverType: ScreensaverType;
+  onUpdateScreensaverType: (type: ScreensaverType) => void;
+  screensaverPhotoSource: ScreensaverPhotoSource;
+  onUpdateScreensaverPhotoSource: (source: ScreensaverPhotoSource) => void;
 }
 
 export function SettingsView({ 
@@ -24,17 +28,22 @@ export function SettingsView({
   ruleLock,
   onUpdateRuleLock,
   idleClockTimeoutMinutes,
-  onUpdateIdleClockTimeout
+  onUpdateIdleClockTimeout,
+  screensaverType,
+  onUpdateScreensaverType,
+  screensaverPhotoSource,
+  onUpdateScreensaverPhotoSource
 }: SettingsViewProps) {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
   const [kbValue, setKbValue] = useState('');
   const [currentUnit, setCurrentUnit] = useState(localStorage.getItem('weatherUnit') || 'C');
 
-  const allAvailableApps = ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'] as const;
+  const allAvailableApps = ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'] as const;
   type AvailableApp = typeof allAvailableApps[number];
   const appLabels: Record<AvailableApp, string> = {
     calendar: 'Calendar',
+    gallery: 'Gallery',
     pomodoro: 'Pomodoro',
     sports: 'Sports',
     weather: 'Weather',
@@ -54,7 +63,7 @@ export function SettingsView({
       });
     }
   }, [showKeyboard, kbMode]);
-  
+
   const handleExitApp = async () => {
     try {
       await fetch('/api/system/exit', { method: 'POST' });
@@ -141,6 +150,24 @@ export function SettingsView({
     });
   };
 
+  const updateScreensaverType = async (type: ScreensaverType) => {
+    onUpdateScreensaverType(type);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ screensaverType: type })
+    });
+  };
+
+  const updateScreensaverPhotoSource = async (source: ScreensaverPhotoSource) => {
+    onUpdateScreensaverPhotoSource(source);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ screensaverPhotoSource: source })
+    });
+  };
+
   const ruleLockHours = Math.floor(ruleLock.timeoutMinutes / 60);
   const ruleLockMinutes = ruleLock.timeoutMinutes % 60;
   const idleClockHours = Math.floor(idleClockTimeoutMinutes / 60);
@@ -203,16 +230,51 @@ export function SettingsView({
           <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-white/80">Screen Clock</h3>
-                <p className="text-white/30 text-xs">Full-screen clock after inactivity</p>
+                <h3 className="text-lg font-bold text-white/80">Screensaver</h3>
+                <p className="text-white/30 text-xs">Shown full-screen after inactivity</p>
               </div>
               <span className="text-xs font-black uppercase tracking-widest text-white/25">
                 {idleClockTimeoutMinutes}m
               </span>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { type: 'clock' as const, label: 'Big Clock', icon: Clock3 },
+                { type: 'photos' as const, label: 'Photos', icon: Images },
+              ]).map(option => {
+                const Icon = option.icon;
+                const selected = screensaverType === option.type;
+                return (
+                  <button
+                    key={option.type}
+                    onPointerDown={() => updateScreensaverType(option.type)}
+                    className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
+                      selected ? 'border-white/40 bg-white text-black' : 'border-white/5 bg-white/[0.03] text-white/45'
+                    }`}
+                  >
+                    <Icon size={22} />
+                    <span className="font-black">{option.label}</span>
+                    {selected && <Check size={18} className="ml-auto" strokeWidth={4} />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {screensaverType === 'photos' && (
+              <div className="space-y-2 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Photos from Gallery</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([{ value: 'all' as const, label: 'All photos' }, { value: 'favorites' as const, label: 'Favourites' }]).map(option => (
+                    <button key={option.value} onPointerDown={() => updateScreensaverPhotoSource(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSource === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/40'}`}>{option.label}</button>
+                  ))}
+                </div>
+                <p className="text-center text-[10px] text-white/20">Manage and upload photos in the Gallery app.</p>
+              </div>
+            )}
+
             <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Clock Timeout</p>
+              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Inactivity Timeout</p>
               <div className="space-y-2">
                 <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button

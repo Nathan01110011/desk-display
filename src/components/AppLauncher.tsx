@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List, CalendarDays, ShieldQuestion } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List, CalendarDays, ShieldQuestion, Images } from 'lucide-react';
 import { PomodoroMode, AppConfig } from '@/types';
 
 type AppId = NonNullable<AppConfig['appOrder']>[number];
@@ -7,6 +7,7 @@ type AppId = NonNullable<AppConfig['appOrder']>[number];
 interface AppLauncherProps {
   onOpenPomo: () => void;
   onOpenCalendar: () => void;
+  onOpenGallery: () => void;
   onOpenSettings: () => void;
   onOpenSports: () => void;
   onOpenWeather: () => void;
@@ -32,6 +33,7 @@ interface AppLauncherProps {
 export function AppLauncher({ 
   onOpenPomo, 
   onOpenCalendar,
+  onOpenGallery,
   onOpenSettings, 
   onOpenSports, 
   onOpenWeather,
@@ -50,7 +52,7 @@ export function AppLauncher({
   appConfig,
   centered = false
 }: AppLauncherProps) {
-  const order: AppId[] = appConfig.appOrder || ['calendar', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'];
+  const order: AppId[] = appConfig.appOrder || ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'];
 
   const apps: Record<AppId, React.ReactNode> = {
     calendar: (
@@ -60,6 +62,12 @@ export function AppLauncher({
       >
         <CalendarDays size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/40">Calendar</span>
+      </button>
+    ),
+    gallery: (
+      <button onPointerDown={onOpenGallery} className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5">
+        <Images size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Gallery</span>
       </button>
     ),
     pomodoro: (
