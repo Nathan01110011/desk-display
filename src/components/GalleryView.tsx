@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Heart, ImagePlus, Images, LoaderCircle, MonitorSmartphone, Trash2, Upload, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Heart, ImagePlus, Images, LoaderCircle, MonitorSmartphone, Trash2, Upload, X } from 'lucide-react';
 import type { GalleryPhoto } from '@/types';
 
 interface PairingSession {
@@ -20,6 +20,8 @@ export function GalleryView() {
   const [now, setNow] = useState(() => Date.now());
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState('');
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const didSwipe = useRef(false);
 
   const loadPhotos = useCallback(async () => {
     const response = await fetch('/api/gallery');
@@ -105,6 +107,42 @@ export function GalleryView() {
     }
   };
 
+  const navigateSelected = useCallback((direction: -1 | 1) => {
+    setSelected(current => {
+      if (!current || photos.length < 2) return current;
+      const index = photos.findIndex(photo => photo.name === current.name);
+      const nextIndex = (index + direction + photos.length) % photos.length;
+      return photos[nextIndex];
+    });
+  }, [photos]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') navigateSelected(-1);
+      if (event.key === 'ArrowRight') navigateSelected(1);
+      if (event.key === 'Escape') setSelected(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigateSelected, selected]);
+
+  const handleViewerPointerDown = (event: React.PointerEvent) => {
+    swipeStart.current = { x: event.clientX, y: event.clientY };
+    didSwipe.current = false;
+  };
+
+  const handleViewerPointerUp = (event: React.PointerEvent) => {
+    if (!swipeStart.current) return;
+    const deltaX = event.clientX - swipeStart.current.x;
+    const deltaY = event.clientY - swipeStart.current.y;
+    swipeStart.current = null;
+    if (Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      didSwipe.current = true;
+      navigateSelected(deltaX < 0 ? 1 : -1);
+    }
+  };
+
   const secondsRemaining = pairing ? Math.max(0, Math.ceil((pairing.expiresAt - now) / 1000)) : 0;
 
   return (
@@ -133,8 +171,37 @@ export function GalleryView() {
 
       <AnimatePresence>
         {selected && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[180] flex items-center justify-center bg-black/95 p-8">
-            <div className="relative h-full w-full"><Image src={selected.screensaverUrl} alt="Gallery photo" fill unoptimized sizes="100vw" className="object-contain" /></div>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onPointerDown={handleViewerPointerDown}
+            onPointerUp={handleViewerPointerUp}
+            className="absolute inset-0 z-[180] flex touch-none items-center justify-center bg-black/95 p-8"
+          >
+            <AnimatePresence mode="wait">
+              <motion.button
+                key={selected.name}
+                type="button"
+                initial={{ opacity: 0, scale: 0.99 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                onClick={() => {
+                  if (didSwipe.current) { didSwipe.current = false; return; }
+                  navigateSelected(1);
+                }}
+                aria-label="Show next photo"
+                className="relative h-full w-full"
+              >
+                <Image src={selected.screensaverUrl} alt="Gallery photo" fill unoptimized priority sizes="100vw" className="object-contain" />
+              </motion.button>
+            </AnimatePresence>
+            {photos.length > 1 && (
+              <>
+                <button onClick={() => navigateSelected(-1)} aria-label="Previous photo" className="absolute left-6 top-1/2 z-10 flex size-16 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white/75 backdrop-blur active:scale-90"><ChevronLeft size={36} /></button>
+                <button onClick={() => navigateSelected(1)} aria-label="Next photo" className="absolute right-6 top-1/2 z-10 flex size-16 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white/75 backdrop-blur active:scale-90"><ChevronRight size={36} /></button>
+                <p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-xs font-black tracking-widest text-white/45">
+                  {photos.findIndex(photo => photo.name === selected.name) + 1} / {photos.length}
+                </p>
+              </>
+            )}
             <div className="absolute right-7 top-7 flex gap-3"><button onClick={() => toggleFavorite(selected)} className={`flex size-14 items-center justify-center rounded-2xl ${selected.favorite ? 'bg-white text-rose-500' : 'bg-white/10 text-white'}`}><Heart size={25} className={selected.favorite ? 'fill-current' : ''} /></button><button onClick={() => removePhoto(selected)} className="flex size-14 items-center justify-center rounded-2xl bg-red-500/20 text-red-200"><Trash2 size={24} /></button><button onClick={() => setSelected(null)} className="flex size-14 items-center justify-center rounded-2xl bg-white/10 text-white"><X size={26} /></button></div>
           </motion.div>
         )}
