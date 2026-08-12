@@ -29,7 +29,7 @@ import { DashboardTimerPanel } from '@/components/DashboardTimerPanel';
 import { PhotoScreensaver } from '@/components/PhotoScreensaver';
 import { GalleryView } from '@/components/GalleryView';
 import { formatPomoTime } from '@/lib/format';
-import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSource, ScreensaverType } from '@/types';
+import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import dynamic from 'next/dynamic';
 
 const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), { 
@@ -58,6 +58,8 @@ const DEFAULT_RULE_LOCK: RuleLockSettings = {
 };
 
 const DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES = 15;
+const DEFAULT_PHOTO_SLIDE_DURATION_SECONDS: ScreensaverPhotoSlideDuration = 30;
+const PHOTO_SLIDE_DURATIONS: ScreensaverPhotoSlideDuration[] = [15, 30, 60, 120];
 
 const FULLSCREEN_APP_EXIT_MS = 240;
 const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
@@ -76,6 +78,7 @@ export default function Dashboard() {
   const [idleClockTimeoutMinutes, setIdleClockTimeoutMinutes] = useState(DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES);
   const [screensaverType, setScreensaverType] = useState<ScreensaverType>('clock');
   const [screensaverPhotoSource, setScreensaverPhotoSource] = useState<ScreensaverPhotoSource>('all');
+  const [screensaverPhotoSlideDuration, setScreensaverPhotoSlideDuration] = useState<ScreensaverPhotoSlideDuration>(DEFAULT_PHOTO_SLIDE_DURATION_SECONDS);
   const [isRuleLocked, setIsRuleLocked] = useState(false);
   const [showIdleClock, setShowIdleClock] = useState(false);
   const [lastActivity, setLastActivity] = useState(() => Date.now());
@@ -145,6 +148,11 @@ export default function Dashboard() {
         );
         setScreensaverType(data.screensaverType === 'photos' ? 'photos' : 'clock');
         setScreensaverPhotoSource(data.screensaverPhotoSource === 'favorites' ? 'favorites' : 'all');
+        setScreensaverPhotoSlideDuration(
+          PHOTO_SLIDE_DURATIONS.includes(data.screensaverPhotoSlideDurationSeconds)
+            ? data.screensaverPhotoSlideDurationSeconds
+            : DEFAULT_PHOTO_SLIDE_DURATION_SECONDS
+        );
         setIsRuleLocked(loadedRuleLock.lockOnOpen);
         
         if (data.worldClocks) updateClocks(data.worldClocks);
@@ -249,6 +257,11 @@ export default function Dashboard() {
 
   const handleUpdateScreensaverPhotoSource = (source: ScreensaverPhotoSource) => {
     setScreensaverPhotoSource(source);
+    markActivity();
+  };
+
+  const handleUpdateScreensaverPhotoSlideDuration = (duration: ScreensaverPhotoSlideDuration) => {
+    setScreensaverPhotoSlideDuration(duration);
     markActivity();
   };
 
@@ -375,7 +388,7 @@ export default function Dashboard() {
             className="fixed inset-0 z-[400] bg-black flex items-center justify-center"
           >
             {screensaverType === 'photos' ? (
-              <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} />
+              <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} durationSeconds={screensaverPhotoSlideDuration} />
             ) : (
               <motion.div
                 initial={{ y: 16, scale: 0.98 }}
@@ -709,6 +722,8 @@ export default function Dashboard() {
                   onUpdateScreensaverType={handleUpdateScreensaverType}
                   screensaverPhotoSource={screensaverPhotoSource}
                   onUpdateScreensaverPhotoSource={handleUpdateScreensaverPhotoSource}
+                  screensaverPhotoSlideDuration={screensaverPhotoSlideDuration}
+                  onUpdateScreensaverPhotoSlideDuration={handleUpdateScreensaverPhotoSlideDuration}
                 />
                 )}
                 {activeView === 'todo' && (
