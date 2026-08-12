@@ -1,50 +1,195 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Images } from 'lucide-react';
-import type { ScreensaverPhoto, ScreensaverPhotoSource } from '@/types';
+import type { ScreensaverPhoto, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource } from '@/types';
 
-const SLIDE_DURATION_MS = 30_000;
-
-function rotate<T>(items: T[], offset: number) {
-  if (items.length === 0) return items;
-  const start = offset % items.length;
-  return [...items.slice(start), ...items.slice(0, start)];
+interface PhotoSlide {
+  variant: number;
+  photos: ScreensaverPhoto[];
 }
 
-function photosForSlide(photos: ScreensaverPhoto[], slide: number) {
-  const groups = {
-    landscape: photos.filter(photo => photo.orientation === 'landscape'),
-    portrait: photos.filter(photo => photo.orientation === 'portrait'),
-    square: photos.filter(photo => photo.orientation === 'square'),
+interface Panel {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  z?: number;
+  alignX?: 'start' | 'center' | 'end';
+  alignY?: 'start' | 'center' | 'end';
+}
+
+function shuffle<T>(items: T[]) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function buildDeck(photos: ScreensaverPhoto[]) {
+  const queue = shuffle(photos);
+  const slides: PhotoSlide[] = [];
+  while (queue.length > 0) {
+    const maximum = Math.min(3, queue.length);
+    const roll = Math.random();
+    const count = maximum === 1 ? 1 : Math.min(maximum, roll < 0.16 ? 1 : roll < 0.5 ? 2 : 3);
+    slides.push({ photos: queue.splice(0, count), variant: Math.floor(Math.random() * 4) });
+  }
+  return slides;
+}
+
+function panelsFor(photos: ScreensaverPhoto[], variant: number) {
+  const panels: Panel[] = photos.map(() => ({ x: 0.025, y: 0.035, width: 0.95, height: 0.91 }));
+  const byOrientation = {
+    landscape: photos.map((photo, index) => photo.orientation === 'landscape' ? index : -1).filter(index => index >= 0),
+    portrait: photos.map((photo, index) => photo.orientation === 'portrait' ? index : -1).filter(index => index >= 0),
+    square: photos.map((photo, index) => photo.orientation === 'square' ? index : -1).filter(index => index >= 0),
   };
-  const available = (Object.keys(groups) as ScreensaverPhoto['orientation'][]).filter(orientation => groups[orientation].length > 0);
-  const orientation = available[slide % available.length] || 'landscape';
-  const variant = Math.floor(slide / Math.max(available.length, 1)) % 3;
-  const count = orientation === 'landscape' ? (variant % 2 === 1 ? 2 : 1) : 3;
-  return { orientation, variant, photos: rotate(groups[orientation], Math.floor(slide / Math.max(available.length, 1))).slice(0, count) };
+  const set = (index: number, panel: Panel) => { panels[index] = panel; };
+
+  if (photos.length === 1) return panels;
+
+  if (photos.length === 2) {
+    const [first, second] = [0, 1];
+    if (byOrientation.landscape.length === 2) {
+      set(first, { x: 0.02, y: 0.02, width: 0.96, height: 0.48, alignY: 'end' });
+      set(second, { x: 0.02, y: 0.5, width: 0.96, height: 0.48, alignY: 'start' });
+      return panels;
+    }
+    if (byOrientation.portrait.length === 2) {
+      set(first, { x: 0.04, y: 0.04, width: 0.44, height: 0.92 });
+      set(second, { x: 0.52, y: 0.04, width: 0.44, height: 0.92 });
+      return panels;
+    }
+    if (byOrientation.square.length === 2) {
+      set(first, { x: 0.03, y: 0.05, width: 0.45, height: 0.9 });
+      set(second, { x: 0.52, y: 0.05, width: 0.45, height: 0.9 });
+      return panels;
+    }
+
+    const landscape = byOrientation.landscape[0];
+    const portrait = byOrientation.portrait[0];
+    const square = byOrientation.square[0];
+    if (landscape !== undefined && portrait !== undefined) {
+      set(landscape, { x: 0.025, y: 0.06, width: 0.59, height: 0.88 });
+      set(portrait, { x: 0.645, y: 0.06, width: 0.33, height: 0.88 });
+    } else if (landscape !== undefined && square !== undefined) {
+      set(landscape, { x: 0.025, y: 0.06, width: 0.58, height: 0.88 });
+      set(square, { x: 0.63, y: 0.06, width: 0.345, height: 0.88 });
+    } else {
+      set(portrait, { x: 0.04, y: 0.06, width: 0.35, height: 0.88 });
+      set(square, { x: 0.42, y: 0.06, width: 0.54, height: 0.88 });
+    }
+    return panels;
+  }
+
+  if (byOrientation.landscape.length === 3) {
+    const hero = variant % 3;
+    const supporting = [0, 1, 2].filter(index => index !== hero);
+    set(hero, { x: 0.025, y: 0.04, width: 0.63, height: 0.92 });
+    set(supporting[0], { x: 0.68, y: 0.04, width: 0.295, height: 0.44 });
+    set(supporting[1], { x: 0.68, y: 0.52, width: 0.295, height: 0.44 });
+    return panels;
+  }
+  if (byOrientation.portrait.length === 3) {
+    photos.forEach((_, index) => {
+      set(index, { x: 0.025 + index * 0.325, y: 0.04, width: 0.3, height: 0.92 });
+    });
+    return panels;
+  }
+  if (byOrientation.square.length === 3) {
+    const hero = variant % 3;
+    const supporting = [0, 1, 2].filter(index => index !== hero);
+    set(hero, { x: 0.025, y: 0.04, width: 0.62, height: 0.92 });
+    set(supporting[0], { x: 0.67, y: 0.04, width: 0.305, height: 0.44 });
+    set(supporting[1], { x: 0.67, y: 0.52, width: 0.305, height: 0.44 });
+    return panels;
+  }
+
+  if (byOrientation.landscape.length === 2) {
+    const [top, bottom] = byOrientation.landscape;
+    const accent = byOrientation.portrait[0] ?? byOrientation.square[0];
+    set(top, { x: 0.025, y: 0.04, width: 0.63, height: 0.44 });
+    set(bottom, { x: 0.025, y: 0.52, width: 0.63, height: 0.44 });
+    set(accent, { x: 0.68, y: 0.04, width: 0.295, height: 0.92 });
+    return panels;
+  }
+
+  if (byOrientation.portrait.length === 2) {
+    const centre = byOrientation.landscape[0] ?? byOrientation.square[0];
+    set(byOrientation.portrait[0], { x: 0.025, y: 0.04, width: 0.285, height: 0.92 });
+    set(centre, { x: 0.335, y: 0.04, width: 0.33, height: 0.92 });
+    set(byOrientation.portrait[1], { x: 0.69, y: 0.04, width: 0.285, height: 0.92 });
+    return panels;
+  }
+
+  if (byOrientation.square.length === 2) {
+    const centre = byOrientation.landscape[0] ?? byOrientation.portrait[0];
+    set(byOrientation.square[0], { x: 0.025, y: 0.04, width: 0.3, height: 0.92 });
+    set(centre, { x: 0.35, y: 0.04, width: 0.3, height: 0.92 });
+    set(byOrientation.square[1], { x: 0.675, y: 0.04, width: 0.3, height: 0.92 });
+    return panels;
+  }
+
+  const landscape = byOrientation.landscape[0];
+  const portrait = byOrientation.portrait[0];
+  const square = byOrientation.square[0];
+  set(landscape, { x: 0.025, y: 0.04, width: 0.5, height: 0.92 });
+  set(square, { x: 0.55, y: 0.04, width: 0.2, height: 0.92 });
+  set(portrait, { x: 0.775, y: 0.04, width: 0.2, height: 0.92 });
+  return panels;
 }
 
-function photoPosition(orientation: ScreensaverPhoto['orientation'], index: number, count: number, variant: number) {
-  if (orientation === 'landscape') {
-    if (count === 1) return 'h-[88vh] w-[94vw]';
-    return index === 0
-      ? 'absolute left-[3vw] top-[4vh] h-[58vh] w-[68vw]'
-      : 'absolute bottom-[4vh] right-[3vw] h-[48vh] w-[58vw]';
-  }
-  if (orientation === 'portrait') {
-    const offsets = variant % 2 === 0 ? ['-translate-y-[3vh]', 'translate-y-[3vh]', '-translate-y-[1vh]'] : ['translate-y-[3vh]', '-translate-y-[3vh]', 'translate-y-[1vh]'];
-    return `h-[82vh] w-[29vw] ${offsets[index] || ''}`;
-  }
-  const sizes = variant % 2 === 0
-    ? ['w-[27vw] -translate-y-[4vh]', 'w-[31vw] translate-y-[3vh]', 'w-[25vw] -translate-y-[1vh]']
-    : ['w-[30vw] translate-y-[2vh]', 'w-[25vw] -translate-y-[4vh]', 'w-[29vw] translate-y-[4vh]'];
-  return `aspect-square ${sizes[index] || 'w-[27vw]'}`;
+function fitPhoto(photo: ScreensaverPhoto, panel: Panel, containerWidth: number, containerHeight: number) {
+  const cellLeft = panel.x * containerWidth;
+  const cellTop = panel.y * containerHeight;
+  const cellWidth = panel.width * containerWidth;
+  const cellHeight = panel.height * containerHeight;
+  const aspect = photo.width / photo.height || 1;
+  const width = Math.min(cellWidth, cellHeight * aspect);
+  const height = width / aspect;
+  const align = (space: number, value: 'start' | 'center' | 'end' = 'center') => value === 'start' ? 0 : value === 'end' ? space : space / 2;
+  return {
+    left: cellLeft + align(cellWidth - width, panel.alignX),
+    top: cellTop + align(cellHeight - height, panel.alignY),
+    width,
+    height,
+    zIndex: panel.z,
+  };
 }
 
-export function PhotoScreensaver({ time, date, source }: { time: string; date: string; source: ScreensaverPhotoSource }) {
+function useContainerSize() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const update = () => setSize({ width: element.clientWidth, height: element.clientHeight });
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, size };
+}
+
+function avoidImmediateRepeat(nextDeck: PhotoSlide[], previous?: PhotoSlide) {
+  if (!previous || nextDeck.length < 2) return nextDeck;
+  const previousNames = new Set(previous.photos.map(photo => photo.name));
+  if (nextDeck[0].photos.some(photo => previousNames.has(photo.name))) {
+    const replacement = nextDeck.findIndex((slide, index) => index > 0 && slide.photos.every(photo => !previousNames.has(photo.name)));
+    if (replacement > 0) [nextDeck[0], nextDeck[replacement]] = [nextDeck[replacement], nextDeck[0]];
+  }
+  return nextDeck;
+}
+
+export function PhotoScreensaver({ time, date, source, durationSeconds }: { time: string; date: string; source: ScreensaverPhotoSource; durationSeconds: ScreensaverPhotoSlideDuration }) {
   const [photos, setPhotos] = useState<ScreensaverPhoto[]>([]);
+  const [deck, setDeck] = useState<PhotoSlide[]>([]);
   const [slide, setSlide] = useState(0);
+  const { ref: containerRef, size } = useContainerSize();
 
   useEffect(() => {
     let active = true;
@@ -54,6 +199,8 @@ export function PhotoScreensaver({ time, date, source }: { time: string; date: s
         if (!active) return;
         const nextPhotos = (data.photos || []).filter((photo: ScreensaverPhoto) => source === 'all' || photo.favorite);
         setPhotos(nextPhotos);
+        setDeck(buildDeck(nextPhotos));
+        setSlide(0);
         nextPhotos.forEach((photo: ScreensaverPhoto) => {
           const preload = new window.Image();
           preload.src = photo.screensaverUrl;
@@ -67,47 +214,56 @@ export function PhotoScreensaver({ time, date, source }: { time: string; date: s
 
   useEffect(() => {
     if (photos.length < 2) return;
-    const timer = window.setInterval(() => setSlide(value => value + 1), SLIDE_DURATION_MS);
+    const timer = window.setInterval(() => setSlide(value => {
+      if (value + 1 < deck.length) return value + 1;
+      setDeck(currentDeck => avoidImmediateRepeat(buildDeck(photos), currentDeck.at(-1)));
+      return 0;
+    }), durationSeconds * 1000);
     return () => window.clearInterval(timer);
-  }, [photos.length]);
+  }, [deck.length, durationSeconds, photos]);
 
-  const current = useMemo(() => photosForSlide(photos, slide), [photos, slide]);
+  const current = useMemo(() => deck[slide] || { variant: 0, photos: [] }, [deck, slide]);
+  const panels = useMemo(() => panelsFor(current.photos, current.variant), [current]);
+  const photoRects = useMemo(
+    () => current.photos.map((photo, index) => fitPhoto(photo, panels[index], size.width, size.height)),
+    [current.photos, panels, size.height, size.width],
+  );
+  const backdrop = current.photos[current.variant % Math.max(current.photos.length, 1)];
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#080808]">
-      <div
-        className="absolute inset-0 opacity-80"
-        style={{ background: current.variant % 2 === 0 ? 'radial-gradient(circle at 15% 20%, #202020 0%, #080808 42%, #030303 100%)' : 'radial-gradient(circle at 85% 75%, #242424 0%, #080808 40%, #030303 100%)' }}
-      />
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden bg-black">
       <AnimatePresence mode="wait">
         {current.photos.length > 0 ? (
           <motion.div
-            key={`${current.orientation}-${current.variant}-${current.photos.map(photo => photo.name).join(':')}`}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            key={`${current.variant}-${current.photos.map(photo => photo.name).join(':')}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.4, ease: 'easeInOut' }}
-            className={`absolute inset-0 will-change-[opacity,transform] ${current.orientation === 'landscape' && current.photos.length > 1 ? '' : 'flex items-center justify-center gap-[2vw] p-[2vw]'}`}
+            transition={{ duration: 1.1, ease: 'easeInOut' }}
+            className="absolute inset-0 will-change-opacity"
           >
-            {current.photos.map((photo, index) => (
-              <motion.div
-                key={photo.name}
-                initial={{ opacity: 0, y: index % 2 === 0 ? 18 : -18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.12, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className={`relative ${photoPosition(current.orientation, index, current.photos.length, current.variant)} ${index === 1 && current.orientation === 'landscape' ? 'z-10' : ''}`}
-              >
-                <Image
-                  src={photo.screensaverUrl}
-                  alt=""
-                  fill
-                  unoptimized
-                  priority
-                  sizes={current.orientation === 'landscape' ? '94vw' : '29vw'}
-                  className="object-contain"
-                />
-              </motion.div>
-            ))}
+            {backdrop && (
+              <div className="absolute inset-0 overflow-hidden">
+                <Image src={backdrop.screensaverUrl} alt="" fill unoptimized priority sizes="100vw" className="scale-105 object-cover opacity-40" />
+                <div className="absolute inset-0 bg-black/45" />
+              </div>
+            )}
+            {current.photos.map((photo, index) => {
+              const rect = photoRects[index];
+              return (
+                <motion.div
+                  key={photo.name}
+                  initial={{ opacity: 0, scale: 1.015 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1, duration: 0.7, ease: 'easeOut' }}
+                  style={rect}
+                  className="absolute overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.6)] ring-1 ring-white/15"
+                >
+                  <Image src={photo.screensaverUrl} alt="" fill unoptimized priority sizes={current.photos.length === 1 ? '100vw' : '70vw'} className="object-contain" />
+                </motion.div>
+              );
+            })}
+            <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
           </motion.div>
         ) : (
           <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col items-center justify-center gap-5 text-white/25">
@@ -117,19 +273,13 @@ export function PhotoScreensaver({ time, date, source }: { time: string; date: s
         )}
       </AnimatePresence>
 
-      {current.photos.length > 0 && (
-        <div className="absolute left-8 top-8 z-20 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-white/35">
-          <span className="size-1.5 rounded-full bg-white/70" /> Gallery · {current.orientation}
-        </div>
-      )}
-
-      <div className="absolute bottom-8 left-8 z-20 rounded-[1.75rem] border border-white/10 bg-black/70 px-7 py-5 shadow-2xl">
+      <div className="absolute bottom-8 left-8 z-30 bg-black/65 px-7 py-5 shadow-2xl backdrop-blur-sm">
         <p className="text-5xl font-black leading-none tracking-tight tabular-nums text-white">{time}</p>
         <p className="mt-2 text-xs font-black uppercase tracking-[0.24em] text-white/55">{date}</p>
       </div>
       {photos.length > 1 && (
         <div className="absolute bottom-0 left-0 right-0 z-30 h-1 bg-white/5">
-          <motion.div key={slide} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: SLIDE_DURATION_MS / 1000, ease: 'linear' }} className="h-full origin-left bg-white/35 will-change-transform" />
+          <motion.div key={`${slide}-${durationSeconds}`} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: durationSeconds, ease: 'linear' }} className="h-full origin-left bg-white/35 will-change-transform" />
         </div>
       )}
     </div>

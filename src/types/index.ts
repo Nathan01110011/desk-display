@@ -115,6 +115,7 @@ export interface RuleLockSettings {
 
 export type ScreensaverType = 'clock' | 'photos';
 export type ScreensaverPhotoSource = 'all' | 'favorites';
+export type ScreensaverPhotoSlideDuration = 15 | 30 | 60 | 120;
 
 export interface GalleryPhoto {
   name: string;

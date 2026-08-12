@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3 } from 'lucide-react';
-import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSource, ScreensaverType } from '@/types';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
+
+const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; label: string }[] = [
+  { value: 15, label: '15s' },
+  { value: 30, label: '30s' },
+  { value: 60, label: '1m' },
+  { value: 120, label: '2m' },
+];
 
 interface SettingsViewProps {
   onClose: () => void;
@@ -18,6 +25,8 @@ interface SettingsViewProps {
   onUpdateScreensaverType: (type: ScreensaverType) => void;
   screensaverPhotoSource: ScreensaverPhotoSource;
   onUpdateScreensaverPhotoSource: (source: ScreensaverPhotoSource) => void;
+  screensaverPhotoSlideDuration: ScreensaverPhotoSlideDuration;
+  onUpdateScreensaverPhotoSlideDuration: (duration: ScreensaverPhotoSlideDuration) => void;
 }
 
 export function SettingsView({ 
@@ -32,7 +41,9 @@ export function SettingsView({
   screensaverType,
   onUpdateScreensaverType,
   screensaverPhotoSource,
-  onUpdateScreensaverPhotoSource
+  onUpdateScreensaverPhotoSource,
+  screensaverPhotoSlideDuration,
+  onUpdateScreensaverPhotoSlideDuration,
 }: SettingsViewProps) {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
@@ -168,6 +179,15 @@ export function SettingsView({
     });
   };
 
+  const updateScreensaverPhotoSlideDuration = async (duration: ScreensaverPhotoSlideDuration) => {
+    onUpdateScreensaverPhotoSlideDuration(duration);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ screensaverPhotoSlideDurationSeconds: duration })
+    });
+  };
+
   const ruleLockHours = Math.floor(ruleLock.timeoutMinutes / 60);
   const ruleLockMinutes = ruleLock.timeoutMinutes % 60;
   const idleClockHours = Math.floor(idleClockTimeoutMinutes / 60);
@@ -267,6 +287,18 @@ export function SettingsView({
                 <div className="grid grid-cols-2 gap-2">
                   {([{ value: 'all' as const, label: 'All photos' }, { value: 'favorites' as const, label: 'Favourites' }]).map(option => (
                     <button key={option.value} onPointerDown={() => updateScreensaverPhotoSource(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSource === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/40'}`}>{option.label}</button>
+                  ))}
+                </div>
+                <p className="pt-2 text-[10px] font-black uppercase tracking-widest text-white/35">Time per slide</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {PHOTO_SLIDE_DURATION_OPTIONS.map(option => (
+                    <button
+                      key={option.value}
+                      onPointerDown={() => updateScreensaverPhotoSlideDuration(option.value)}
+                      className={`rounded-xl border px-2 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSlideDuration === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/40'}`}
+                    >
+                      {option.label}
+                    </button>
                   ))}
                 </div>
                 <p className="text-center text-[10px] text-white/20">Manage and upload photos in the Gallery app.</p>
