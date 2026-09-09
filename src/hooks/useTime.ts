@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { AdditionalClock } from '@/types';
 import { normalizeClocks, normalizeTimeZone } from '@/lib/timeZones';
 
-export function useTime(mainOffset?: number) {
+export function useTime(_legacyMainOffset?: number) {
+  // Kept temporarily for call-site compatibility; the main clock now follows the system timezone.
+  void _legacyMainOffset;
   const [now, setNow] = useState(new Date());
   const [clocks, setClocks] = useState<AdditionalClock[]>([]);
 
@@ -61,8 +63,6 @@ export function useTime(mainOffset?: number) {
     return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
   };
 
-  // If mainOffset is provided, use it. Otherwise use local system time.
-  const mainTime = mainOffset !== undefined ? getTimeForOffset(mainOffset) : now;
   const getClockDisplayTime = (clock: AdditionalClock) => {
     if (clock.timeZone) {
       const zonedTime = formatTimeForZone(clock.timeZone);
@@ -73,9 +73,9 @@ export function useTime(mainOffset?: number) {
   };
 
   return {
-    time: formatTime(mainTime),
-    date: formatDate(mainTime),
-    rawTime: mainTime,
+    time: formatTime(now),
+    date: formatDate(now),
+    rawTime: now,
     clocks: clocks.map(c => ({
       ...c,
       displayTime: getClockDisplayTime(c)
