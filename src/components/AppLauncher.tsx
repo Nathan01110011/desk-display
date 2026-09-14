@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List, CalendarDays, ShieldQuestion, Images } from 'lucide-react';
+import { Timer, Settings, Trophy, CheckCircle2, CloudSun, Activity, Home, Hourglass, X, List, CalendarDays, ShieldQuestion, Images, BookOpen } from 'lucide-react';
 import { PomodoroMode, AppConfig } from '@/types';
 
 type AppId = NonNullable<AppConfig['appOrder']>[number];
@@ -16,6 +16,7 @@ interface AppLauncherProps {
   onOpenTimer: () => void;
   onOpenTodo: () => void;
   onOpenRule: () => void;
+  onOpenJoplin: () => void;
   onResetPomo: () => void;
   onResetTimer: () => void;
   pomoActive: boolean;
@@ -42,6 +43,7 @@ export function AppLauncher({
   onOpenTimer,
   onOpenTodo,
   onOpenRule,
+  onOpenJoplin,
   onResetPomo,
   onResetTimer,
   pomoActive, 
@@ -52,9 +54,15 @@ export function AppLauncher({
   appConfig,
   centered = false
 }: AppLauncherProps) {
-  const order: AppId[] = appConfig.appOrder || ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'];
+  const order: AppId[] = [...new Set<AppId>([...(appConfig.appOrder || ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule']), 'joplin'])];
 
   const apps: Record<AppId, React.ReactNode> = {
+    joplin: (
+      <button onPointerDown={onOpenJoplin} className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5">
+        <BookOpen size={40} className="text-white/80" />
+        <span className="text-base font-bold text-white/40">Joplin</span>
+      </button>
+    ),
     calendar: (
       <button
         onPointerDown={onOpenCalendar}

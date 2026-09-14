@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3 } from 'lucide-react';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3, BookOpen } from 'lucide-react';
 import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 
@@ -50,7 +50,7 @@ export function SettingsView({
   const [kbValue, setKbValue] = useState('');
   const [currentUnit, setCurrentUnit] = useState(localStorage.getItem('weatherUnit') || 'C');
 
-  const allAvailableApps = ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'] as const;
+  const allAvailableApps = ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule', 'joplin'] as const;
   type AvailableApp = typeof allAvailableApps[number];
   const appLabels: Record<AvailableApp, string> = {
     calendar: 'Calendar',
@@ -63,6 +63,7 @@ export function SettingsView({
     timer: 'Timer',
     todo: 'TODO',
     rule: 'Rule',
+    joplin: 'Joplin',
   };
   const savedOrder = appConfig.appOrder || allAvailableApps;
   const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter((app): app is AvailableApp => allAvailableApps.includes(app as AvailableApp));
@@ -262,6 +263,7 @@ export function SettingsView({
               {([
                 { type: 'clock' as const, label: 'Big Clock', icon: Clock3 },
                 { type: 'photos' as const, label: 'Photos', icon: Images },
+                { type: 'joplin' as const, label: 'Daily TODO', icon: BookOpen },
               ]).map(option => {
                 const Icon = option.icon;
                 const selected = screensaverType === option.type;
@@ -280,6 +282,10 @@ export function SettingsView({
                 );
               })}
             </div>
+
+            {screensaverType === 'joplin' && (
+              <p className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-sm text-white/50">Shows your newest daily TODO with content. Blank days keep the previous list visible. Long notes scroll automatically.</p>
+            )}
 
             {screensaverType === 'photos' && (
               <div className="space-y-2 rounded-2xl border border-white/5 bg-white/[0.03] p-4">

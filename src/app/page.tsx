@@ -28,6 +28,8 @@ import { DashboardPomodoroPanel } from '@/components/DashboardPomodoroPanel';
 import { DashboardTimerPanel } from '@/components/DashboardTimerPanel';
 import { PhotoScreensaver } from '@/components/PhotoScreensaver';
 import { GalleryView } from '@/components/GalleryView';
+import { JoplinView } from '@/components/JoplinView';
+import { JoplinScreensaver } from '@/components/JoplinScreensaver';
 import { formatPomoTime } from '@/lib/format';
 import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import dynamic from 'next/dynamic';
@@ -48,7 +50,8 @@ const DEFAULT_CONFIG: AppConfig = {
   timer: true,
   todo: true,
   rule: true,
-  appOrder: ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule']
+  joplin: true,
+  appOrder: ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule', 'joplin']
 };
 
 const DEFAULT_RULE_LOCK: RuleLockSettings = {
@@ -67,7 +70,7 @@ const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
 type FullscreenReturnPhase = 'idle' | 'app-exit' | 'sidebar-enter';
 
 function isFullscreenAppView(view: ViewState, weatherDetail: boolean) {
-  return view === 'calendar' || view === 'gallery' || view === 'fitbit' || (view === 'weather' && weatherDetail) || view === 'todo' || view === 'rule';
+  return view === 'calendar' || view === 'gallery' || view === 'fitbit' || (view === 'weather' && weatherDetail) || view === 'todo' || view === 'rule' || view === 'joplin';
 }
 
 export default function Dashboard() {
@@ -133,6 +136,7 @@ export default function Dashboard() {
             if (!mergedConfig.appOrder.includes('timer')) mergedConfig.appOrder.push('timer');
             if (!mergedConfig.appOrder.includes('todo')) mergedConfig.appOrder.push('todo');
             if (!mergedConfig.appOrder.includes('rule')) mergedConfig.appOrder.push('rule');
+            if (!mergedConfig.appOrder.includes('joplin')) mergedConfig.appOrder.push('joplin');
           }
           setAppConfig(mergedConfig);
         }
@@ -146,7 +150,7 @@ export default function Dashboard() {
         setIdleClockTimeoutMinutes(
           data.idleClockTimeoutMinutes ?? data.screenClockTimeoutMinutes ?? DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES
         );
-        setScreensaverType(data.screensaverType === 'photos' ? 'photos' : 'clock');
+        setScreensaverType(data.screensaverType === 'joplin' ? 'joplin' : data.screensaverType === 'photos' ? 'photos' : 'clock');
         setScreensaverPhotoSource(data.screensaverPhotoSource === 'favorites' ? 'favorites' : 'all');
         setScreensaverPhotoSlideDuration(
           PHOTO_SLIDE_DURATIONS.includes(data.screensaverPhotoSlideDurationSeconds)
@@ -387,7 +391,9 @@ export default function Dashboard() {
             onPointerDown={markActivity}
             className="fixed inset-0 z-[400] bg-black flex items-center justify-center"
           >
-            {screensaverType === 'photos' ? (
+            {screensaverType === 'joplin' ? (
+              <JoplinScreensaver time={time} date={date} />
+            ) : screensaverType === 'photos' ? (
               <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} durationSeconds={screensaverPhotoSlideDuration} />
             ) : (
               <motion.div
@@ -640,6 +646,7 @@ export default function Dashboard() {
                     onOpenTimer={() => openView('timer')}
                     onOpenTodo={() => openView('todo')}
                     onOpenRule={() => openView('rule')}
+                    onOpenJoplin={() => openView('joplin')}
                     onResetPomo={resetPomo}
                     onResetTimer={dismissAlert}
                     pomoActive={pomoActive} 
@@ -691,6 +698,7 @@ export default function Dashboard() {
                   />
                 )}
                 {activeView === 'gallery' && <GalleryView />}
+                {activeView === 'joplin' && <JoplinView />}
                 {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
                 {activeView === 'weather' && (
                   <WeatherView 
