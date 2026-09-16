@@ -93,11 +93,12 @@ export function ConsoleLogCapture() {
   useEffect(() => {
     const levels: ConsoleLogLevel[] = ['log', 'info', 'warn', 'error', 'debug'];
     const originals = new Map<ConsoleLogLevel, (...args: unknown[]) => void>();
+    const consoleMethods = console as unknown as Record<ConsoleLogLevel, (...args: unknown[]) => void>;
 
     for (const level of levels) {
-      const original = console[level].bind(console) as (...args: unknown[]) => void;
+      const original = consoleMethods[level].bind(console);
       originals.set(level, original);
-      console[level] = (...args: unknown[]) => {
+      consoleMethods[level] = (...args: unknown[]) => {
         appendEntry(level, args);
         original(...args);
       };
@@ -121,7 +122,7 @@ export function ConsoleLogCapture() {
 
     return () => {
       for (const [level, original] of originals) {
-        console[level] = original;
+        consoleMethods[level] = original;
       }
       window.removeEventListener('error', handleWindowError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
