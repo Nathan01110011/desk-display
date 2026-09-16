@@ -14,7 +14,7 @@ export interface ConsoleLogEntry {
 
 const STORAGE_KEY = 'desk-display:console-logs';
 const EVENT_NAME = 'desk-display:console-log';
-const MAX_ENTRIES = 300;
+const MAX_ENTRIES = 1000;
 const MAX_MESSAGE_LENGTH = 10_000;
 
 function safeStringify(value: unknown): string {
