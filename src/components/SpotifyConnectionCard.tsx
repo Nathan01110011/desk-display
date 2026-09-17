@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2, CircleAlert, Music2, RefreshCw } from 'lucide-react';
 import { SystemUpdateButton } from './SystemUpdateButton';
+import { ServiceHealthDashboard } from './ServiceHealthDashboard';
 
 type SpotifyConnectionState = 'checking' | 'connected' | 'expired' | 'error';
 
@@ -74,6 +75,8 @@ export function SpotifyConnectionCard() {
 
   return (
     <div className="space-y-3">
+      <ServiceHealthDashboard />
+
       <div className={`rounded-2xl border p-4 ${state === 'expired' ? 'border-amber-400/25 bg-amber-400/[0.06]' : 'border-white/5 bg-white/[0.03]'}`}>
         <div className="flex items-center gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/55">
