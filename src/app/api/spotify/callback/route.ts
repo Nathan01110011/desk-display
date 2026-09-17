@@ -9,6 +9,16 @@ interface SpotifyTokenResponse {
   error_description?: string;
 }
 
+function popupResult(success: boolean, message: string) {
+  const safeMessage = JSON.stringify(message);
+  const safeType = success ? 'spotify-auth-complete' : 'spotify-auth-error';
+
+  return new NextResponse(
+    `<!doctype html><html><head><meta charset="utf-8"><title>Spotify Authorization</title></head><body style="margin:0;background:#111;color:#eee;font-family:sans-serif;min-height:100vh;display:grid;place-items:center"><button onclick="window.close();location.href='/'" aria-label="Close" style="position:fixed;right:24px;top:18px;border:0;border-radius:999px;width:48px;height:48px;font-size:28px;background:#333;color:#fff">×</button><main style="text-align:center;padding:32px;max-width:560px"><h1>${success ? 'Spotify connected' : 'Spotify connection failed'}</h1><p style="color:#bbb">${message}</p><button onclick="window.close();location.href='/'" style="margin-top:18px;padding:12px 22px;border-radius:12px;border:1px solid #555;background:#222;color:#fff;font-weight:700">Close</button></main><script>try{if(window.opener&&!window.opener.closed){window.opener.postMessage({type:'${safeType}',message:${safeMessage}},window.location.origin);${success ? 'setTimeout(()=>window.close(),350);' : ''}}}catch(e){}</script></body></html>`,
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+  );
+}
+
 export async function GET(req: NextRequest) {
   if (process.platform === 'linux') {
     disableOnScreenKeyboard();
@@ -23,19 +33,19 @@ export async function GET(req: NextRequest) {
   const redirectUri = getSpotifyRedirectUri();
 
   if (spotifyError) {
-    return NextResponse.redirect(new URL(`/?spotify=error&reason=${encodeURIComponent(spotifyError)}`, req.url));
+    return popupResult(false, `Spotify returned: ${spotifyError}`);
   }
 
   if (!expectedState || !returnedState || expectedState !== returnedState) {
-    return NextResponse.json({ error: 'Spotify authorization state validation failed.' }, { status: 400 });
+    return popupResult(false, 'Spotify authorization state validation failed.');
   }
 
   if (!code) {
-    return NextResponse.json({ error: 'Spotify did not return an authorization code.' }, { status: 400 });
+    return popupResult(false, 'Spotify did not return an authorization code.');
   }
 
   if (!clientId || !clientSecret) {
-    return NextResponse.json({ error: 'Spotify client credentials are not configured.' }, { status: 500 });
+    return popupResult(false, 'Spotify client credentials are not configured.');
   }
 
   try {
@@ -58,17 +68,17 @@ export async function GET(req: NextRequest) {
     if (!response.ok || !data.refresh_token) {
       const reason = data.error_description || data.error || `HTTP ${response.status}`;
       console.error('[Spotify] Authorization code exchange failed:', reason);
-      return NextResponse.redirect(new URL(`/?spotify=error&reason=${encodeURIComponent(reason)}`, req.url));
+      return popupResult(false, reason);
     }
 
     saveSpotifyRefreshToken(data.refresh_token);
     console.info('[Spotify] Authorization refreshed successfully');
 
-    const redirect = NextResponse.redirect(new URL('/?spotify=reconnected', req.url));
-    redirect.cookies.delete('spotify_oauth_state');
-    return redirect;
+    const result = popupResult(true, 'Authorization saved. Returning to Desk Display.');
+    result.cookies.delete('spotify_oauth_state');
+    return result;
   } catch (error) {
     console.error('[Spotify] Failed to save refreshed authorization', error);
-    return NextResponse.redirect(new URL('/?spotify=error&reason=token_exchange_failed', req.url));
+    return popupResult(false, 'The token exchange failed. Check Console Logs for details.');
   }
 }
