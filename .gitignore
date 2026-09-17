@@ -23,6 +23,7 @@
 .calendar-cache.json
 .dashboard-settings.json
 .spotify-auth.json
+.update-build.log
 
 # debug
 npm-debug.log*
