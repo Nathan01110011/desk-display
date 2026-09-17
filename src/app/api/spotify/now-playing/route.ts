@@ -43,51 +43,98 @@ interface SpotifyCurrentlyPlaying {
   progress_ms?: number;
 }
 
+interface SpotifyErrorPayload {
+  error?: string | {
+    status?: number;
+    message?: string;
+  };
+  error_description?: string;
+  access_token?: string;
+}
+
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 15000) {
+  let lastStatus: number | null = null;
+
   for (let i = 0; i < retries; i++) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
       const response = await fetch(url, { ...options, signal: controller.signal });
-      if (response.status === 204 || response.status === 401) return response;
-      if (response.ok) return response;
-    } catch (e) {
-      if (i === retries - 1) throw e;
+      lastStatus = response.status;
+
+      // Client/auth errors are deterministic and should be returned immediately so the
+      // caller can expose the real reason instead of retrying into a generic failure.
+      if (response.ok || response.status === 204 || (response.status >= 400 && response.status < 500)) {
+        return response;
+      }
+
+      if (i < retries - 1) {
+        logger.warn(`Spotify: HTTP ${response.status}, retrying (${i + 1}/${retries})...`);
+        await new Promise(res => setTimeout(res, 2000));
+      }
+    } catch (error) {
+      if (i === retries - 1) throw error;
       logger.warn(`Spotify: Fetch failed, retrying (${i + 1}/${retries})...`);
-      // Increased delay between retries
       await new Promise(res => setTimeout(res, 2000));
     } finally {
       clearTimeout(id);
     }
   }
-  throw new Error('All Spotify fetch retries failed');
+
+  throw new Error(`All Spotify fetch retries failed${lastStatus ? ` (last HTTP ${lastStatus})` : ''}`);
+}
+
+function describeSpotifyError(data: SpotifyErrorPayload, status: number): string {
+  if (typeof data.error === 'string') {
+    return `${data.error}${data.error_description ? `: ${data.error_description}` : ''}`;
+  }
+
+  if (data.error && typeof data.error === 'object') {
+    return data.error.message || `Spotify API error ${data.error.status || status}`;
+  }
+
+  return `Spotify returned HTTP ${status}`;
 }
 
 async function getAccessToken(currentRefreshToken: string) {
-  try {
-    const response = await fetchWithRetry('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64'),
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: currentRefreshToken,
-      }),
-    });
-
-    const data = await response.json() as { access_token: string };
-    return data.access_token;
-  } catch (e) {
-    logger.error('Failed to get Spotify access token', e);
-    throw e;
+  if (!client_id || !client_secret) {
+    throw new Error('Spotify client credentials are not configured');
   }
+
+  const response = await fetchWithRetry('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64'),
+    },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: currentRefreshToken,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({})) as SpotifyErrorPayload;
+
+  if (!response.ok) {
+    const description = describeSpotifyError(data, response.status);
+    logger.error(`Spotify token refresh failed: HTTP ${response.status} - ${description}`);
+    throw new Error(`Spotify token refresh failed (HTTP ${response.status}: ${description})`);
+  }
+
+  if (!data.access_token) {
+    throw new Error('Spotify token refresh succeeded but returned no access token');
+  }
+
+  return data.access_token;
 }
 
 export async function GET() {
   if (!refresh_token) {
-    return NextResponse.json({ isPlaying: false, error: 'Spotify token not configured' });
+    return NextResponse.json({
+      isPlaying: false,
+      error: 'Spotify token not configured',
+      diagnostic: 'SPOTIFY_REFRESH_TOKEN is missing on the server.',
+    });
   }
 
   try {
@@ -99,22 +146,32 @@ export async function GET() {
       cache: 'no-store'
     });
 
-    if (response.status === 204) return NextResponse.json({ isPlaying: false, status: 'NO_CONTENT' });
-    
-    const song = await response.json() as SpotifyCurrentlyPlaying;
-
-    if (song.item) {
-      logger.debug(`Spotify Data: Type: ${song.currently_playing_type} | Item: ${song.item.name}`);
+    if (response.status === 204) {
+      return NextResponse.json({ isPlaying: false, status: 'NO_CONTENT' });
     }
-    
-    if (response.status >= 400 || !song || !song.item) {
+
+    const song = await response.json().catch(() => ({})) as SpotifyCurrentlyPlaying & SpotifyErrorPayload;
+
+    if (!response.ok) {
+      const diagnostic = describeSpotifyError(song, response.status);
+      logger.error(`Spotify currently-playing failed: HTTP ${response.status} - ${diagnostic}`);
+      return NextResponse.json({
+        isPlaying: false,
+        error: 'Spotify currently-playing request failed',
+        diagnostic: `HTTP ${response.status}: ${diagnostic}`,
+      });
+    }
+
+    if (!song.item) {
       return NextResponse.json({ isPlaying: false, status: 'NO_ITEM' });
     }
+
+    logger.debug(`Spotify Data: Type: ${song.currently_playing_type} | Item: ${song.item.name}`);
 
     const isPlaying = song.is_playing;
     const type = song.currently_playing_type;
     const item = song.item;
-    
+
     const title = item.name || 'Unknown Title';
     let artist = 'Unknown Artist';
     if (type === 'episode') artist = (item as SpotifyEpisodeItem).show?.name || 'Podcast';
@@ -141,7 +198,12 @@ export async function GET() {
       durationMs: item.duration_ms || 0,
     });
   } catch (error) {
+    const diagnostic = error instanceof Error ? error.message : String(error);
     logger.error('Spotify API Error', error);
-    return NextResponse.json({ isPlaying: false, error: 'Failed to fetch Spotify status' });
+    return NextResponse.json({
+      isPlaying: false,
+      error: 'Failed to fetch Spotify status',
+      diagnostic,
+    });
   }
 }
