@@ -144,10 +144,13 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
   const refresh = () => setLogs(readConsoleLogs());
 
   useEffect(() => {
-    refresh();
+    const refreshTimer = window.setTimeout(refresh, 0);
     const handleLog = () => refresh();
     window.addEventListener(EVENT_NAME, handleLog);
-    return () => window.removeEventListener(EVENT_NAME, handleLog);
+    return () => {
+      window.clearTimeout(refreshTimer);
+      window.removeEventListener(EVENT_NAME, handleLog);
+    };
   }, []);
 
   const filteredLogs = useMemo(
