@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Clipboard, RefreshCw, Trash2 } from 'lucide-react';
+import { SpotifyConnectionCard } from './SpotifyConnectionCard';
 
 export type ConsoleLogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
 
@@ -222,6 +223,8 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
           </button>
         </div>
       </div>
+
+      <SpotifyConnectionCard />
 
       <div className="flex flex-wrap items-center gap-2">
         {(['all', 'error', 'warn', 'info', 'log', 'debug'] as const).map((option) => {
