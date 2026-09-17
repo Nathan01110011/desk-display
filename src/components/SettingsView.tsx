@@ -3,6 +3,7 @@ import { motion, Reorder } from 'framer-motion';
 import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3 } from 'lucide-react';
 import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
+import { ConsoleLogViewer } from './ConsoleLogs';
 
 const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; label: string }[] = [
   { value: 15, label: '15s' },
@@ -46,6 +47,7 @@ export function SettingsView({
   onUpdateScreensaverPhotoSlideDuration,
 }: SettingsViewProps) {
   const [showKeyboard, setShowKeyboard] = useState(false);
+  const [showConsoleLogs, setShowConsoleLogs] = useState(false);
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
   const [kbValue, setKbValue] = useState('');
   const [currentUnit, setCurrentUnit] = useState(localStorage.getItem('weatherUnit') || 'C');
@@ -192,6 +194,10 @@ export function SettingsView({
   const ruleLockMinutes = ruleLock.timeoutMinutes % 60;
   const idleClockHours = Math.floor(idleClockTimeoutMinutes / 60);
   const idleClockMinutes = idleClockTimeoutMinutes % 60;
+
+  if (showConsoleLogs) {
+    return <ConsoleLogViewer onBack={() => setShowConsoleLogs(false)} />;
+  }
 
   return (
     <motion.div
@@ -353,12 +359,15 @@ export function SettingsView({
             </div>
           </div>
 
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 flex items-center justify-between">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-white/80">System</h3>
-              <p className="text-white/30 text-xs">Return to Pi Desktop</p>
+              <p className="text-white/30 text-xs">Diagnostics and kiosk controls</p>
             </div>
-            <button onPointerDown={handleExitApp} className="px-5 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold text-sm active:scale-95 transition-all">Exit Kiosk</button>
+            <div className="grid grid-cols-2 gap-3">
+              <button onPointerDown={() => setShowConsoleLogs(true)} className="px-5 py-3 rounded-xl bg-white/5 text-white/60 border border-white/10 font-bold text-sm active:scale-95 transition-all">Console Logs</button>
+              <button onPointerDown={handleExitApp} className="px-5 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold text-sm active:scale-95 transition-all">Exit Kiosk</button>
+            </div>
           </div>
         </div>
 
