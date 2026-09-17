@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export type ServiceHealthStatus = 'healthy' | 'degraded' | 'down';
+type ServiceHealthStatus = 'healthy' | 'degraded' | 'down';
 
-export interface ServiceHealthResult {
+interface ServiceHealthResult {
   id: string;
   name: string;
   status: ServiceHealthStatus;
@@ -201,10 +201,11 @@ export async function GET(req: NextRequest) {
       unconfiguredDetail: 'No SMART_DEVICES are configured.',
       classify: (response, body) => {
         if (!response.ok) return { status: 'down', detail: `HTTP ${response.status}` };
-        if (!Array.isArray(body)) return { status: 'degraded', detail: 'Device endpoint returned an unexpected response.' };
-        const offline = body.filter((item) => Boolean(asRecord(item).isOffline)).length;
-        if (offline > 0) return { status: 'degraded', detail: `${offline} of ${body.length} configured devices offline.` };
-        return { status: 'healthy', detail: `${body.length} configured devices responding.` };
+        const devices = asRecord(body).devices;
+        if (!Array.isArray(devices)) return { status: 'degraded', detail: 'Device endpoint returned an unexpected response.' };
+        const offline = devices.filter((item) => Boolean(asRecord(item).isOffline)).length;
+        if (offline > 0) return { status: 'degraded', detail: `${offline} of ${devices.length} configured devices offline.` };
+        return { status: 'healthy', detail: `${devices.length} configured devices responding.` };
       },
     }),
     probeInternal(origin, {
