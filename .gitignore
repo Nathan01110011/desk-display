@@ -22,6 +22,7 @@
 /data/
 .calendar-cache.json
 .dashboard-settings.json
+.spotify-auth.json
 
 # debug
 npm-debug.log*
