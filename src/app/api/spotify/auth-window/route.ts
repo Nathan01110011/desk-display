@@ -1,7 +1,9 @@
-import { spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import { readdirSync, statSync } from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
+
+const AUTH_PROFILE = '/tmp/desk-display-spotify-auth';
 
 function desktopEnvironment(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env };
@@ -68,4 +70,13 @@ export async function POST() {
       { status: 500 },
     );
   }
+}
+
+export async function DELETE() {
+  if (process.platform !== 'linux') {
+    return NextResponse.json({ success: false, error: 'Not on Linux.' }, { status: 400 });
+  }
+
+  spawnSync('pkill', ['-f', AUTH_PROFILE], { stdio: 'ignore' });
+  return NextResponse.json({ success: true });
 }
