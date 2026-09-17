@@ -1,34 +1,82 @@
 import { spawn, spawnSync } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
+import path from 'path';
 
 interface KeyboardCandidate {
   name: string;
   path: string;
   args: string[];
+  display: 'wayland' | 'x11' | 'either';
+}
+
+interface DesktopSession {
+  env: NodeJS.ProcessEnv;
+  description: string;
 }
 
 export interface KeyboardControlResult {
   success: boolean;
   keyboard?: string;
+  session?: string;
   error?: string;
 }
 
 const KEYBOARD_CANDIDATES: KeyboardCandidate[] = [
-  { name: 'wvkbd-mobintl', path: '/usr/bin/wvkbd-mobintl', args: [] },
-  { name: 'wvkbd', path: '/usr/bin/wvkbd', args: [] },
-  { name: 'squeekboard', path: '/usr/bin/squeekboard', args: [] },
-  { name: 'onboard', path: '/usr/bin/onboard', args: [] },
-  { name: 'matchbox-keyboard', path: '/usr/bin/matchbox-keyboard', args: [] },
+  { name: 'wvkbd-mobintl', path: '/usr/bin/wvkbd-mobintl', args: [], display: 'wayland' },
+  { name: 'wvkbd', path: '/usr/bin/wvkbd', args: [], display: 'wayland' },
+  { name: 'squeekboard', path: '/usr/bin/squeekboard', args: [], display: 'wayland' },
+  { name: 'onboard', path: '/usr/bin/onboard', args: [], display: 'either' },
+  { name: 'matchbox-keyboard', path: '/usr/bin/matchbox-keyboard', args: [], display: 'x11' },
 ];
 
-function keyboardEnvironment(): NodeJS.ProcessEnv {
-  const uid = typeof process.getuid === 'function' ? process.getuid() : undefined;
+function findWaylandSession(): DesktopSession | null {
+  try {
+    for (const uidDir of readdirSync('/run/user')) {
+      if (!/^\d+$/.test(uidDir)) continue;
+      const runtimeDir = path.join('/run/user', uidDir);
+      const sockets = readdirSync(runtimeDir).filter((entry) => /^wayland-\d+$/.test(entry));
+      for (const socket of sockets) {
+        const socketPath = path.join(runtimeDir, socket);
+        try {
+          if (!statSync(socketPath).isSocket()) continue;
+        } catch {
+          continue;
+        }
+
+        return {
+          env: {
+            ...process.env,
+            XDG_RUNTIME_DIR: runtimeDir,
+            WAYLAND_DISPLAY: socket,
+            DISPLAY: process.env.DISPLAY || ':0',
+          },
+          description: `${runtimeDir}/${socket}`,
+        };
+      }
+    }
+  } catch {
+    // Fall through to X11 / inherited environment.
+  }
+
+  return null;
+}
+
+function findX11Session(): DesktopSession | null {
+  if (!existsSync('/tmp/.X11-unix/X0') && !process.env.DISPLAY) return null;
 
   return {
-    ...process.env,
-    DISPLAY: process.env.DISPLAY || ':0',
-    WAYLAND_DISPLAY: process.env.WAYLAND_DISPLAY || 'wayland-0',
-    XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR || (uid !== undefined ? `/run/user/${uid}` : undefined),
+    env: {
+      ...process.env,
+      DISPLAY: process.env.DISPLAY || ':0',
+    },
+    description: process.env.DISPLAY || ':0',
+  };
+}
+
+function inheritedSession(): DesktopSession {
+  return {
+    env: { ...process.env },
+    description: 'inherited process environment',
   };
 }
 
@@ -44,13 +92,41 @@ export function disableOnScreenKeyboard(): KeyboardControlResult {
   return { success: true };
 }
 
-export function enableOnScreenKeyboard(): KeyboardControlResult {
+async function tryStart(candidate: KeyboardCandidate, session: DesktopSession): Promise<KeyboardControlResult> {
+  try {
+    const child = spawn(candidate.path, candidate.args, {
+      detached: true,
+      stdio: 'ignore',
+      env: session.env,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    if (child.exitCode !== null) {
+      return {
+        success: false,
+        error: `${candidate.name} exited immediately in ${session.description}.`,
+      };
+    }
+
+    child.unref();
+    console.info(`[System Keyboard] Started ${candidate.name} in ${session.description}.`);
+    return { success: true, keyboard: candidate.name, session: session.description };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+export async function enableOnScreenKeyboard(): Promise<KeyboardControlResult> {
   if (process.platform !== 'linux') {
     return { success: false, error: 'System keyboard control is only available on Linux.' };
   }
 
-  const candidate = KEYBOARD_CANDIDATES.find((item) => existsSync(item.path));
-  if (!candidate) {
+  const installed = KEYBOARD_CANDIDATES.filter((candidate) => existsSync(candidate.path));
+  if (installed.length === 0) {
     return {
       success: false,
       error: 'No supported on-screen keyboard is installed. Tried wvkbd, squeekboard, onboard, and matchbox-keyboard.',
@@ -59,19 +135,25 @@ export function enableOnScreenKeyboard(): KeyboardControlResult {
 
   disableOnScreenKeyboard();
 
-  try {
-    const child = spawn(candidate.path, candidate.args, {
-      detached: true,
-      stdio: 'ignore',
-      env: keyboardEnvironment(),
-    });
-    child.unref();
+  const wayland = findWaylandSession();
+  const x11 = findX11Session();
+  const inherited = inheritedSession();
+  const failures: string[] = [];
 
-    console.info(`[System Keyboard] Started ${candidate.name} for external authentication.`);
-    return { success: true, keyboard: candidate.name };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`[System Keyboard] Failed to start ${candidate.name}:`, error);
-    return { success: false, error: message };
+  for (const candidate of installed) {
+    const sessions: DesktopSession[] = [];
+    if ((candidate.display === 'wayland' || candidate.display === 'either') && wayland) sessions.push(wayland);
+    if ((candidate.display === 'x11' || candidate.display === 'either') && x11) sessions.push(x11);
+    if (sessions.length === 0) sessions.push(inherited);
+
+    for (const session of sessions) {
+      const result = await tryStart(candidate, session);
+      if (result.success) return result;
+      failures.push(result.error || `${candidate.name} failed in ${session.description}`);
+    }
   }
+
+  const error = `Installed keyboard(s) could not attach to the desktop session: ${failures.join(' | ')}`;
+  console.error(`[System Keyboard] ${error}`);
+  return { success: false, error };
 }
