@@ -44,7 +44,14 @@ export function SpotifyConnectionCard() {
   }, []);
 
   useEffect(() => {
-    void check();
+    // Defer the initial external-state sync out of the effect body. React's
+    // set-state-in-effect rule rejects calling a state-updating callback directly
+    // from an effect, even when that callback performs async work first.
+    const frame = window.requestAnimationFrame(() => {
+      void check();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [check]);
 
   useEffect(() => {
