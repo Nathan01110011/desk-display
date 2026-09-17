@@ -12,9 +12,12 @@ interface SpotifyTokenResponse {
 function popupResult(success: boolean, message: string) {
   const safeMessage = JSON.stringify(message);
   const safeType = success ? 'spotify-auth-complete' : 'spotify-auth-error';
+  const autoClose = success
+    ? "setTimeout(()=>{fetch('/api/spotify/auth-window',{method:'DELETE'}).catch(()=>{});},700);"
+    : '';
 
   return new NextResponse(
-    `<!doctype html><html><head><meta charset="utf-8"><title>Spotify Authorization</title></head><body style="margin:0;background:#111;color:#eee;font-family:sans-serif;min-height:100vh;display:grid;place-items:center"><button onclick="window.close();location.href='/'" aria-label="Close" style="position:fixed;right:24px;top:18px;border:0;border-radius:999px;width:48px;height:48px;font-size:28px;background:#333;color:#fff">×</button><main style="text-align:center;padding:32px;max-width:560px"><h1>${success ? 'Spotify connected' : 'Spotify connection failed'}</h1><p style="color:#bbb">${message}</p><button onclick="window.close();location.href='/'" style="margin-top:18px;padding:12px 22px;border-radius:12px;border:1px solid #555;background:#222;color:#fff;font-weight:700">Close</button></main><script>try{if(window.opener&&!window.opener.closed){window.opener.postMessage({type:'${safeType}',message:${safeMessage}},window.location.origin);${success ? 'setTimeout(()=>window.close(),350);' : ''}}}catch(e){}</script></body></html>`,
+    `<!doctype html><html><head><meta charset="utf-8"><title>Spotify Authorization</title></head><body style="margin:0;background:#111;color:#eee;font-family:sans-serif;min-height:100vh;display:grid;place-items:center"><button onclick="closeAuth()" aria-label="Close" style="position:fixed;right:24px;top:18px;border:0;border-radius:999px;width:48px;height:48px;font-size:28px;background:#333;color:#fff">×</button><main style="text-align:center;padding:32px;max-width:560px"><h1>${success ? 'Spotify connected' : 'Spotify connection failed'}</h1><p style="color:#bbb">${message}</p><button onclick="closeAuth()" style="margin-top:18px;padding:12px 22px;border-radius:12px;border:1px solid #555;background:#222;color:#fff;font-weight:700">Close &amp; return to Desk Display</button></main><script>async function closeAuth(){try{await fetch('/api/spotify/auth-window',{method:'DELETE'});}catch(e){}}try{if(window.opener&&!window.opener.closed){window.opener.postMessage({type:'${safeType}',message:${safeMessage}},window.location.origin);}}catch(e){}${autoClose}</script></body></html>`,
     { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
   );
 }
@@ -74,7 +77,7 @@ export async function GET(req: NextRequest) {
     saveSpotifyRefreshToken(data.refresh_token);
     console.info('[Spotify] Authorization refreshed successfully');
 
-    const result = popupResult(true, 'Authorization saved. Returning to Desk Display.');
+    const result = popupResult(true, 'Authorization saved. Desk Display will relaunch automatically.');
     result.cookies.delete('spotify_oauth_state');
     return result;
   } catch (error) {
