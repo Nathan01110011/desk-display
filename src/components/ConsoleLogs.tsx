@@ -137,10 +137,13 @@ interface ConsoleLogViewerProps {
   onBack: () => void;
 }
 
+type UpdateState = 'idle' | 'confirm' | 'starting' | 'error';
+
 export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
   const [logs, setLogs] = useState<ConsoleLogEntry[]>([]);
   const [level, setLevel] = useState<'all' | ConsoleLogLevel>('all');
   const [copied, setCopied] = useState(false);
+  const [updateState, setUpdateState] = useState<UpdateState>('idle');
 
   const refresh = () => setLogs(readConsoleLogs());
 
@@ -173,6 +176,32 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
     }
   };
 
+  const startUpdate = async () => {
+    if (updateState === 'idle' || updateState === 'error') {
+      setUpdateState('confirm');
+      return;
+    }
+
+    if (updateState !== 'confirm') return;
+
+    setUpdateState('starting');
+    console.info('[System] Starting update and rebuild from origin/main.');
+
+    try {
+      const response = await fetch('/api/system/update', { method: 'POST' });
+      const data = await response.json().catch(() => ({})) as { success?: boolean; error?: string; message?: string };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || `Update request failed with HTTP ${response.status}`);
+      }
+
+      console.info(`[System] ${data.message || 'Update started. The kiosk will restart when it is complete.'}`);
+    } catch (error) {
+      console.error('[System] Failed to start update:', error);
+      setUpdateState('error');
+    }
+  };
+
   const levelStyles: Record<ConsoleLogLevel, string> = {
     log: 'text-white/70 border-white/10',
     info: 'text-blue-300 border-blue-400/20',
@@ -180,6 +209,14 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
     error: 'text-red-300 border-red-400/20',
     debug: 'text-violet-300 border-violet-400/20',
   };
+
+  const updateLabel = updateState === 'confirm'
+    ? 'Tap Again to Update'
+    : updateState === 'starting'
+      ? 'Updating…'
+      : updateState === 'error'
+        ? 'Retry Update'
+        : 'Update & Rebuild';
 
   return (
     <div className="w-full max-w-6xl mx-auto flex h-full flex-col gap-4 py-8 pr-4">
@@ -198,7 +235,18 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            onPointerDown={startUpdate}
+            disabled={updateState === 'starting'}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold active:scale-95 transition-all disabled:cursor-wait disabled:opacity-60 ${
+              updateState === 'confirm'
+                ? 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+                : 'border-white/10 bg-white/5 text-white/55'
+            }`}
+          >
+            <RefreshCw size={17} className={updateState === 'starting' ? 'animate-spin' : ''} /> {updateLabel}
+          </button>
           <button
             onPointerDown={refresh}
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/55 active:scale-95 transition-all"
@@ -223,6 +271,12 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
           </button>
         </div>
       </div>
+
+      {updateState === 'starting' && (
+        <div className="rounded-2xl border border-blue-400/20 bg-blue-400/[0.06] px-4 py-3 text-xs font-bold text-blue-200/70">
+          Update launched. The kiosk will close shortly while it pulls, installs and builds, then Chromium will relaunch automatically.
+        </div>
+      )}
 
       <SpotifyConnectionCard />
 
