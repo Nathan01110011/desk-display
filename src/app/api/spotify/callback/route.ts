@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSpotifyRedirectUri, saveSpotifyRefreshToken } from '@/lib/spotifyAuth';
+import { disableOnScreenKeyboard } from '@/lib/systemKeyboard';
 
 interface SpotifyTokenResponse {
   access_token?: string;
@@ -9,6 +10,10 @@ interface SpotifyTokenResponse {
 }
 
 export async function GET(req: NextRequest) {
+  if (process.platform === 'linux') {
+    disableOnScreenKeyboard();
+  }
+
   const code = req.nextUrl.searchParams.get('code');
   const returnedState = req.nextUrl.searchParams.get('state');
   const spotifyError = req.nextUrl.searchParams.get('error');
