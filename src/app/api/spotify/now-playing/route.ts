@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { getSpotifyRefreshToken } from '@/lib/spotifyAuth';
 
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
-const refresh_token = process.env.SPOTIFY_REFRESH_TOKEN;
 
 interface SpotifyArtist {
   name: string;
@@ -52,6 +52,8 @@ interface SpotifyErrorPayload {
   access_token?: string;
 }
 
+class SpotifyReauthorizationRequiredError extends Error {}
+
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3, timeout = 15000) {
   let lastStatus: number | null = null;
 
@@ -62,8 +64,6 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, ti
       const response = await fetch(url, { ...options, signal: controller.signal });
       lastStatus = response.status;
 
-      // Client/auth errors are deterministic and should be returned immediately so the
-      // caller can expose the real reason instead of retrying into a generic failure.
       if (response.ok || response.status === 204 || (response.status >= 400 && response.status < 500)) {
         return response;
       }
@@ -118,6 +118,11 @@ async function getAccessToken(currentRefreshToken: string) {
   if (!response.ok) {
     const description = describeSpotifyError(data, response.status);
     logger.error(`Spotify token refresh failed: HTTP ${response.status} - ${description}`);
+
+    if (typeof data.error === 'string' && data.error === 'invalid_grant') {
+      throw new SpotifyReauthorizationRequiredError(description);
+    }
+
     throw new Error(`Spotify token refresh failed (HTTP ${response.status}: ${description})`);
   }
 
@@ -129,16 +134,19 @@ async function getAccessToken(currentRefreshToken: string) {
 }
 
 export async function GET() {
-  if (!refresh_token) {
+  const refreshToken = getSpotifyRefreshToken();
+
+  if (!refreshToken) {
     return NextResponse.json({
       isPlaying: false,
-      error: 'Spotify token not configured',
-      diagnostic: 'SPOTIFY_REFRESH_TOKEN is missing on the server.',
-    });
+      authRequired: true,
+      error: 'Spotify authorization required',
+      diagnostic: 'No Spotify refresh token is configured.',
+    }, { status: 401 });
   }
 
   try {
-    const access_token = await getAccessToken(refresh_token);
+    const access_token = await getAccessToken(refreshToken);
     const response = await fetchWithRetry('https://api.spotify.com/v1/me/player/currently-playing?additional_types=episode', {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -159,7 +167,7 @@ export async function GET() {
         isPlaying: false,
         error: 'Spotify currently-playing request failed',
         diagnostic: `HTTP ${response.status}: ${diagnostic}`,
-      });
+      }, { status: response.status });
     }
 
     if (!song.item) {
@@ -200,10 +208,20 @@ export async function GET() {
   } catch (error) {
     const diagnostic = error instanceof Error ? error.message : String(error);
     logger.error('Spotify API Error', error);
+
+    if (error instanceof SpotifyReauthorizationRequiredError) {
+      return NextResponse.json({
+        isPlaying: false,
+        authRequired: true,
+        error: 'Spotify authorization expired',
+        diagnostic,
+      }, { status: 401 });
+    }
+
     return NextResponse.json({
       isPlaying: false,
       error: 'Failed to fetch Spotify status',
       diagnostic,
-    });
+    }, { status: 502 });
   }
 }
