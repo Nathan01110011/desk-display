@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, CircleAlert, Music2, RefreshCw, X } from 'lucide-react';
+import { SystemUpdateButton } from './SystemUpdateButton';
 
 type SpotifyConnectionState = 'checking' | 'connected' | 'expired' | 'error';
 
@@ -108,32 +109,42 @@ export function SpotifyConnectionCard() {
 
   return (
     <>
-      <div className={`rounded-2xl border p-4 ${state === 'expired' ? 'border-amber-400/25 bg-amber-400/[0.06]' : 'border-white/5 bg-white/[0.03]'}`}>
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/55">
-            <Music2 size={20} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-white/75">Spotify</span>
-              {state === 'connected' && <CheckCircle2 size={15} className="text-green-400" />}
-              {state === 'expired' && <CircleAlert size={15} className="text-amber-400" />}
-              {state === 'checking' && <RefreshCw size={14} className="animate-spin text-white/30" />}
+      <div className="space-y-3">
+        <div className={`rounded-2xl border p-4 ${state === 'expired' ? 'border-amber-400/25 bg-amber-400/[0.06]' : 'border-white/5 bg-white/[0.03]'}`}>
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/55">
+              <Music2 size={20} />
             </div>
-            <p className={`mt-0.5 truncate text-xs ${state === 'expired' ? 'text-amber-200/60' : state === 'error' ? 'text-red-300/60' : 'text-white/30'}`} title={detail}>
-              {detail}
-            </p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-white/75">Spotify</span>
+                {state === 'connected' && <CheckCircle2 size={15} className="text-green-400" />}
+                {state === 'expired' && <CircleAlert size={15} className="text-amber-400" />}
+                {state === 'checking' && <RefreshCw size={14} className="animate-spin text-white/30" />}
+              </div>
+              <p className={`mt-0.5 truncate text-xs ${state === 'expired' ? 'text-amber-200/60' : state === 'error' ? 'text-red-300/60' : 'text-white/30'}`} title={detail}>
+                {detail}
+              </p>
+            </div>
+            <button
+              onPointerDown={reconnect}
+              className={`shrink-0 rounded-xl border px-4 py-2 text-xs font-black transition-all active:scale-95 ${
+                state === 'expired'
+                  ? 'border-green-400/30 bg-green-500/15 text-green-300'
+                  : 'border-white/10 bg-white/5 text-white/45'
+              }`}
+            >
+              {state === 'expired' ? 'Reconnect' : 'Reauthorize'}
+            </button>
           </div>
-          <button
-            onPointerDown={reconnect}
-            className={`shrink-0 rounded-xl border px-4 py-2 text-xs font-black transition-all active:scale-95 ${
-              state === 'expired'
-                ? 'border-green-400/30 bg-green-500/15 text-green-300'
-                : 'border-white/10 bg-white/5 text-white/45'
-            }`}
-          >
-            {state === 'expired' ? 'Reconnect' : 'Reauthorize'}
-          </button>
+        </div>
+
+        <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+          <div className="mb-3">
+            <div className="font-bold text-white/75">System Update</div>
+            <p className="mt-0.5 text-xs text-white/30">Pull latest main, rebuild, restart PM2, and relaunch the kiosk.</p>
+          </div>
+          <SystemUpdateButton />
         </div>
       </div>
 
