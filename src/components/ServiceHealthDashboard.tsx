@@ -25,6 +25,8 @@ const statusStyles: Record<ServiceHealthStatus, { dot: string; text: string; lab
   down: { dot: 'bg-red-400', text: 'text-red-300', label: 'Down' },
 };
 
+const loadingSlots = ['health-1', 'health-2', 'health-3', 'health-4', 'health-5', 'health-6', 'health-7', 'health-8'];
+
 export function ServiceHealthDashboard() {
   const [data, setData] = useState<HealthResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,9 +42,18 @@ export function ServiceHealthDashboard() {
       if (!response.ok || !body) {
         throw new Error(`Health check failed with HTTP ${response.status}`);
       }
+
       setData(body);
+      for (const service of body.services) {
+        const message = `[Health] ${service.name}: ${service.status} — ${service.detail}${typeof service.latencyMs === 'number' ? ` (${service.latencyMs}ms)` : ''}`;
+        if (service.status === 'down') console.error(message);
+        else if (service.status === 'degraded') console.warn(message);
+        else console.info(message);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      console.error(`[Health] Service health check failed: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -104,8 +115,8 @@ export function ServiceHealthDashboard() {
             );
           })}
 
-          {loading && !data && Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="h-24 animate-pulse rounded-2xl border border-white/5 bg-white/[0.03]" />
+          {loading && !data && loadingSlots.map((slot) => (
+            <div key={slot} className="h-24 animate-pulse rounded-2xl border border-white/5 bg-white/[0.03]" />
           ))}
         </div>
       )}
