@@ -1,0 +1,28 @@
+name: Joplin checks
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/joplin*.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/joplin.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:joplin
+      - run: pnpm build
+        env:
+          # Synthetic fixtures for the existing Rule view; CI builds are never deployed.
+          NEXT_PUBLIC_RULE_LOCK_ROWS: '{"orbit":["anchor","aperture","bolt","brain","diamond","flame","flower","gem"],"ember":["anchor","aperture","bolt","brain","diamond","flame","flower","gem"],"tide":["anchor","aperture","bolt","brain","diamond","flame","flower","gem"],"signal":["anchor","aperture","bolt","brain","diamond","flame","flower","gem"]}'
+          NEXT_PUBLIC_RULE_LOCK_LENS_OFFSETS: '{"sun":0,"moon":1,"compass":2,"mirror":3}'
