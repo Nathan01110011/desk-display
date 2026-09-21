@@ -365,7 +365,7 @@ export function SettingsView({
               <p className="text-white/30 text-xs">Diagnostics and kiosk controls</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <button onPointerDown={() => setShowConsoleLogs(true)} className="px-5 py-3 rounded-xl bg-white/5 text-white/60 border border-white/10 font-bold text-sm active:scale-95 transition-all">Console Logs</button>
+              <button onPointerDown={() => setShowConsoleLogs(true)} className="px-5 py-3 rounded-xl bg-white/5 text-white/60 border border-white/10 font-bold text-sm active:scale-95 transition-all">System Admin</button>
               <button onPointerDown={handleExitApp} className="px-5 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold text-sm active:scale-95 transition-all">Exit Kiosk</button>
             </div>
           </div>
