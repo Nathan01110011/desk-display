@@ -18,6 +18,8 @@ const STORAGE_KEY = 'desk-display:console-logs';
 const EVENT_NAME = 'desk-display:console-log';
 const MAX_ENTRIES = 1000;
 const MAX_MESSAGE_LENGTH = 10_000;
+const INITIAL_RENDER_LIMIT = 150;
+const RENDER_LIMIT_STEP = 150;
 
 function safeStringify(value: unknown): string {
   if (value instanceof Error) {
@@ -145,6 +147,7 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
   const [level, setLevel] = useState<'all' | ConsoleLogLevel>('all');
   const [copied, setCopied] = useState(false);
   const [updateState, setUpdateState] = useState<UpdateState>('idle');
+  const [renderLimit, setRenderLimit] = useState(INITIAL_RENDER_LIMIT);
 
   const refresh = () => setLogs(readConsoleLogs());
 
@@ -161,6 +164,11 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
   const filteredLogs = useMemo(
     () => (level === 'all' ? logs : logs.filter((entry) => entry.level === level)),
     [level, logs],
+  );
+
+  const visibleLogs = useMemo(
+    () => filteredLogs.slice(-renderLimit),
+    [filteredLogs, renderLimit],
   );
 
   const copyLogs = async () => {
@@ -290,7 +298,7 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
           return (
             <button
               key={option}
-              onPointerDown={() => setLevel(option)}
+              onPointerDown={() => { setLevel(option); setRenderLimit(INITIAL_RENDER_LIMIT); }}
               className={`rounded-xl border px-4 py-2 text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
                 selected ? 'border-white bg-white text-black' : 'border-white/10 bg-white/[0.03] text-white/35'
               }`}
@@ -299,7 +307,7 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
             </button>
           );
         })}
-        <span className="ml-auto text-xs font-bold text-white/25">{filteredLogs.length} shown · {logs.length} stored</span>
+        <span className="ml-auto text-xs font-bold text-white/25">{visibleLogs.length} shown · {filteredLogs.length} matching · {logs.length} stored</span>
       </div>
 
       <div className="rounded-3xl border border-white/10 bg-black/40 p-4 font-mono text-xs">
@@ -309,7 +317,15 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
           </div>
         ) : (
           <div className="space-y-2">
-            {filteredLogs.map((entry) => (
+            {filteredLogs.length > visibleLogs.length && (
+              <button
+                onPointerDown={() => setRenderLimit((current) => current + RENDER_LIMIT_STEP)}
+                className="mb-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-black uppercase tracking-widest text-white/35 active:scale-[0.99] transition-all"
+              >
+                Load older logs ({filteredLogs.length - visibleLogs.length} remaining)
+              </button>
+            )}
+            {visibleLogs.map((entry) => (
               <div key={entry.id} className={`rounded-xl border bg-white/[0.025] p-3 ${levelStyles[entry.level]}`}>
                 <div className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-60">
                   <span>{entry.level}</span>
