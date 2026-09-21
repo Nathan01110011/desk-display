@@ -83,6 +83,7 @@ export default function Dashboard() {
   const [showIdleClock, setShowIdleClock] = useState(false);
   const [lastActivity, setLastActivity] = useState(() => Date.now());
   const [weatherDetail, setWeatherDetail] = useState(false);
+  const [systemAdminOpen, setSystemAdminOpen] = useState(false);
   const [fullscreenReturnPhase, setFullscreenReturnPhase] = useState<FullscreenReturnPhase>('idle');
   const fullscreenReturnTimers = useRef<number[]>([]);
 
@@ -281,12 +282,13 @@ export default function Dashboard() {
     markActivity();
     clearFullscreenReturnTimers();
     setFullscreenReturnPhase('idle');
+    if (view !== 'settings') setSystemAdminOpen(false);
     setActiveView(view);
   };
 
   const closeActiveView = () => {
     markActivity();
-    const wasFullscreen = isFullscreenAppView(activeView, weatherDetail);
+    const wasFullscreen = isFullscreenAppView(activeView, weatherDetail) || (activeView === 'settings' && systemAdminOpen);
     clearFullscreenReturnTimers();
 
     if (wasFullscreen) {
@@ -306,12 +308,13 @@ export default function Dashboard() {
 
     setActiveView('dashboard');
     setWeatherDetail(false);
+    setSystemAdminOpen(false);
     refreshWeather();
   };
 
   if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
-  const isActiveFullscreenView = isFullscreenAppView(activeView, weatherDetail);
+  const isActiveFullscreenView = isFullscreenAppView(activeView, weatherDetail) || (activeView === 'settings' && systemAdminOpen);
   const isReturningFromFullscreen = fullscreenReturnPhase !== 'idle';
   const showSidebar = !isActiveFullscreenView && fullscreenReturnPhase !== 'app-exit';
   const showDashboardHome = activeView === 'dashboard' && !isReturningFromFullscreen;
@@ -713,6 +716,7 @@ export default function Dashboard() {
                 {activeView === 'settings' && (
                   <SettingsView 
                     onClose={closeActiveView}
+                    onSystemAdminChange={setSystemAdminOpen}
                   appConfig={appConfig} onUpdateAppConfig={updateAppConfig}
                   worldClocks={clocks} onUpdateClocks={updateClocks}
                   ruleLock={ruleLock} onUpdateRuleLock={handleUpdateRuleLock}
