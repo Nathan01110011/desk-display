@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Clipboard, RefreshCw, Trash2 } from 'lucide-react';
 import { SpotifyConnectionCard } from './SpotifyConnectionCard';
+import { SystemInfoCard } from './SystemInfoCard';
 
 export type ConsoleLogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
 
@@ -231,7 +232,7 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
           </button>
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.3em] text-white/30">Settings</div>
-            <h2 className="text-2xl font-black text-white/85">Console Logs</h2>
+            <h2 className="text-2xl font-black text-white/85">System Admin</h2>
           </div>
         </div>
 
@@ -277,6 +278,8 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
           Update launched. The kiosk will close shortly while it pulls, installs and builds, then Chromium will relaunch automatically.
         </div>
       )}
+
+      <SystemInfoCard />
 
       <SpotifyConnectionCard />
 
