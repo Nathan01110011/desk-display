@@ -79,6 +79,7 @@ export default function Dashboard() {
   const [screensaverType, setScreensaverType] = useState<ScreensaverType>('clock');
   const [screensaverPhotoSource, setScreensaverPhotoSource] = useState<ScreensaverPhotoSource>('all');
   const [screensaverPhotoSlideDuration, setScreensaverPhotoSlideDuration] = useState<ScreensaverPhotoSlideDuration>(DEFAULT_PHOTO_SLIDE_DURATION_SECONDS);
+  const [disableScreensaverWhileSpotifyPlaying, setDisableScreensaverWhileSpotifyPlaying] = useState(false);
   const [isRuleLocked, setIsRuleLocked] = useState(false);
   const [showIdleClock, setShowIdleClock] = useState(false);
   const [lastActivity, setLastActivity] = useState(() => Date.now());
@@ -154,6 +155,7 @@ export default function Dashboard() {
             ? data.screensaverPhotoSlideDurationSeconds
             : DEFAULT_PHOTO_SLIDE_DURATION_SECONDS
         );
+        setDisableScreensaverWhileSpotifyPlaying(Boolean(data.disableScreensaverWhileSpotifyPlaying));
         setIsRuleLocked(loadedRuleLock.lockOnOpen);
         
         if (data.worldClocks) updateClocks(data.worldClocks);
@@ -192,6 +194,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!mounted || isRuleLocked || showIdleClock) return;
+    if (disableScreensaverWhileSpotifyPlaying && spotify?.isPlaying) return;
 
     const timeout = window.setTimeout(
       () => setShowIdleClock(true),
@@ -199,7 +202,7 @@ export default function Dashboard() {
     );
 
     return () => window.clearTimeout(timeout);
-  }, [idleClockTimeoutMinutes, isRuleLocked, lastActivity, mounted, showIdleClock]);
+  }, [disableScreensaverWhileSpotifyPlaying, idleClockTimeoutMinutes, isRuleLocked, lastActivity, mounted, showIdleClock, spotify?.isPlaying]);
 
   useEffect(() => {
     if (!mounted || !ruleLock.lockOnInactivity || isRuleLocked) return;
@@ -263,6 +266,14 @@ export default function Dashboard() {
 
   const handleUpdateScreensaverPhotoSlideDuration = (duration: ScreensaverPhotoSlideDuration) => {
     setScreensaverPhotoSlideDuration(duration);
+    markActivity();
+  };
+
+  const handleDisableScreensaverWhileSpotifyPlaying = (disabled: boolean) => {
+    setDisableScreensaverWhileSpotifyPlaying(disabled);
+    if (disabled && spotify?.isPlaying) {
+      setShowIdleClock(false);
+    }
     markActivity();
   };
 
@@ -380,7 +391,7 @@ export default function Dashboard() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showIdleClock && !isRuleLocked && (
+        {showIdleClock && !isRuleLocked && !(disableScreensaverWhileSpotifyPlaying && spotify?.isPlaying) && (
           <motion.div
             key="idle-screensaver"
             initial={{ opacity: 0 }}
@@ -728,6 +739,8 @@ export default function Dashboard() {
                   onUpdateScreensaverPhotoSource={handleUpdateScreensaverPhotoSource}
                   screensaverPhotoSlideDuration={screensaverPhotoSlideDuration}
                   onUpdateScreensaverPhotoSlideDuration={handleUpdateScreensaverPhotoSlideDuration}
+                  disableScreensaverWhileSpotifyPlaying={disableScreensaverWhileSpotifyPlaying}
+                  onDisableScreensaverWhileSpotifyPlaying={handleDisableScreensaverWhileSpotifyPlaying}
                 />
                 )}
                 {activeView === 'todo' && (
