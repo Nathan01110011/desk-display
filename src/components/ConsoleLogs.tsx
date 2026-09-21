@@ -220,7 +220,8 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
         : 'Update & Rebuild';
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex h-full flex-col gap-4 py-8 pr-4">
+    <div className="w-full max-w-6xl mx-auto h-full overflow-y-auto overscroll-contain py-8 pr-4 scrollbar-hide touch-pan-y">
+      <div className="flex min-h-full flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -301,7 +302,7 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
         <span className="ml-auto text-xs font-bold text-white/25">{filteredLogs.length} shown · {logs.length} stored</span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-3xl border border-white/10 bg-black/40 p-4 font-mono text-xs">
+      <div className="rounded-3xl border border-white/10 bg-black/40 p-4 font-mono text-xs">
         {filteredLogs.length === 0 ? (
           <div className="flex h-full min-h-56 items-center justify-center text-center text-white/25">
             No logs captured yet. Errors and console output will appear here automatically.
@@ -322,9 +323,10 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
         )}
       </div>
 
-      <p className="text-center text-[10px] text-white/20">
+      <p className="pb-4 text-center text-[10px] text-white/20">
         Stores the latest {MAX_ENTRIES} browser-side entries on this device, including uncaught errors and rejected promises.
       </p>
+      </div>
     </div>
   );
 }
