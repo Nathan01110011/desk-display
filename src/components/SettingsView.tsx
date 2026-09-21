@@ -29,6 +29,8 @@ interface SettingsViewProps {
   onUpdateScreensaverPhotoSource: (source: ScreensaverPhotoSource) => void;
   screensaverPhotoSlideDuration: ScreensaverPhotoSlideDuration;
   onUpdateScreensaverPhotoSlideDuration: (duration: ScreensaverPhotoSlideDuration) => void;
+  disableScreensaverWhileSpotifyPlaying: boolean;
+  onDisableScreensaverWhileSpotifyPlaying: (disabled: boolean) => void;
 }
 
 export function SettingsView({ 
@@ -47,6 +49,8 @@ export function SettingsView({
   onUpdateScreensaverPhotoSource,
   screensaverPhotoSlideDuration,
   onUpdateScreensaverPhotoSlideDuration,
+  disableScreensaverWhileSpotifyPlaying,
+  onDisableScreensaverWhileSpotifyPlaying,
 }: SettingsViewProps) {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showConsoleLogs, setShowConsoleLogs] = useState(false);
@@ -192,6 +196,15 @@ export function SettingsView({
     });
   };
 
+  const updateDisableScreensaverWhileSpotifyPlaying = async (disabled: boolean) => {
+    onDisableScreensaverWhileSpotifyPlaying(disabled);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disableScreensaverWhileSpotifyPlaying: disabled })
+    });
+  };
+
   const ruleLockHours = Math.floor(ruleLock.timeoutMinutes / 60);
   const ruleLockMinutes = ruleLock.timeoutMinutes % 60;
   const idleClockHours = Math.floor(idleClockTimeoutMinutes / 60);
@@ -312,6 +325,19 @@ export function SettingsView({
                 <p className="text-center text-[10px] text-white/20">Manage and upload photos in the Gallery app.</p>
               </div>
             )}
+
+            <button
+              onPointerDown={() => void updateDisableScreensaverWhileSpotifyPlaying(!disableScreensaverWhileSpotifyPlaying)}
+              className="flex w-full items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-left active:scale-[0.98] transition-all"
+            >
+              <div>
+                <p className="text-sm font-black text-white/65">Stay awake while Spotify is playing</p>
+                <p className="mt-1 text-[10px] text-white/25">Prevents the screensaver while active playback is detected.</p>
+              </div>
+              <span className={`ml-4 flex size-8 shrink-0 items-center justify-center rounded-xl border ${disableScreensaverWhileSpotifyPlaying ? 'border-white bg-white text-black' : 'border-white/20 text-transparent'}`}>
+                <Check size={18} strokeWidth={4} />
+              </span>
+            </button>
 
             <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
               <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Inactivity Timeout</p>
