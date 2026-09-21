@@ -31,7 +31,7 @@ export interface SpotifyNowPlaying {
   durationMs: number;
 }
 
-export type ViewState = 'dashboard' | 'calendar' | 'gallery' | 'pomodoro' | 'settings' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule';
+export type ViewState = 'dashboard' | 'calendar' | 'gallery' | 'pomodoro' | 'settings' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule' | 'joplin';
 
 export type PomodoroMode = 'work' | 'break';
 
@@ -104,7 +104,8 @@ export interface AppConfig {
   timer: boolean;
   todo: boolean;
   rule: boolean;
-  appOrder?: ('calendar' | 'gallery' | 'pomodoro' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule')[];
+  joplin: boolean;
+  appOrder?: ('calendar' | 'gallery' | 'pomodoro' | 'sports' | 'weather' | 'fitbit' | 'home' | 'timer' | 'todo' | 'rule' | 'joplin')[];
 }
 
 export interface RuleLockSettings {
@@ -113,7 +114,7 @@ export interface RuleLockSettings {
   timeoutMinutes: number;
 }
 
-export type ScreensaverType = 'clock' | 'photos';
+export type ScreensaverType = 'clock' | 'photos' | 'joplin';
 export type ScreensaverPhotoSource = 'all' | 'favorites';
 export type ScreensaverPhotoSlideDuration = 15 | 30 | 60 | 120;
 

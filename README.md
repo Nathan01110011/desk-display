@@ -14,6 +14,7 @@ A minimalist, high-performance smart display dashboard designed for Raspberry Pi
 - **🏠 Smart Home**: Control your smart devices (starting with TP-Link Tapo) with large, tactile toggle tiles. Supports multiple devices and vendors.
 - **❤️ Google Health**: Daily steps, floors, calories, active minutes, and resting heart rate via the Google Health API.
 - **📝 TODO Tracker**: Embedded interactive map and checklist via an external React app, perfectly integrated via a Same-Origin proxy to bypass cross-origin restrictions.
+- **📓 Joplin Notes**: Read-only pinned notes and a daily TODO screensaver, with a separate daily creation and untouched-template cleanup worker. See [Joplin setup](./JOPLIN.md).
 - **⚙️ Settings Panel**: Fully configurable via an on-screen keyboard. Toggle apps, adjust timers, and exit to the OS.
 
 ---

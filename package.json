@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "check": "pnpm lint && pnpm typecheck",
     "biome:check": "biome check --error-on-warnings .",
-    "biome:fix": "biome check --write ."
+    "biome:fix": "biome check --write .",
+    "test:joplin": "node --test scripts/joplin-daily.test.mjs scripts/joplin-client.test.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4",
