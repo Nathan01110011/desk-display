@@ -14,6 +14,7 @@ const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; labe
 
 interface SettingsViewProps {
   onClose: () => void;
+  onSystemAdminChange?: (open: boolean) => void;
   appConfig: AppConfig;
   onUpdateAppConfig: (config: AppConfig) => void;
   worldClocks: AdditionalClock[];
@@ -31,6 +32,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ 
+  onSystemAdminChange,
   appConfig,
   onUpdateAppConfig,
   worldClocks,
@@ -196,7 +198,7 @@ export function SettingsView({
   const idleClockMinutes = idleClockTimeoutMinutes % 60;
 
   if (showConsoleLogs) {
-    return <ConsoleLogViewer onBack={() => setShowConsoleLogs(false)} />;
+    return <ConsoleLogViewer onBack={() => { setShowConsoleLogs(false); onSystemAdminChange?.(false); }} />;
   }
 
   return (
@@ -365,7 +367,7 @@ export function SettingsView({
               <p className="text-white/30 text-xs">Diagnostics and kiosk controls</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <button onPointerDown={() => setShowConsoleLogs(true)} className="px-5 py-3 rounded-xl bg-white/5 text-white/60 border border-white/10 font-bold text-sm active:scale-95 transition-all">System Admin</button>
+              <button onPointerDown={() => { setShowConsoleLogs(true); onSystemAdminChange?.(true); }} className="px-5 py-3 rounded-xl bg-white/5 text-white/60 border border-white/10 font-bold text-sm active:scale-95 transition-all">System Admin</button>
               <button onPointerDown={handleExitApp} className="px-5 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold text-sm active:scale-95 transition-all">Exit Kiosk</button>
             </div>
           </div>
