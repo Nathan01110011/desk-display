@@ -13,7 +13,7 @@ interface SpotifyPlayerProps {
 export function SpotifyPlayer({ spotify, onAction, compact = false }: SpotifyPlayerProps) {
   if (!spotify || !spotify.title) {
     return (
-      <div className={`w-full flex items-center  ${compact ? 'gap-6' : 'gap-8 max-w-4xl rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950/35 to-slate-950 p-6'}`}>
+      <div className={`w-full flex items-center  ${compact ? 'gap-6' : 'gap-8 max-w-4xl rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950/35 to-neutral-950 p-6'}`}>
         <div className={`relative shrink-0 bg-white/5 border border-white/5 rounded-3xl flex items-center justify-center ${compact ? 'size-40' : 'size-[clamp(140px,18vw,220px)]'}`}>
           <Music size={compact ? 72 : 100} className="text-white/65" />
         </div>
@@ -26,7 +26,7 @@ export function SpotifyPlayer({ spotify, onAction, compact = false }: SpotifyPla
   }
 
   return (
-    <div className={`w-full flex items-center ${compact ? 'gap-6' : 'gap-8 max-w-4xl rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950/35 to-slate-950 p-6'}`}>
+    <div className={`w-full flex items-center ${compact ? 'gap-6' : 'gap-8 max-w-4xl rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950/35 to-neutral-950 p-6'}`}>
       <div className={`relative shrink-0 shadow-2xl rounded-3xl overflow-hidden border border-white/10 ${compact ? 'size-40' : 'size-[clamp(140px,18vw,220px)]'}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={spotify.albumImageUrl} alt="Album Art" className="object-cover w-full h-full" />

@@ -391,7 +391,7 @@ export function SportsView({
             {featured ? (
               <FeaturedMatch match={featured} />
             ) : (
-              <section className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950 to-slate-950 p-6 text-center">
+              <section className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950 to-neutral-950 p-6 text-center">
                 <Trophy size={48} className="text-emerald-200" />
                 <h3 className="text-2xl font-black">
                   {loading
@@ -416,7 +416,7 @@ export function SportsView({
                 )}
               </section>
             )}
-            <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-900/70">
+            <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/70">
               <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-4">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
                   Fixtures & results
@@ -476,7 +476,7 @@ export function SportsView({
         </>
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] gap-4">
-          <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950/70 to-slate-950">
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950/70 to-neutral-950">
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 p-4">
               <div className="flex gap-2">
                 {(["clubs", "leagues"] as const).map((tab) => (
@@ -614,7 +614,7 @@ export function SportsView({
             </div>
           </section>
           <div className="flex min-h-0 flex-col gap-4">
-            <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-900/70 p-4">
+            <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/70 p-4">
               <h3 className="mb-3 flex shrink-0 items-center gap-2 text-lg font-black">
                 <Search size={20} className="text-emerald-200" /> Find a team
               </h3>
@@ -632,7 +632,7 @@ export function SportsView({
                         setResults([]);
                         setSearching(false);
                       }}
-                      className="min-h-11 w-full appearance-none rounded-xl border border-white/15 bg-slate-950 py-3 pl-3 pr-10 text-sm font-bold text-white"
+                      className="min-h-11 w-full appearance-none rounded-xl border border-white/15 bg-neutral-950 py-3 pl-3 pr-10 text-sm font-bold text-white"
                     >
                       {leaguePresets.map((league) => (
                         <option
@@ -713,7 +713,7 @@ export function SportsView({
                 )}
               </div>
             </section>
-            <section className="shrink-0 rounded-3xl border border-white/10 bg-slate-900/70 p-4">
+            <section className="shrink-0 rounded-3xl border border-white/10 bg-neutral-900/70 p-4">
               <h3 className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
                 <Clock size={16} /> Fixture window
               </h3>
@@ -782,7 +782,7 @@ function TeamLogo({
 
 function FeaturedMatch({ match }: { match: SportMatch }) {
   return (
-    <section className="flex min-h-0 flex-col justify-between overflow-hidden rounded-3xl border border-emerald-200/20 bg-gradient-to-br from-emerald-800/70 via-emerald-950 to-slate-950 p-6">
+    <section className="flex min-h-0 flex-col justify-between overflow-hidden rounded-3xl border border-emerald-200/20 bg-gradient-to-br from-emerald-800/70 via-emerald-950 to-neutral-950 p-6">
       <div className="flex shrink-0 items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">

@@ -319,7 +319,7 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
       exit={{ opacity: 0, y: 20 }}
       className="grid h-full w-full grid-cols-[0.9fr_1.1fr] gap-4"
     >
-      <section className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-950/50 to-slate-950 p-5">
+      <section className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-gradient-to-br from-neutral-950/50 to-neutral-950 p-5">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
           <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-white/65">
             <ShieldQuestion size={18} />

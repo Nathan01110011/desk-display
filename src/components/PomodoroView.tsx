@@ -48,7 +48,7 @@ export function PomodoroView({
       transition={{ duration: 0.22, ease: 'easeOut' }}
       className="w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"
     >
-      <section className="min-h-0 rounded-[2rem] border border-rose-200/15 bg-gradient-to-br from-rose-950/70 to-slate-950 p-5 flex flex-col">
+      <section className="min-h-0 rounded-[2rem] border border-rose-200/15 bg-gradient-to-br from-rose-950/70 to-neutral-950 p-5 flex flex-col">
         <div className="flex items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
           <span className="flex items-center gap-3"><Timer size={18} /> Pomodoro</span>
           <span>{isBreak ? 'Break' : 'Focus'}</span>
@@ -105,7 +105,7 @@ export function PomodoroView({
         </div>
       </section>
 
-      <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-slate-900/70 p-5 flex flex-col gap-3 overflow-y-auto">
+      <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-neutral-900/70 p-5 flex flex-col gap-3 overflow-y-auto">
         <div className="flex items-center gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
           <Timer size={20} /> Pomodoro
         </div>

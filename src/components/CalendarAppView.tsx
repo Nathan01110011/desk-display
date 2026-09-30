@@ -341,7 +341,7 @@ export function CalendarAppView({
 
   return (
     <div className="relative w-full h-full grid grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)] gap-4 items-stretch">
-      <section className="min-h-0 flex flex-col rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-slate-950 border border-rose-200/15 overflow-hidden">
+      <section className="min-h-0 flex flex-col rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-neutral-950 border border-rose-200/15 overflow-hidden">
         <div className="shrink-0 flex items-center justify-between gap-6 px-5 py-4 border-b border-white/10">
           <div className="min-w-0">
             <div className="flex items-center gap-3 text-white/65 font-bold uppercase tracking-[0.3em] text-xs">
@@ -433,7 +433,7 @@ export function CalendarAppView({
         </div>
       </section>
 
-      <aside className="min-h-0 rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-slate-950 border border-rose-200/15 p-8 flex flex-col">
+      <aside className="min-h-0 rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-neutral-950 border border-rose-200/15 p-8 flex flex-col">
         <div className="space-y-2">
           <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">Selected date</p>
           <h3 className="text-5xl font-black tracking-tight leading-none">{selectedDate.getDate()}</h3>

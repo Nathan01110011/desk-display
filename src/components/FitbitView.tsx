@@ -311,7 +311,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                   {weightGraph.points.map((point, index) => (
                     <g key={point.date}>
                       <title>{`${formatHealthDate(point.date)}: ${point.weightKg.toFixed(1)} kg`}</title>
-                      <circle cx={point.x} cy={point.y} r="3" fill="#020617" stroke="#99f6e4" strokeWidth="2" />
+                      <circle cx={point.x} cy={point.y} r="3" fill="#171717" stroke="#99f6e4" strokeWidth="2" />
                       {weightGraph.labelIndices.has(index) && (
                         <>
                           <text x={point.x} y={weightGraph.height - 24} textAnchor="middle" fill="rgba(255,255,255,0.42)" fontSize="12" fontWeight="900">
