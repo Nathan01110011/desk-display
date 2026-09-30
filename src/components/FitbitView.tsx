@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, CalendarRange, Droplets, RefreshCw } from 'lucide-react';
 import { FitbitStats } from '@/types';
+import { healthDateKey, weightRangeStart, weightRanges, WeightRange } from '@/lib/healthWeightRange';
 
 interface FitbitViewProps {
   stats: FitbitStats | null;
@@ -121,8 +122,15 @@ function ExerciseDaysTile({
 }
 
 export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
+  const [weightRange, setWeightRange] = useState<WeightRange>('3months');
+  const rangeLabel = weightRanges.find(range => range.value === weightRange)?.label;
   const weightGraph = useMemo(() => {
-    const history = [...(stats?.weightHistory || [])].sort((a, b) => a.date.localeCompare(b.date));
+    const today = new Date();
+    const startDate = healthDateKey(weightRangeStart(today, weightRange));
+    const endDate = healthDateKey(today);
+    const history = [...(stats?.weightHistory || [])]
+      .filter(point => point.date >= startDate && point.date <= endDate)
+      .sort((a, b) => a.date.localeCompare(b.date));
     const values = history.map(point => point.weightKg);
     const minValue = values.length ? Math.min(...values) : 0;
     const maxValue = values.length ? Math.max(...values) : 0;
@@ -139,8 +147,15 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
     const plotWidth = width - left - right;
     const plotHeight = height - top - bottom;
 
-    const points = history.map((point, index) => {
-      const x = history.length === 1 ? left + plotWidth : left + (plotWidth * index) / (history.length - 1);
+    const dateTime = (date: string) => {
+      const [year, month, day] = date.split('-').map(Number);
+      return Date.UTC(year, month - 1, day);
+    };
+    const firstTime = history.length ? dateTime(history[0].date) : 0;
+    const timeSpan = history.length > 1 ? dateTime(history[history.length - 1].date) - firstTime : 0;
+    const labelIndices = new Set(Array.from({ length: Math.min(5, history.length) }, (_, index) => Math.round(index * (history.length - 1) / Math.max(1, Math.min(5, history.length) - 1))));
+    const points = history.map(point => {
+      const x = timeSpan === 0 ? left + plotWidth : left + plotWidth * (dateTime(point.date) - firstTime) / timeSpan;
       const y = top + plotHeight - ((point.weightKg - chartMin) / chartRange) * plotHeight;
       return { ...point, x, y };
     });
@@ -153,6 +168,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
 
     return {
       history,
+      labelIndices,
       latest: history[history.length - 1],
       delta: history.length > 1 ? history[history.length - 1].weightKg - history[0].weightKg : 0,
       width,
@@ -166,7 +182,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
       area,
       labels,
     };
-  }, [stats]);
+  }, [stats, weightRange]);
 
   if (loading && !stats) {
     return (
@@ -188,7 +204,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
   }
 
   const stepProgress = stats.stepGoal ? Math.min(100, (stats.steps / stats.stepGoal) * 100) : null;
-  const latestWeight = weightGraph.latest?.weightKg;
+  const latestWeight = [...(stats.weightHistory || [])].sort((a, b) => b.date.localeCompare(a.date))[0]?.weightKg;
   const weightDelta = weightGraph.delta;
   const hasWeightHistory = weightGraph.points.length > 0;
   const exerciseHistory = stats.exerciseHistory || [];
@@ -277,7 +293,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               <div className="min-w-0">
                 <div className="flex items-center gap-3 text-teal-200/60">
                   <CalendarRange size={18} />
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/30">Previous fortnight</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/30">Last {rangeLabel}</p>
                 </div>
                 <p className="mt-2 text-xl font-black text-white/90">Weight trend</p>
               </div>
@@ -289,9 +305,23 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               </div>
             </div>
 
+            <fieldset className="mt-3 flex gap-2 shrink-0" aria-label="Weight history range">
+              {weightRanges.map(range => (
+                <button
+                  key={range.value}
+                  type="button"
+                  aria-pressed={weightRange === range.value}
+                  onClick={() => setWeightRange(range.value)}
+                  className={`min-h-10 flex-1 rounded-xl px-3 text-xs font-black transition-colors ${weightRange === range.value ? 'bg-teal-300/20 text-teal-100 border border-teal-300/40' : 'bg-white/5 text-white/45 border border-white/10 hover:bg-white/10'}`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </fieldset>
+
             <div className="relative mt-4 flex-1 min-h-0">
               {hasWeightHistory ? (
-                <svg viewBox={`0 0 ${weightGraph.width} ${weightGraph.height}`} className="h-full w-full overflow-visible" role="img" aria-label="Weight over the previous fortnight">
+                <svg viewBox={`0 0 ${weightGraph.width} ${weightGraph.height}`} className="h-full w-full overflow-visible" role="img" aria-label={`Weight over the last ${rangeLabel}`}>
                   <defs>
                     <linearGradient id="weightArea" x1="0" x2="0" y1="0" y2="1">
                       <stop offset="0%" stopColor="#5eead4" stopOpacity="0.24" />
@@ -314,7 +344,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                   {weightGraph.points.map((point, index) => (
                     <g key={point.date}>
                       <circle cx={point.x} cy={point.y} r="8" fill="#020617" stroke="#99f6e4" strokeWidth="5" />
-                      {(index === 0 || index === weightGraph.points.length - 1 || index % 4 === 0) && (
+                      {weightGraph.labelIndices.has(index) && (
                         <>
                           <text x={point.x} y={weightGraph.height - 24} textAnchor="middle" fill="rgba(255,255,255,0.42)" fontSize="16" fontWeight="900">
                             {formatWeekday(point.date)}
@@ -338,7 +368,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
 
           <div className="rounded-[2rem] bg-white/[0.04] border border-white/10 p-6">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Fortnight range</p>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Selected range</p>
               <p className="mt-2 text-lg font-black text-white/70">
                 {hasWeightHistory ? `${formatHealthDate(weightGraph.points[0].date)} to ${formatHealthDate(weightGraph.points[weightGraph.points.length - 1].date)}` : '--'}
               </p>
