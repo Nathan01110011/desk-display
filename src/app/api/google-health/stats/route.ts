@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { weightRangeStart } from '@/lib/healthWeightRange';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -443,6 +444,8 @@ export async function GET() {
     const end = addDays(start, 1);
     const weekStart = addDays(start, -6);
     const fortnightStart = addDays(start, -13);
+    const weightStartDate = weightRangeStart(new Date(start.year, start.month - 1, start.day), '3months');
+    const weightStart = { year: weightStartDate.getFullYear(), month: weightStartDate.getMonth() + 1, day: weightStartDate.getDate() };
 
     const [
       stepsSummary,
@@ -488,10 +491,10 @@ export async function GET() {
         logger.warn('Google Health: Blood oxygen unavailable', error);
         return 0;
       }),
-      fetchDailyRollupSeries(accessToken, 'weight', fortnightStart, end).then(points => (
+      fetchDailyRollupSeries(accessToken, 'weight', weightStart, end).then(points => (
         points
           .map(point => ({
-            date: formatDate(rollupDate(point, fortnightStart)),
+            date: formatDate(rollupDate(point, weightStart)),
             weightKg: Math.round((toNumber(point.weight?.weightGramsAvg) / 1000) * 100) / 100,
           }))
           .filter(point => point.weightKg > 0)
