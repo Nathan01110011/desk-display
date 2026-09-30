@@ -68,8 +68,8 @@ const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
 
 type FullscreenReturnPhase = 'idle' | 'app-exit' | 'sidebar-enter';
 
-function isFullscreenAppView(view: ViewState, weatherDetail: boolean) {
-  return view === 'calendar' || view === 'gallery' || view === 'fitbit' || (view === 'weather' && weatherDetail) || view === 'todo' || view === 'rule';
+function isFullscreenAppView(view: ViewState) {
+  return view === 'calendar' || view === 'gallery' || view === 'fitbit' || view === 'weather' || view === 'todo' || view === 'rule';
 }
 
 export default function Dashboard() {
@@ -301,7 +301,7 @@ export default function Dashboard() {
 
   const closeActiveView = () => {
     markActivity();
-    const wasFullscreen = isFullscreenAppView(activeView, weatherDetail) || (activeView === 'settings' && systemAdminOpen);
+    const wasFullscreen = isFullscreenAppView(activeView) || (activeView === 'settings' && systemAdminOpen);
     clearFullscreenReturnTimers();
 
     if (wasFullscreen) {
@@ -327,7 +327,7 @@ export default function Dashboard() {
 
   if (!mounted) return <main className="fixed inset-0 bg-black" />;
 
-  const isActiveFullscreenView = isFullscreenAppView(activeView, weatherDetail) || (activeView === 'settings' && systemAdminOpen);
+  const isActiveFullscreenView = isFullscreenAppView(activeView) || (activeView === 'settings' && systemAdminOpen);
   const isReturningFromFullscreen = fullscreenReturnPhase !== 'idle';
   const showSidebar = !isActiveFullscreenView && fullscreenReturnPhase !== 'app-exit';
   const showDashboardHome = activeView === 'dashboard' && !isReturningFromFullscreen;
