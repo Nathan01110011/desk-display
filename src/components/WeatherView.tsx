@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CloudSun, ChevronLeft, List, Sunrise, Sunset } from 'lucide-react';
-import { WeatherData } from '@/types';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowUpRight, Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudSun, MapPin, Moon, Snowflake, Sun, Sunrise, Sunset } from 'lucide-react';
+import type { WeatherData } from '@/types';
+import BackButton from './BackButton';
 
 interface WeatherViewProps {
   weather: WeatherData | null;
@@ -10,190 +11,82 @@ interface WeatherViewProps {
   onToggleExtended: (val: boolean) => void;
 }
 
+type Forecast = WeatherData['forecast'];
+
+function WeatherIcon({ code, className = '' }: { code: string; className?: string }) {
+  const kind = code.slice(0, 2);
+  const Icon = kind === '01' ? (code.endsWith('n') ? Moon : Sun)
+    : kind === '02' ? CloudSun : kind === '03' || kind === '04' ? Cloud
+    : kind === '09' ? CloudDrizzle : kind === '10' ? CloudRain
+    : kind === '11' ? CloudLightning : kind === '13' ? Snowflake
+    : kind === '50' ? CloudFog : CloudSun;
+  return <Icon aria-hidden="true" className={className} strokeWidth={1.5} />;
+}
+
+function TemperatureTimeline({ hours }: { hours: Forecast }) {
+  if (!hours.length) return <p className="p-5 text-white/70">Forecast unavailable.</p>;
+  const low = Math.min(...hours.map(hour => hour.temp));
+  const high = Math.max(...hours.map(hour => hour.temp));
+  const span = Math.max(high - low, 1);
+  return (
+    <div className="grid min-h-0 flex-1 gap-2" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}>
+      {hours.map((hour, index) => (
+        <div key={`${hour.date}-${hour.time}-${index}`} className="flex min-w-0 flex-col items-center justify-between gap-2 rounded-2xl bg-white/[0.04] px-2 py-3">
+          <div className="text-center"><p className="text-xs font-bold text-sky-100/65">{hour.date}</p><p className="mt-1 text-sm font-bold tabular-nums">{hour.time}</p></div>
+          <WeatherIcon code={hour.icon} className="size-7 shrink-0 text-sky-100" />
+          <div className="flex h-12 w-full items-end justify-center"><div className="w-1.5 rounded-full bg-gradient-to-t from-sky-500/35 to-sky-200" style={{ height: `${25 + (hour.temp - low) / span * 75}%` }} /></div>
+          <p className="text-2xl font-black tabular-nums">{hour.temp}°</p>
+          <p className="w-full truncate text-center text-xs font-medium text-sky-100/75" title={hour.condition}>{hour.condition}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherViewProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [topFade, setTopFade] = useState(0);
-  const [bottomFade, setBottomFade] = useState(40);
-  const [showExtended, setShowExtended] = useState(isExtended);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  if (!weather) return <div role="status" className="flex h-full w-full flex-col items-center justify-center gap-4 text-sky-100"><CloudSun className="size-16 animate-pulse" /><p className="text-xl font-bold">Loading weather…</p></div>;
 
-  const groupedForecast = useMemo(() => {
-    if (!weather) return {};
-    const groups: Record<string, typeof weather.forecast> = {};
-    weather.forecast.forEach(item => {
-      if (!groups[item.date]) groups[item.date] = [];
-      groups[item.date].push(item);
-    });
-    return groups;
-  }, [weather]);
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    const newTop = Math.min(scrollTop, 40);
-    const scrollBottom = scrollHeight - clientHeight - scrollTop;
-    const newBottom = Math.min(scrollBottom, 40);
-    setTopFade(newTop);
-    setBottomFade(newBottom);
-  };
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setShowExtended(isExtended);
-    }, isExtended ? 420 : 0);
-
-    return () => window.clearTimeout(timer);
-  }, [isExtended]);
-
-  useEffect(() => {
-    if (showExtended) {
-      setTimeout(handleScroll, 100);
-    }
-  }, [showExtended]);
-
-  if (!weather) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 opacity-20">
-        <CloudSun size={80} className="animate-pulse" />
-        <p className="text-xl font-bold uppercase tracking-widest mt-4">Loading Weather...</p>
-      </div>
-    );
+  const groups: Record<string, Forecast> = {};
+  for (const hour of weather.forecast) {
+    groups[hour.date] ??= [];
+    groups[hour.date].push(hour);
   }
-
-  const atAGlance = weather.forecast.slice(0, 4);
-
-  const maskStyle = {
-    WebkitMaskImage: `linear-gradient(to bottom, transparent 0%, black ${topFade}px, black calc(100% - ${bottomFade}px), transparent 100%)`,
-    maskImage: `linear-gradient(to bottom, transparent 0%, black ${topFade}px, black calc(100% - ${bottomFade}px), transparent 100%)`
-  };
+  const days = Object.entries(groups);
+  const selected = days.find(([date]) => date === selectedDate) ?? days[0];
+  const upcoming = weather.forecast.slice(0, 8);
+  const currentHours = days[0]?.[1] ?? [];
+  const range = currentHours.length ? { low: Math.min(...currentHours.map(hour => hour.temp)), high: Math.max(...currentHours.map(hour => hour.temp)) } : null;
+  const openDay = (date: string) => { setSelectedDate(date); onToggleExtended(true); };
+  const night = weather.icon.endsWith('n');
 
   return (
-    <motion.div
-      key="weather-view"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.22, ease: "easeOut" }}
-      className="w-full h-full flex flex-col items-center justify-center py-4 relative"
-    >
-      <AnimatePresence mode="wait">
-        {!showExtended ? (
-          <motion.div 
-            key="at-a-glance"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: isExtended ? 0 : 1, y: isExtended ? -12 : 0, scale: isExtended ? 0.98 : 1 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="w-full flex flex-col items-center"
-          >
-            <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs mb-4">
-              <CloudSun size={18} /> {weather.location}
-            </div>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex h-full min-h-0 w-full flex-col gap-4 text-white">
+      <header className="flex shrink-0 items-center justify-between gap-4">
+        <div><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-200"><MapPin size={16} />{weather.location}</p><h2 className="mt-1 text-3xl font-black tracking-tight">{isExtended ? 'Forecast explorer' : 'Weather'}</h2></div>
+        {isExtended ? <BackButton onClick={() => onToggleExtended(false)} aria-label="Back to weather overview" /> : <button type="button" onClick={() => { setSelectedDate(days[0]?.[0] ?? null); onToggleExtended(true); }} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 py-2 font-bold text-sky-100 active:bg-sky-200/20">Explore forecast <ArrowUpRight size={20} /></button>}
+      </header>
 
-            <div className="flex items-center gap-10 mb-8">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={`http://openweathermap.org/img/wn/${weather.icon}@4x.png`} 
-                alt={weather.condition}
-                className="w-36 h-36 drop-shadow-2xl"
-              />
-              <div className="flex flex-col">
-                <div className="text-[8rem] font-black tracking-tighter leading-none text-white flex">
-                  {weather.temp}<span className="text-[5rem] mt-2 text-white/20">°</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-bold text-white/40 uppercase tracking-widest">{weather.condition}</p>
-                  <div className="flex items-center gap-5 pt-2 border-t border-white/5">
-                    <div className="flex items-center gap-2 text-white/30">
-                      <Sunrise size={18} className="text-orange-400/60" />
-                      <span className="text-base font-bold tabular-nums">{weather.sunrise}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/30">
-                      <Sunset size={18} className="text-blue-400/60" />
-                      <span className="text-base font-bold tabular-nums">{weather.sunset}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {isExtended ? (
+        <section className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-sky-200/15 bg-gradient-to-br from-sky-950/80 to-slate-950 p-5">
+          <fieldset aria-label="Forecast day" className="flex shrink-0 flex-wrap gap-2">{days.map(([date, hours]) => <button key={date} type="button" onClick={() => setSelectedDate(date)} aria-pressed={selected?.[0] === date} className={`min-h-14 flex-1 rounded-2xl border px-3 py-2 text-left transition-colors ${selected?.[0] === date ? 'border-sky-200/40 bg-sky-200 text-slate-950' : 'border-white/10 bg-white/5 text-sky-100'}`}><span className="block text-sm font-black">{date}</span><span className="mt-1 block text-xs font-bold">{Math.max(...hours.map(hour => hour.temp))}° / {Math.min(...hours.map(hour => hour.temp))}°</span></button>)}</fieldset>
+          <div className="flex shrink-0 items-end justify-between gap-3"><h3 className="text-2xl font-black">{selected?.[0] ?? 'Forecast'}</h3><p className="text-xs font-medium text-sky-100/70">Three-hour intervals · °{weather.unit ?? 'C'}</p></div>
+          <TemperatureTimeline hours={selected?.[1] ?? []} />
+          <p className="shrink-0 text-xs text-sky-100/65">Highs and lows reflect the forecast intervals shown.</p>
+        </section>
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_minmax(0,0.85fr)] gap-4">
+          <section className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-3xl border border-sky-200/20 p-5 ${night ? 'bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950' : 'bg-gradient-to-br from-sky-800 via-sky-950 to-slate-950'}`}>
+            <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-sky-200/10 blur-3xl" />
+            <div className="flex min-h-0 flex-1 items-center justify-between gap-3"><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-100/75">At a glance</p><p className="mt-2 text-[clamp(3rem,8vw,7rem)] font-black leading-none tracking-tighter tabular-nums">{weather.temp}<span className="text-sky-100/70">°</span></p><p className="mt-2 text-xl font-bold text-sky-50">{weather.condition}</p></div><WeatherIcon code={weather.icon} className="size-24 shrink-0 text-sky-100 drop-shadow-lg" /></div>
+            <div className="mt-3 flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-sky-100/15 pt-3 text-sm font-bold text-sky-100"><span>°{weather.unit ?? 'C'}</span>{range && <span>H {range.high}° <span className="ml-2 text-sky-100/70">L {range.low}°</span></span>}{weather.sunrise && <span className="inline-flex items-center gap-2"><Sunrise size={17} />{weather.sunrise}</span>}{weather.sunset && <span className="inline-flex items-center gap-2"><Sunset size={17} />{weather.sunset}</span>}</div>
+          </section>
 
-            <div className="w-full max-w-4xl grid grid-cols-4 gap-4 pt-6 border-t border-white/5">
-              {atAGlance.map((item, i) => (
-                <div key={i} className="bg-white/5 rounded-2xl p-4 flex flex-col items-center gap-2 border border-white/5">
-                  <p className="text-base font-bold text-white/30 uppercase tracking-widest">{item.time}</p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={`http://openweathermap.org/img/wn/${item.icon}@2x.png`} 
-                    alt={item.condition}
-                    className="w-12 h-12"
-                  />
-                  <div className="text-2xl font-black">{item.temp}°</div>
-                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest truncate w-full text-center">
-                    {item.condition}
-                  </p>
-                </div>
-              ))}
-            </div>
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-900/70 p-4"><h3 className="mb-2 shrink-0 text-xs font-black uppercase tracking-[0.2em] text-sky-200">Coming days</h3><div className="grid min-h-0 flex-1 auto-rows-fr gap-1">{days.slice(0, 6).map(([date, hours]) => { const representative = hours[Math.floor(hours.length / 2)]; return <button key={date} type="button" onClick={() => openDay(date)} aria-label={`Explore ${date} forecast`} className="flex min-h-0 items-center gap-3 rounded-xl px-3 text-left hover:bg-white/5 active:bg-white/10"><span className="w-20 shrink-0 text-sm font-bold">{date}</span><WeatherIcon code={representative.icon} className="size-6 shrink-0 text-sky-200" /><span className="min-w-0 flex-1 truncate text-xs text-sky-100/75">{representative.condition}</span><span className="shrink-0 text-lg font-black tabular-nums">{Math.max(...hours.map(hour => hour.temp))}° <span className="ml-2 text-white/60">{Math.min(...hours.map(hour => hour.temp))}°</span></span><ArrowUpRight size={16} className="shrink-0 text-sky-200/70" /></button>; })}{!days.length && <p className="text-white/70">Forecast unavailable.</p>}</div></section>
 
-            <button 
-              onPointerDown={() => onToggleExtended(true)}
-              className="mt-8 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/40 text-sm font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-white/10 active:scale-95 transition-all"
-            >
-              <List size={18} /> View 5-Day Forecast
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div 
-            key="extended"
-            initial={{ opacity: 0, y: 12, scale: 0.99 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.99 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="w-full h-full flex flex-col p-4"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <button 
-                onPointerDown={() => onToggleExtended(false)}
-                className="p-4 rounded-2xl bg-white/5 text-white/60 flex items-center gap-3 font-bold active:scale-90 transition-all"
-              >
-                <ChevronLeft size={24} /> Back
-              </button>
-              <div className="text-white/30 font-bold uppercase tracking-[0.3em] text-sm">5-Day Forecast ({weather.location})</div>
-              <div />
-            </div>
-
-            <div 
-              ref={scrollRef}
-              onScroll={handleScroll}
-              className="flex-1 overflow-y-auto pr-4 scrollbar-hide space-y-6"
-              style={maskStyle}
-            >
-              {Object.entries(groupedForecast).map(([date, hours]) => (
-                <div key={date} className="bg-white/5 rounded-[2.5rem] border border-white/5 p-6 space-y-4">
-                  <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em] px-2">{date}</h3>
-                  <div className="grid grid-cols-8 gap-2">
-                    {hours.map((item, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-white/[0.02] transition-colors">
-                        <span className="text-[10px] font-bold text-white/30 uppercase">{item.time}</span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={`http://openweathermap.org/img/wn/${item.icon}@2x.png`} 
-                          alt={item.condition}
-                          className="w-12 h-12"
-                        />
-                        <span className="text-2xl font-black">{item.temp}°</span>
-                        <span className="text-[12px] font-black text-white/60 uppercase truncate w-full text-center leading-none mt-1">{item.condition}</span>
-                      </div>
-                    ))}
-                    {Array.from({ length: 8 - hours.length }).map((_, i) => (
-                      <div key={`empty-${i}`} className="w-full" />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <section className="col-span-2 flex min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/80 p-4"><div className="flex shrink-0 items-center justify-between"><h3 className="text-xs font-black uppercase tracking-[0.2em] text-sky-200">Next 24 hours</h3><span className="text-xs text-sky-100/65">Three-hour forecast</span></div><TemperatureTimeline hours={upcoming} /></section>
+        </div>
+      )}
     </motion.div>
   );
 }
