@@ -1,0 +1,579 @@
+import React, { useState } from 'react';
+import { motion, Reorder } from 'framer-motion';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3 } from 'lucide-react';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
+import { OnScreenKeyboard } from './OnScreenKeyboard';
+import { ConsoleLogViewer } from './ConsoleLogs';
+
+const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; label: string }[] = [
+  { value: 15, label: '15s' },
+  { value: 30, label: '30s' },
+  { value: 60, label: '1m' },
+  { value: 120, label: '2m' },
+];
+
+interface SettingsViewProps {
+  onClose: () => void;
+  onSystemAdminChange?: (open: boolean) => void;
+  appConfig: AppConfig;
+  onUpdateAppConfig: (config: AppConfig) => void;
+  worldClocks: AdditionalClock[];
+  onUpdateClocks: (clocks: AdditionalClock[]) => void;
+  ruleLock: RuleLockSettings;
+  onUpdateRuleLock: (settings: RuleLockSettings) => void;
+  idleClockTimeoutMinutes: number;
+  onUpdateIdleClockTimeout: (timeoutMinutes: number) => void;
+  screensaverType: ScreensaverType;
+  onUpdateScreensaverType: (type: ScreensaverType) => void;
+  screensaverPhotoSource: ScreensaverPhotoSource;
+  onUpdateScreensaverPhotoSource: (source: ScreensaverPhotoSource) => void;
+  screensaverPhotoSlideDuration: ScreensaverPhotoSlideDuration;
+  onUpdateScreensaverPhotoSlideDuration: (duration: ScreensaverPhotoSlideDuration) => void;
+  disableScreensaverWhileSpotifyPlaying: boolean;
+  onDisableScreensaverWhileSpotifyPlaying: (disabled: boolean) => void;
+}
+
+export function SettingsView({ 
+  onSystemAdminChange,
+  appConfig,
+  onUpdateAppConfig,
+  worldClocks,
+  onUpdateClocks,
+  ruleLock,
+  onUpdateRuleLock,
+  idleClockTimeoutMinutes,
+  onUpdateIdleClockTimeout,
+  screensaverType,
+  onUpdateScreensaverType,
+  screensaverPhotoSource,
+  onUpdateScreensaverPhotoSource,
+  screensaverPhotoSlideDuration,
+  onUpdateScreensaverPhotoSlideDuration,
+  disableScreensaverWhileSpotifyPlaying,
+  onDisableScreensaverWhileSpotifyPlaying,
+}: SettingsViewProps) {
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [showConsoleLogs, setShowConsoleLogs] = useState(false);
+  const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
+  const [kbValue, setKbValue] = useState('');
+  const [currentUnit, setCurrentUnit] = useState(localStorage.getItem('weatherUnit') || 'C');
+
+  const allAvailableApps = ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'] as const;
+  type AvailableApp = typeof allAvailableApps[number];
+  const appLabels: Record<AvailableApp, string> = {
+    calendar: 'Calendar',
+    gallery: 'Gallery',
+    pomodoro: 'Pomodoro',
+    sports: 'Sports',
+    weather: 'Weather',
+    fitbit: 'Health',
+    home: 'Smart Home',
+    timer: 'Timer',
+    todo: 'TODO',
+    rule: 'Rule',
+  };
+  const savedOrder = appConfig.appOrder || allAvailableApps;
+  const appOrder = [...new Set([...savedOrder, ...allAvailableApps])].filter((app): app is AvailableApp => allAvailableApps.includes(app as AvailableApp));
+
+  React.useEffect(() => {
+    if (!showKeyboard && kbMode === 'weather') {
+      queueMicrotask(() => {
+        setKbValue(localStorage.getItem('weatherLocation') || '');
+      });
+    }
+  }, [showKeyboard, kbMode]);
+
+  const handleExitApp = async () => {
+    try {
+      await fetch('/api/system/exit', { method: 'POST' });
+    } catch (e) {
+      console.error('Failed to exit app:', e);
+    }
+  };
+
+  const toggleApp = (app: keyof AppConfig) => {
+    if (app === 'appOrder') return;
+    onUpdateAppConfig({
+      ...appConfig,
+      [app]: !appConfig[app]
+    });
+  };
+
+  const handleUnitToggle = async (unit: 'C' | 'F') => {
+    setCurrentUnit(unit);
+    localStorage.setItem('weatherUnit', unit);
+    await fetch('/api/system/settings', { method: 'POST', body: JSON.stringify({ weatherUnit: unit }) });
+    // Note: No reload here, the next weather fetch will naturally pick up the new unit
+  };
+
+  const handleAddClock = async (city: string) => {
+    try {
+      const res = await fetch(`/api/system/resolve-city?city=${encodeURIComponent(city)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const newClock: AdditionalClock = {
+          id: Math.random().toString(36).substr(2, 9),
+          label: data.city,
+          city: data.city,
+          offset: data.offset,
+          timeZone: data.timeZone
+        };
+        const updatedClocks = [...worldClocks, newClock].slice(0, 5);
+        onUpdateClocks(updatedClocks);
+        await fetch('/api/system/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ worldClocks: updatedClocks })
+        });
+      }
+    } catch (e) {
+      console.error("Failed to add clock", e);
+    }
+  };
+
+  const handleRemoveClock = async (id: string) => {
+    const updatedClocks = worldClocks.filter(c => c.id !== id);
+    onUpdateClocks(updatedClocks);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ worldClocks: updatedClocks })
+    });
+  };
+
+  const updateRuleLock = async (settings: RuleLockSettings) => {
+    onUpdateRuleLock(settings);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ruleLockOnOpen: settings.lockOnOpen,
+        ruleLockOnInactivity: settings.lockOnInactivity,
+        ruleLockTimeoutMinutes: settings.timeoutMinutes
+      })
+    });
+  };
+
+  const updateRuleLockTime = (hours: number, minutes: number) => {
+    const timeoutMinutes = Math.max(1, Math.min(24 * 60, (hours * 60) + minutes));
+    updateRuleLock({ ...ruleLock, timeoutMinutes });
+  };
+
+  const updateIdleClockTime = async (hours: number, minutes: number) => {
+    const timeoutMinutes = Math.max(1, Math.min(24 * 60, (hours * 60) + minutes));
+    onUpdateIdleClockTimeout(timeoutMinutes);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idleClockTimeoutMinutes: timeoutMinutes })
+    });
+  };
+
+  const updateScreensaverType = async (type: ScreensaverType) => {
+    onUpdateScreensaverType(type);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ screensaverType: type })
+    });
+  };
+
+  const updateScreensaverPhotoSource = async (source: ScreensaverPhotoSource) => {
+    onUpdateScreensaverPhotoSource(source);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ screensaverPhotoSource: source })
+    });
+  };
+
+  const updateScreensaverPhotoSlideDuration = async (duration: ScreensaverPhotoSlideDuration) => {
+    onUpdateScreensaverPhotoSlideDuration(duration);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ screensaverPhotoSlideDurationSeconds: duration })
+    });
+  };
+
+  const updateDisableScreensaverWhileSpotifyPlaying = async (disabled: boolean) => {
+    onDisableScreensaverWhileSpotifyPlaying(disabled);
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disableScreensaverWhileSpotifyPlaying: disabled })
+    });
+  };
+
+  const ruleLockHours = Math.floor(ruleLock.timeoutMinutes / 60);
+  const ruleLockMinutes = ruleLock.timeoutMinutes % 60;
+  const idleClockHours = Math.floor(idleClockTimeoutMinutes / 60);
+  const idleClockMinutes = idleClockTimeoutMinutes % 60;
+
+  if (showConsoleLogs) {
+    return <ConsoleLogViewer onBack={() => { setShowConsoleLogs(false); onSystemAdminChange?.(false); }} />;
+  }
+
+  return (
+    <motion.div
+      key="settings-view"
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+      className="w-full max-w-6xl mx-auto flex flex-col space-y-6 py-8 h-full overflow-y-auto pr-4 scrollbar-hide"
+    >
+      <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs">
+        <Settings size={18} /> Settings
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white/80 flex items-center gap-3"><Globe size={20} /> World Clocks</h3>
+              <span className="text-xs font-bold text-white/20 uppercase">{worldClocks.length}/5</span>
+            </div>
+            
+            <Reorder.Group 
+              axis="y" 
+              values={worldClocks} 
+              onReorder={(newClocks) => {
+                onUpdateClocks(newClocks);
+                fetch('/api/system/settings', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ worldClocks: newClocks })
+                });
+              }}
+              className="space-y-3"
+            >
+              {worldClocks.map(clock => (
+                <Reorder.Item key={clock.id} value={clock} className="flex items-center gap-3 group">
+                  <div className="cursor-grab active:cursor-grabbing p-2 text-white/10 group-active:text-blue-400 transition-colors">
+                    <GripVertical size={20} />
+                  </div>
+                  <div className="flex-1 flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <span className="text-lg font-bold text-white/60">{clock.label}</span>
+                    <button onPointerDown={() => handleRemoveClock(clock.id)} className="text-red-500/40 hover:text-red-500 active:scale-90 p-2 transition-all"><Trash2 size={20} /></button>
+                  </div>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+
+            {worldClocks.length < 5 && (
+              <button 
+                onPointerDown={() => { setKbMode('clock'); setKbValue(''); setShowKeyboard(true); }}
+                className="w-full py-3 rounded-xl border border-dashed border-white/10 text-white/30 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
+              >
+                + Add Clock
+              </button>
+            )}
+          </div>
+
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white/80">Screensaver</h3>
+                <p className="text-white/30 text-xs">Shown full-screen after inactivity</p>
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest text-white/25">
+                {idleClockTimeoutMinutes}m
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { type: 'clock' as const, label: 'Big Clock', icon: Clock3 },
+                { type: 'photos' as const, label: 'Photos', icon: Images },
+              ]).map(option => {
+                const Icon = option.icon;
+                const selected = screensaverType === option.type;
+                return (
+                  <button
+                    key={option.type}
+                    onPointerDown={() => updateScreensaverType(option.type)}
+                    className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
+                      selected ? 'border-white/40 bg-white text-black' : 'border-white/5 bg-white/[0.03] text-white/45'
+                    }`}
+                  >
+                    <Icon size={22} />
+                    <span className="font-black">{option.label}</span>
+                    {selected && <Check size={18} className="ml-auto" strokeWidth={4} />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {screensaverType === 'photos' && (
+              <div className="space-y-2 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Photos from Gallery</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([{ value: 'all' as const, label: 'All photos' }, { value: 'favorites' as const, label: 'Favourites' }]).map(option => (
+                    <button key={option.value} onPointerDown={() => updateScreensaverPhotoSource(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSource === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/40'}`}>{option.label}</button>
+                  ))}
+                </div>
+                <p className="pt-2 text-[10px] font-black uppercase tracking-widest text-white/35">Time per slide</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {PHOTO_SLIDE_DURATION_OPTIONS.map(option => (
+                    <button
+                      key={option.value}
+                      onPointerDown={() => updateScreensaverPhotoSlideDuration(option.value)}
+                      className={`rounded-xl border px-2 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSlideDuration === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/40'}`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-[10px] text-white/20">Manage and upload photos in the Gallery app.</p>
+              </div>
+            )}
+
+            <button
+              onPointerDown={() => void updateDisableScreensaverWhileSpotifyPlaying(!disableScreensaverWhileSpotifyPlaying)}
+              className="flex w-full items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-left active:scale-[0.98] transition-all"
+            >
+              <div>
+                <p className="text-sm font-black text-white/65">Stay awake while Spotify is playing</p>
+                <p className="mt-1 text-[10px] text-white/25">Prevents the screensaver while active playback is detected.</p>
+              </div>
+              <span className={`ml-4 flex size-8 shrink-0 items-center justify-center rounded-xl border ${disableScreensaverWhileSpotifyPlaying ? 'border-white bg-white text-black' : 'border-white/20 text-transparent'}`}>
+                <Check size={18} strokeWidth={4} />
+              </span>
+            </button>
+
+            <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Inactivity Timeout</p>
+              <div className="space-y-2">
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                  <button
+                    onPointerDown={() => updateIdleClockTime(Math.max(0, idleClockHours - 1), idleClockMinutes)}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Decrease clock timeout hours"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-2xl font-black tabular-nums leading-none">{idleClockHours}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Hours</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateIdleClockTime(Math.min(24, idleClockHours + 1), idleClockMinutes)}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Increase clock timeout hours"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                  <button
+                    onPointerDown={() => updateIdleClockTime(idleClockHours, Math.max(0, idleClockMinutes - 5))}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Decrease clock timeout minutes"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-2xl font-black tabular-nums leading-none">{idleClockMinutes}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Minutes</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateIdleClockTime(idleClockHours, Math.min(55, idleClockMinutes + 5))}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Increase clock timeout minutes"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-white/80">System</h3>
+              <p className="text-white/30 text-xs">Diagnostics and kiosk controls</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button onPointerDown={() => { setShowConsoleLogs(true); onSystemAdminChange?.(true); }} className="px-5 py-3 rounded-xl bg-white/5 text-white/60 border border-white/10 font-bold text-sm active:scale-95 transition-all">System Admin</button>
+              <button onPointerDown={handleExitApp} className="px-5 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold text-sm active:scale-95 transition-all">Exit Kiosk</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white/80">Rule Lock</h3>
+                <p className="text-white/30 text-xs">Password gate on open or inactivity</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onPointerDown={() => updateRuleLock({ ...ruleLock, lockOnOpen: !ruleLock.lockOnOpen })}
+                  className="flex items-center justify-between rounded-2xl bg-white/[0.03] border border-white/5 p-4 active:scale-[0.98] transition-all"
+                >
+                  <span className="text-sm font-black uppercase tracking-widest text-white/50">On Open</span>
+                  <span className={`size-8 rounded-xl border flex items-center justify-center ${
+                    ruleLock.lockOnOpen ? 'bg-white text-black border-white' : 'border-white/20'
+                  }`}>
+                    {ruleLock.lockOnOpen && <Check size={18} strokeWidth={4} />}
+                  </span>
+                </button>
+
+                <button
+                  onPointerDown={() => updateRuleLock({ ...ruleLock, lockOnInactivity: !ruleLock.lockOnInactivity })}
+                  className="flex items-center justify-between rounded-2xl bg-white/[0.03] border border-white/5 p-4 active:scale-[0.98] transition-all"
+                >
+                  <span className="text-sm font-black uppercase tracking-widest text-white/50">Idle Lock</span>
+                  <span className={`size-8 rounded-xl border flex items-center justify-center ${
+                    ruleLock.lockOnInactivity ? 'bg-white text-black border-white' : 'border-white/20'
+                  }`}>
+                    {ruleLock.lockOnInactivity && <Check size={18} strokeWidth={4} />}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Lock Timeout</p>
+              <div className="space-y-2">
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                  <button
+                    onPointerDown={() => updateRuleLockTime(Math.max(0, ruleLockHours - 1), ruleLockMinutes)}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Decrease hours"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-2xl font-black tabular-nums leading-none">{ruleLockHours}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Hours</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateRuleLockTime(Math.min(24, ruleLockHours + 1), ruleLockMinutes)}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Increase hours"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                  <button
+                    onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.max(0, ruleLockMinutes - 5))}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Decrease minutes"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <div className="text-center">
+                    <div className="text-2xl font-black tabular-nums leading-none">{ruleLockMinutes}</div>
+                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Minutes</div>
+                  </div>
+                  <button
+                    onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.min(55, ruleLockMinutes + 5))}
+                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    aria-label="Increase minutes"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+            <h3 className="text-lg font-bold text-white/80">Dashboard Apps</h3>
+            
+            <Reorder.Group 
+              axis="y" 
+              values={appOrder} 
+              onReorder={(newOrder) => onUpdateAppConfig({ ...appConfig, appOrder: newOrder })}
+              className="space-y-3"
+            >
+              {appOrder.map((app) => (
+                <Reorder.Item key={app} value={app} className="flex items-center gap-3 group">
+                  <div className="cursor-grab active:cursor-grabbing p-3 text-white/10 group-active:text-blue-400 transition-colors">
+                    <GripVertical size={24} />
+                  </div>
+                  <button
+                    onPointerDown={() => toggleApp(app)}
+                    className="flex-1 flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/5 active:scale-[0.98] transition-all"
+                  >
+                    <span className="text-lg font-bold text-white/70">{appLabels[app]}</span>
+                    {appConfig[app as keyof AppConfig] ? (
+                      <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-black">
+                        <Check size={18} strokeWidth={4} />
+                      </div>
+                    ) : (
+                      <div className="w-7 h-7 rounded-lg border-2 border-white/20" />
+                    )}
+                  </button>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+            
+            {appConfig.weather && (
+              <div className="pt-4 border-t border-white/5 space-y-4">
+                <div className="space-y-2">
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Weather Location</p>
+                  <div className="flex gap-2">
+                    <div 
+                      onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-lg min-h-[3rem] flex items-center overflow-hidden truncate"
+                    >
+                      {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-base">Auto-locate</span>}
+                    </div>
+                    <button 
+                      onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
+                      className="p-3 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
+                    >
+                      <Keyboard size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Temperature Unit</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onPointerDown={() => handleUnitToggle('C')}
+                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'C' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                    >
+                      Celsius (°C)
+                    </button>
+                    <button 
+                      onPointerDown={() => handleUnitToggle('F')}
+                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'F' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                    >
+                      Fahrenheit (°F)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showKeyboard && (
+        <OnScreenKeyboard 
+          value={kbValue}
+          onChange={setKbValue}
+          onClose={() => setShowKeyboard(false)}
+          onSubmit={async () => {
+            if (kbMode === 'weather') {
+              localStorage.setItem('weatherLocation', kbValue);
+              await fetch('/api/system/settings', { method: 'POST', body: JSON.stringify({ weatherLocation: kbValue }) });
+              setShowKeyboard(false);
+              window.location.reload();
+            } else {
+              handleAddClock(kbValue);
+              setShowKeyboard(false);
+            }
+          }}
+        />
+      )}
+    </motion.div>
+  );
+}
