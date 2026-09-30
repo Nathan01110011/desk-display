@@ -79,3 +79,15 @@
     scrollbar-width: none;
   }
 }
+
+@layer base {
+  button:not(:disabled), select, input[type="range"] { touch-action: manipulation; }
+  button:focus-visible, select:focus-visible, input:focus-visible {
+    outline: 2px solid #bae6fd;
+    outline-offset: 3px;
+  }
+  button:disabled { cursor: default; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms; transition-duration: 0.01ms; }
+}

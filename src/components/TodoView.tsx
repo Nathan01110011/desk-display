@@ -17,7 +17,7 @@ export function TodoView() {
   const [kbValue, setKbValue] = useState('');
   const [configError, setConfigError] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  
+
   // Track the active input ourselves so it's not lost when clicking the dashboard button
   const lastActiveRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
@@ -50,18 +50,18 @@ export function TodoView() {
   const handleKeyboardSubmit = () => {
     try {
       const win = iframeRef.current?.contentWindow as IframeWindow | null | undefined;
-      
+
       // Prefer our internally tracked active element, fallback to the document's active element
       const activeEl = lastActiveRef.current || (iframeRef.current?.contentDocument?.activeElement as HTMLInputElement | HTMLTextAreaElement);
-      
+
       if (!win) {
         console.error("❌ No DOM access to iframe. Proxy failed or cross-origin blocked.");
         return;
       }
-      
+
       if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
         console.log("🚀 DIRECT DOM INJECTION:", kbValue);
-        
+
         // Grab the native setter from the iframe's window context to bypass React's proxy
         const setter = Object.getOwnPropertyDescriptor(
           activeEl.tagName === 'TEXTAREA' ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype,
@@ -77,7 +77,7 @@ export function TodoView() {
         // Trigger React's synthetic events inside the iframe
         activeEl.dispatchEvent(new win.Event('input', { bubbles: true }));
         activeEl.dispatchEvent(new win.Event('change', { bubbles: true }));
-        
+
         // Simulate pressing the Enter key (for inputs that listen to keydown)
         activeEl.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
         activeEl.dispatchEvent(new win.KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
@@ -97,23 +97,23 @@ export function TodoView() {
     } catch (e) {
       console.error("❌ Critical DOM Injection Error:", e);
     }
-    
+
     setShowKeyboard(false);
-    setKbValue(''); 
+    setKbValue('');
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-black/20 rounded-[3rem] overflow-hidden border border-white/5 relative">
+    <div className="w-full h-full flex flex-col bg-slate-950 rounded-3xl overflow-hidden border border-sky-200/15 relative">
       {loading && !configError && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md">
           <Loader2 className="animate-spin text-blue-500 mb-4" size={64} />
-          <p className="text-xl font-bold text-white/40 uppercase tracking-widest">Loading Tracker...</p>
+          <p className="text-xl font-bold text-white/75 uppercase tracking-widest">Loading Tracker...</p>
         </div>
       )}
 
       {/* Configuration Error UI */}
       {configError && (
-        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 p-12 text-center gap-6 rounded-[3rem]">
+        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 p-12 text-center gap-6 rounded-3xl">
           <AlertCircle size={80} className="text-red-500" />
           <h2 className="text-4xl font-bold text-white">TODO App Not Configured</h2>
           <p className="text-xl text-white/60 max-w-2xl leading-relaxed">
@@ -121,34 +121,21 @@ export function TodoView() {
           </p>
         </div>
       )}
-      
+
+      {!loading && !configError && <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-sky-950/40 px-4 py-3"><h2 className="text-lg font-black">Your tracker</h2><button type="button" onClick={() => setShowKeyboard(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 text-sm font-bold text-sky-100"><Keyboard size={20} /> Keyboard</button></header>}
       {!configError && (
-        <iframe 
+        <iframe
           ref={iframeRef}
           src="/todo-proxy"
           title="TODO tracker"
-          className="w-full h-full border-none"
+          className="w-full min-h-0 flex-1 border-none"
           onLoad={handleIframeLoad}
           allow="geolocation"
         />
       )}
 
-      {/* Manual Keyboard Trigger */}
-      {!loading && !configError && !showKeyboard && (
-        <button
-          onPointerDown={(e) => {
-            e.preventDefault(); 
-            setShowKeyboard(true);
-          }}
-          className="absolute bottom-8 right-8 z-[60] p-6 rounded-2xl bg-blue-600 text-white shadow-2xl active:scale-95 transition-all flex items-center gap-3 hover:bg-blue-500 border border-white/20"
-        >
-          <Keyboard size={32} />
-          <span className="text-lg font-bold uppercase tracking-widest">Open Keyboard</span>
-        </button>
-      )}
-
       {showKeyboard && (
-        <OnScreenKeyboard 
+        <OnScreenKeyboard
           value={kbValue}
           onChange={setKbValue}
           onClose={() => setShowKeyboard(false)}

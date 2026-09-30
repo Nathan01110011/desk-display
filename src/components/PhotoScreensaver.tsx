@@ -266,16 +266,16 @@ export function PhotoScreensaver({ time, date, source, durationSeconds }: { time
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
           </motion.div>
         ) : (
-          <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col items-center justify-center gap-5 text-white/25">
+          <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col items-center justify-center gap-5 text-white/75">
             <Images size={72} strokeWidth={1.25} />
             <p className="text-xl font-bold">{source === 'favorites' ? 'Mark some favourites in Gallery' : 'Add photos in Gallery'}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="absolute bottom-8 left-8 z-30 bg-black/65 px-7 py-5 shadow-2xl backdrop-blur-sm">
+      <div className="absolute bottom-8 left-8 z-30 rounded-2xl border border-white/15 bg-black/65 px-5 py-4 shadow-2xl backdrop-blur-sm">
         <p className="text-5xl font-black leading-none tracking-tight tabular-nums text-white">{time}</p>
-        <p className="mt-2 text-xs font-black uppercase tracking-[0.24em] text-white/55">{date}</p>
+        <p className="mt-2 text-xs font-black uppercase tracking-[0.24em] text-white/80">{date}</p>
       </div>
       {photos.length > 1 && (
         <div className="absolute bottom-0 left-0 right-0 z-30 h-1 bg-white/5">

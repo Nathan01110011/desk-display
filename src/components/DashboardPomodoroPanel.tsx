@@ -63,21 +63,21 @@ export function DashboardPomodoroPanel({
               <div className="mt-1 text-2xl font-black tracking-tighter tabular-nums leading-none">
                 {formatPomoTime(timeLeft)}
               </div>
-              <div className="mt-1 text-[8px] font-black uppercase tracking-[0.28em] text-white/35">
+              <div className="mt-1 text-[8px] font-black uppercase tracking-[0.28em] text-white/75">
                 {isBreak ? 'Break' : 'Focus'}
               </div>
             </div>
           </button>
 
           <div className="min-w-0 flex-1 overflow-hidden space-y-2">
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-white/65">
               <Timer size={16} />
               Pomodoro
             </div>
             <h3 className="mt-2 text-xl font-black tracking-tight leading-none truncate">
               {active ? 'In progress' : timeLeft === 0 ? 'Complete' : 'Paused'}
             </h3>
-            <p className="mt-1 text-xs font-bold text-white/35 truncate">
+            <p className="mt-1 text-xs font-bold text-white/75 truncate">
               {isBreak ? 'Break timer' : 'Focus timer'} · {Math.round((1 - progress) * 100)}%
             </p>
 
@@ -101,7 +101,7 @@ export function DashboardPomodoroPanel({
         </div>
       ) : (
         <div className="relative w-full h-full min-w-0 flex flex-col items-center justify-center pt-8 pb-2">
-          <div className="absolute left-1 top-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-white/30">
+          <div className="absolute left-1 top-1 flex items-center gap-2 text-xs font-black uppercase tracking-[0.24em] text-white/65">
             <Timer size={15} />
             Pomodoro
           </div>
@@ -127,7 +127,7 @@ export function DashboardPomodoroPanel({
               <div className="mt-1 text-[clamp(1.9rem,3.4vw,2.6rem)] font-black tracking-tighter tabular-nums leading-none">
                 {formatPomoTime(timeLeft)}
               </div>
-              <div className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/35">
+              <div className="mt-2 text-xs font-black uppercase tracking-[0.28em] text-white/75">
                 {isBreak ? 'Break' : 'Focus'}
               </div>
             </div>
@@ -138,7 +138,7 @@ export function DashboardPomodoroPanel({
               <h3 className="text-[clamp(1.45rem,2.4vw,2rem)] font-black tracking-tight leading-none">
                 {active ? 'In progress' : timeLeft === 0 ? 'Complete' : 'Paused'}
               </h3>
-              <p className="mt-1 text-sm font-bold text-white/35">
+              <p className="mt-1 text-sm font-bold text-white/75">
                 {isBreak ? 'Break timer' : 'Focus timer'} · {Math.round((1 - progress) * 100)}%
               </p>
             </div>

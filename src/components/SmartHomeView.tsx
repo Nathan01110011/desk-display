@@ -61,7 +61,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
 
   if (loading && devices.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-6 opacity-20">
+      <div className="flex flex-col items-center gap-6 opacity-75">
         <Home size={80} className="animate-pulse" />
         <p className="text-xl font-bold uppercase tracking-widest">Scanning Network...</p>
       </div>
@@ -69,7 +69,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center py-4 relative">
+    <div className="w-full h-full min-h-0 flex flex-col relative">
       <style jsx global>{`
         input[type='range']::-webkit-slider-thumb {
           -webkit-appearance: none;
@@ -89,22 +89,23 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
           <motion.div
             key="grid"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="w-full flex flex-col items-center gap-8"
+            className="w-full h-full min-h-0 flex flex-col gap-4"
           >
-            <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm mb-4">
+            <div className="flex items-center gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm mb-0">
               <Home size={20} /> Smart Home
             </div>
 
-            <div className="grid grid-cols-3 gap-8 w-full px-8">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 w-full min-h-0 overflow-y-auto overscroll-contain">
+              {!devices.length && <p className="p-6 text-white/75">No devices found. Check that your lights are connected to the same network.</p>}
               {devices.map((device) => (
                 <button
                   key={device.id}
                   onPointerDown={() => setSelectedDeviceId(device.id)}
                   className={`
-                    relative flex flex-col items-center justify-center gap-6 p-8 rounded-[3rem] border transition-all active:scale-95 aspect-square overflow-hidden
-                    ${device.isOn 
-                      ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' 
-                      : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'}
+                    relative flex min-h-44 flex-col items-start justify-between gap-4 p-5 rounded-3xl border transition-all active:scale-95 overflow-hidden
+                    ${device.isOn
+                      ? 'bg-gradient-to-br from-amber-900/60 to-slate-950 border-amber-200/30 text-amber-100'
+                      : 'bg-slate-900/70 border-white/15 text-white/75 hover:bg-white/10'}
                   `}
                 >
                   {device.isOn && (
@@ -112,17 +113,17 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
                   )}
                   <div className="relative z-10">
                     {device.loading ? (
-                      <Loader2 size={64} className="animate-spin" />
+                      <Loader2 size={36} className="animate-spin" />
                     ) : (
-                      <Lightbulb size={64} className={device.isOn ? 'fill-yellow-400/20 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]' : ''} />
+                      <Lightbulb size={36} className={device.isOn ? 'fill-yellow-400/20 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]' : ''} />
                     )}
                   </div>
-                  <div className="relative z-10 flex flex-col items-center gap-1 text-center">
+                  <div className="relative z-10 flex flex-col items-start gap-1 text-left">
                     <span className="text-2xl font-bold tracking-tight">{device.name}</span>
                     <span className={`text-sm font-black uppercase tracking-widest ${
-                      device.isOffline ? 'text-red-500/50' : (device.isOn ? `${device.brightness || 100}%` : 'OFF')}
+                      device.isOffline ? 'text-rose-200' : 'text-white/75'}
                     `}>
-                      {device.isOffline ? 'OFFLINE' : (device.isOn ? `${device.brightness || 100}%` : 'OFF')}
+                      {device.isOffline ? 'OFFLINE' : (device.isOn ? `${device.brightness ?? 100}%` : 'OFF')}
                     </span>
                   </div>
                 </button>
@@ -133,10 +134,10 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
           <motion.div
             key="detail"
             initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}
-            className="w-full h-full max-w-6xl flex flex-col gap-6 px-4"
+            className="w-full h-full min-h-0 flex flex-col gap-4"
           >
             <div className="flex items-center justify-between">
-              <button 
+              <button
                 onPointerDown={() => setSelectedDeviceId(null)}
                 className="p-3 rounded-xl bg-white/5 text-white/60 flex items-center gap-3 font-bold active:scale-90 transition-all"
               >
@@ -149,85 +150,85 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
               <div className="w-24" />
             </div>
 
-            <div className="grid grid-cols-2 gap-8 flex-1 overflow-hidden">
-              <div className="space-y-6 bg-white/5 p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-center">
+            <div className="grid grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden">
+              <div className="space-y-4 bg-gradient-to-br from-amber-950/50 to-slate-950 p-5 rounded-[2.5rem] border border-white/5 flex flex-col justify-start overflow-y-auto">
                 <div className="flex p-1 bg-black/40 rounded-2xl border border-white/5">
-                  <button 
+                  <button
                     onPointerDown={() => handleToggle(false)}
-                    className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${!selectedDevice?.isOn ? 'bg-white/10 text-white shadow-lg' : 'text-white/20'}`}
+                    className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${!selectedDevice?.isOn ? 'bg-white/10 text-white shadow-lg' : 'text-white/65'}`}
                   >
                     OFF
                   </button>
-                  <button 
+                  <button
                     onPointerDown={() => handleToggle(true)}
-                    className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${selectedDevice?.isOn ? 'bg-yellow-500 text-black shadow-lg' : 'text-white/20'}`}
+                    className={`flex-1 py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${selectedDevice?.isOn ? 'bg-yellow-500 text-black shadow-lg' : 'text-white/65'}`}
                   >
                     ON
                   </button>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between text-white/40 uppercase font-black tracking-widest text-[10px]">
+                  <div className="flex items-center justify-between text-white/75 uppercase font-black tracking-widest text-xs">
                     <div className="flex items-center gap-2"><Sun size={16} /> Brightness</div>
-                    <span className="text-sm text-white/60">{selectedDevice?.brightness || 100}%</span>
+                    <span className="text-sm text-white/60">{selectedDevice?.brightness ?? 100}%</span>
                   </div>
-                  <input 
-                    type="range" min="10" max="100" 
-                    value={selectedDevice?.brightness || 100}
-                    onChange={(e) => onUpdate(selectedDeviceId!, { brightness: parseInt(e.target.value, 10) })}
+                  <input
+                    type="range" min="10" max="100"
+                    value={selectedDevice?.brightness ?? 100}
+                    aria-label="Device control" onChange={(e) => onUpdate(selectedDeviceId!, { brightness: parseInt(e.target.value, 10) })}
                     className="w-full h-10 bg-white/10 rounded-xl appearance-none cursor-pointer accent-white"
                   />
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between text-white/40 uppercase font-black tracking-widest text-[10px]">
+                  <div className="flex items-center justify-between text-white/75 uppercase font-black tracking-widest text-xs">
                     <div className="flex items-center gap-2"><Thermometer size={16} /> Temperature</div>
                     <span className="text-sm text-white/60">{selectedDevice?.colorTemp || 4000}K</span>
                   </div>
-                  <input 
+                  <input
                     type="range" min="2500" max="6500" step="100"
                     value={selectedDevice?.colorTemp || 4000}
-                    onChange={(e) => onUpdate(selectedDeviceId!, { colorTemp: parseInt(e.target.value, 10), sceneId: undefined })}
+                    aria-label="Device control" onChange={(e) => onUpdate(selectedDeviceId!, { colorTemp: parseInt(e.target.value, 10), sceneId: undefined })}
                     className="w-full h-10 rounded-xl appearance-none cursor-pointer"
                     style={{ background: 'linear-gradient(to right, #ff9e33, #ffffff, #a5c9ff)' }}
                   />
                 </div>
 
                 <div className="pt-2 grid grid-cols-2 gap-3">
-                  <button 
+                  <button
                     onPointerDown={() => onUpdate(selectedDeviceId!, { colorTemp: 2700, brightness: 50, sceneId: undefined })}
                     className="flex flex-col items-center justify-center p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 active:scale-95 transition-all gap-1"
                   >
                     <Flame size={18} className="text-orange-400" />
-                    <span className="text-[9px] font-black uppercase text-orange-200">Warm 50%</span>
+                    <span className="text-xs font-black uppercase text-orange-200">Warm 50%</span>
                   </button>
-                  <button 
+                  <button
                     onPointerDown={() => onUpdate(selectedDeviceId!, { colorTemp: 2700, brightness: 100, sceneId: undefined })}
                     className="flex flex-col items-center justify-center p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 active:scale-95 transition-all gap-1"
                   >
                     <Flame size={18} className="text-orange-400" />
-                    <span className="text-[9px] font-black uppercase text-white">Warm 100%</span>
+                    <span className="text-xs font-black uppercase text-white">Warm 100%</span>
                   </button>
-                  <button 
+                  <button
                     onPointerDown={() => onUpdate(selectedDeviceId!, { colorTemp: 6000, brightness: 50, sceneId: undefined })}
                     className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 active:scale-95 transition-all gap-1"
                   >
                     <Snowflake size={18} className="text-blue-400" />
-                    <span className="text-[9px] font-black uppercase text-blue-200">Cool 50%</span>
+                    <span className="text-xs font-black uppercase text-blue-200">Cool 50%</span>
                   </button>
-                  <button 
+                  <button
                     onPointerDown={() => onUpdate(selectedDeviceId!, { colorTemp: 6000, brightness: 100, sceneId: undefined })}
                     className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 active:scale-95 transition-all gap-1"
                   >
                     <Snowflake size={18} className="text-blue-400" />
-                    <span className="text-[9px] font-black uppercase text-white">Cool 100%</span>
+                    <span className="text-xs font-black uppercase text-white">Cool 100%</span>
                   </button>
                 </div>
               </div>
 
               <div className="space-y-4 bg-white/5 p-5 rounded-[2.5rem] border border-white/5 overflow-y-auto scrollbar-hide flex flex-col justify-start">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-white/40 uppercase font-black tracking-widest text-[10px]">
+                  <div className="flex items-center justify-between text-white/75 uppercase font-black tracking-widest text-xs">
                     <div className="flex items-center gap-2"><Palette size={18} /> Color</div>
                     <span className="text-sm text-white/60 tabular-nums">{selectedColorHex.toUpperCase()}</span>
                   </div>
@@ -241,7 +242,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block text-base font-black text-white">Pick Color</span>
-                      <span className="block text-xs font-bold text-white/35 tabular-nums mt-1">
+                      <span className="block text-xs font-bold text-white/75 tabular-nums mt-1">
                         R {clampColor(selectedColor.r)} · G {clampColor(selectedColor.g)} · B {clampColor(selectedColor.b)}
                       </span>
                     </span>
@@ -249,7 +250,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-white/40 uppercase font-black tracking-widest text-[10px]">
+                  <div className="flex items-center justify-between text-white/75 uppercase font-black tracking-widest text-xs">
                     <div className="flex items-center gap-2"><Sparkles size={18} /> Glow Modes</div>
                     <span className="text-sm text-white/60 tabular-nums">{selectedSpeed}</span>
                   </div>
@@ -259,7 +260,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
                     max="200"
                     step="10"
                     value={selectedSpeed}
-                    onChange={(e) => onUpdate(selectedDeviceId!, { speed: parseInt(e.target.value, 10) })}
+                    aria-label="Device control" onChange={(e) => onUpdate(selectedDeviceId!, { speed: parseInt(e.target.value, 10) })}
                     className="w-full h-10 bg-white/10 rounded-xl appearance-none cursor-pointer accent-white"
                   />
                   <div className="grid grid-cols-2 gap-2.5">
@@ -309,7 +310,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.65),transparent_30%),linear-gradient(to_bottom,rgba(255,255,255,0.08),rgba(0,0,0,0.35))]" />
                 <div className="absolute inset-x-6 bottom-6 rounded-[2rem] bg-black/30 border border-white/15 p-5 backdrop-blur-md">
-                  <div className="text-[10px] font-black uppercase tracking-[0.28em] text-white/45">Selected Color</div>
+                  <div className="text-xs font-black uppercase tracking-[0.28em] text-white/75">Selected Color</div>
                   <div className="mt-2 text-4xl font-black tabular-nums tracking-tight">{draftColorHex.toUpperCase()}</div>
                 </div>
               </div>
@@ -317,7 +318,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
               <div className="p-6 flex flex-col min-h-0">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2 text-white/40 uppercase font-black tracking-widest text-[10px]">
+                    <div className="flex items-center gap-2 text-white/75 uppercase font-black tracking-widest text-xs">
                       <Palette size={18} /> Color
                     </div>
                     <h3 className="text-3xl font-black mt-2">{selectedDevice?.name}</h3>
@@ -325,7 +326,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
                   <BackButton onClick={() => setColorPickerOpen(false)} aria-label="Back to smart home" />
                 </div>
 
-                <div className="flex-1 flex flex-col justify-center gap-5">
+                <div className="flex-1 flex flex-col justify-start overflow-y-auto gap-5">
                   <ColorSlider
                     label="Red"
                     value={draftColor.r}
@@ -397,7 +398,7 @@ function ColorSlider({
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-white/40 uppercase font-black tracking-widest text-[10px]">
+      <div className="flex items-center justify-between text-white/75 uppercase font-black tracking-widest text-xs">
         <span>{label}</span>
         <span className="text-sm text-white/70 tabular-nums">{Math.round(value)}</span>
       </div>
@@ -449,7 +450,7 @@ function hueToRgb(hue: number) {
 function ColorMetric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 text-center">
-      <div className="text-[10px] font-black uppercase tracking-widest text-white/35">{label}</div>
+      <div className="text-xs font-black uppercase tracking-widest text-white/75">{label}</div>
       <div className="text-xl font-black tabular-nums">{clampColor(value)}</div>
     </div>
   );

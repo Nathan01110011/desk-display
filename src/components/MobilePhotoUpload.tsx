@@ -100,9 +100,9 @@ export function MobilePhotoUpload({ token }: { token: string }) {
           <div className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-white text-black shadow-xl">
             <UploadCloud size={28} strokeWidth={2.5} />
           </div>
-          <p className="text-xs font-black uppercase tracking-[0.28em] text-white/35">Desk Display Gallery</p>
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-white/75">Desk Display Gallery</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight">Send photos</h1>
-          <p className="mt-3 text-base font-medium leading-relaxed text-white/45">Choose pictures from this phone. They’ll transfer directly to your display.</p>
+          <p className="mt-3 text-base font-medium leading-relaxed text-white/75">Choose pictures from this phone. They’ll transfer directly to your display.</p>
         </div>
 
         {selected.length > 0 && (
@@ -160,11 +160,11 @@ export function MobilePhotoUpload({ token }: { token: string }) {
           type="button"
           onClick={upload}
           disabled={!token || selected.length === 0 || status === 'uploading'}
-          className="mt-auto flex min-h-16 w-full items-center justify-center gap-3 rounded-3xl bg-white px-6 text-lg font-black text-black shadow-2xl transition-transform active:scale-[0.98] disabled:bg-white/10 disabled:text-white/25 disabled:shadow-none"
+          className="mt-auto flex min-h-16 w-full items-center justify-center gap-3 rounded-3xl bg-white px-6 text-lg font-black text-black shadow-2xl transition-transform active:scale-[0.98] disabled:bg-white/10 disabled:text-white/65 disabled:shadow-none"
         >
           {status === 'uploading' ? <><LoaderCircle size={24} className="animate-spin" /> Uploading {progress}%</> : `Add ${selected.length || ''} photo${selected.length === 1 ? '' : 's'}`}
         </button>
-        <p className="mt-4 text-center text-xs font-medium text-white/25">This private upload session expires after 10 minutes.</p>
+        <p className="mt-4 text-center text-xs font-medium text-white/65">This private upload session expires after 10 minutes.</p>
       </div>
     </main>
   );

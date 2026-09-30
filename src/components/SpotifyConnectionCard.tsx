@@ -87,12 +87,12 @@ export function SpotifyConnectionCard() {
               <span className="font-bold text-white/75">Spotify</span>
               {state === 'connected' && <CheckCircle2 size={15} className="text-green-400" />}
               {state === 'expired' && <CircleAlert size={15} className="text-amber-400" />}
-              {(state === 'checking' || launchingAuth) && <RefreshCw size={14} className="animate-spin text-white/30" />}
+              {(state === 'checking' || launchingAuth) && <RefreshCw size={14} className="animate-spin text-white/65" />}
             </div>
-            <p className={`mt-0.5 truncate text-xs ${state === 'expired' ? 'text-amber-200/60' : state === 'error' ? 'text-red-300/60' : 'text-white/30'}`} title={detail}>
+            <p className={`mt-0.5 truncate text-xs ${state === 'expired' ? 'text-amber-200/60' : state === 'error' ? 'text-red-300/60' : 'text-white/65'}`} title={detail}>
               {detail}
             </p>
-            <p className="mt-1 text-[10px] text-white/20">Reauth temporarily leaves kiosk mode so the Pi keyboard and window close button remain available.</p>
+            <p className="mt-1 text-xs text-white/65">Reauth temporarily leaves kiosk mode so the Pi keyboard and window close button remain available.</p>
           </div>
           <button
             onPointerDown={() => void reconnect()}
@@ -100,7 +100,7 @@ export function SpotifyConnectionCard() {
             className={`shrink-0 rounded-xl border px-4 py-2 text-xs font-black transition-all active:scale-95 disabled:opacity-50 ${
               state === 'expired'
                 ? 'border-green-400/30 bg-green-500/15 text-green-300'
-                : 'border-white/10 bg-white/5 text-white/45'
+                : 'border-white/10 bg-white/5 text-white/75'
             }`}
           >
             {launchingAuth ? 'Opening…' : state === 'expired' ? 'Reconnect' : 'Reauthorize'}
@@ -111,7 +111,7 @@ export function SpotifyConnectionCard() {
       <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
         <div className="mb-3">
           <div className="font-bold text-white/75">System Update</div>
-          <p className="mt-0.5 text-xs text-white/30">Pull latest main, rebuild, restart PM2, and relaunch the kiosk.</p>
+          <p className="mt-0.5 text-xs text-white/65">Pull latest main, rebuild, restart PM2, and relaunch the kiosk.</p>
         </div>
         <SystemUpdateButton />
       </div>

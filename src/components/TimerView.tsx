@@ -16,15 +16,15 @@ interface TimerViewProps {
   onClose: () => void;
 }
 
-export function TimerView({ 
-  timeLeft, 
+export function TimerView({
+  timeLeft,
   totalTime,
   isActive,
   isFinished,
-  onStart, 
-  onPause, 
-  onResume, 
-  onReset, 
+  onStart,
+  onPause,
+  onResume,
+  onReset,
   onDismiss
 }: TimerViewProps) {
   const [customMinutes, setCustomMinutes] = useState(5);
@@ -46,16 +46,16 @@ export function TimerView({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="w-full h-full grid grid-cols-[minmax(0,1fr)_22rem] gap-8"
+      className="w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"
     >
-      <section className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex flex-col">
+      <section className="min-h-0 rounded-[2rem] border border-sky-200/15 bg-gradient-to-br from-sky-950/70 to-slate-950 p-5 flex flex-col">
         {hasTimer ? (
           <>
-            <div className="flex items-center justify-between gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
+            <div className="flex items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
               <span className="flex items-center gap-3"><Timer size={18} /> Timer</span>
               <span>{isFinished ? 'Complete' : isActive ? 'Running' : 'Paused'}</span>
             </div>
-            <div className="flex-1 min-h-0 flex items-center justify-center py-6">
+            <div className="flex-1 min-h-0 flex items-center justify-center py-3">
               <div className="relative aspect-square w-[min(100%,46vh,30rem)] shrink">
                 <div
                   className="absolute inset-0 rounded-full"
@@ -81,7 +81,7 @@ export function TimerView({
                       <div className={`mt-4 max-w-[78%] whitespace-nowrap ${timeTextSize} font-black tracking-tighter leading-none tabular-nums`}>
                         {displayTime}
                       </div>
-                      <div className="mt-4 text-[clamp(0.65rem,1.3vw,0.75rem)] font-black uppercase tracking-[0.28em] text-white/35">
+                      <div className="mt-4 text-[clamp(0.65rem,1.3vw,0.75rem)] font-black uppercase tracking-[0.28em] text-white/75">
                         {remaining}% left
                       </div>
                     </>
@@ -91,18 +91,18 @@ export function TimerView({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Elapsed</p>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Elapsed</p>
                 <p className="mt-1 text-2xl font-black tabular-nums">{Math.round(progress * 100)}%</p>
               </div>
               <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Left</p>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Left</p>
                 <p className="mt-1 text-2xl font-black tabular-nums">{remaining}%</p>
               </div>
             </div>
           </>
         ) : (
-          <div className="w-full max-w-2xl">
-            <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm mb-8">
+          <div className="w-full flex-1 flex flex-col justify-center">
+            <div className="flex items-center gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm mb-8">
               <Timer size={20} /> Quick Set
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -110,10 +110,10 @@ export function TimerView({
                 <button
                   key={m}
                   onPointerDown={() => onStart(m * 60)}
-                  className="p-8 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 active:scale-95 transition-all flex flex-col items-center gap-1"
+                  className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 active:scale-95 transition-all flex flex-col items-center gap-1"
                 >
                   <span className="text-4xl font-black">{m}</span>
-                  <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Min</span>
+                  <span className="text-xs font-bold text-white/65 uppercase tracking-widest">Min</span>
                 </button>
               ))}
             </div>
@@ -121,49 +121,40 @@ export function TimerView({
         )}
       </section>
 
-      <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex flex-col">
-        <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
+      <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-slate-900/70 p-5 flex flex-col gap-3 overflow-y-auto">
+        <div className="flex items-center gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
           <Timer size={20} /> Timer
         </div>
 
         {hasTimer ? (
           <>
-            <div className="mt-8">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-white/25">Status</p>
-              <h2 className="mt-4 text-5xl font-black tracking-tight">{isFinished ? 'Complete' : isActive ? 'Running' : 'Paused'}</h2>
-              <p className="mt-2 text-white/35 font-bold">{Math.round(progress * 100)}% elapsed</p>
+            <div className="mt-3">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">Status</p>
+              <h2 className="mt-4 text-3xl font-black tracking-tight">{isFinished ? 'Complete' : isActive ? 'Running' : 'Paused'}</h2>
+              <p className="mt-2 text-white/75 font-bold">{Math.round(progress * 100)}% elapsed</p>
             </div>
 
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Elapsed</p>
-                <p className="mt-2 text-3xl font-black tabular-nums">{Math.round(progress * 100)}%</p>
-              </div>
-              <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Left</p>
-                <p className="mt-2 text-3xl font-black tabular-nums">{remaining}%</p>
-              </div>
-            </div>
+
 
             <div className="mt-auto flex items-center gap-4">
               {isFinished ? (
                 <button
                   onPointerDown={onDismiss}
-                  className="flex-1 py-6 rounded-[2rem] bg-white text-black text-2xl font-black uppercase tracking-widest shadow-2xl active:scale-[0.98] transition-transform flex items-center justify-center gap-3"
+                  className="flex-1 py-3 rounded-[2rem] bg-white text-black text-2xl font-black uppercase tracking-widest shadow-2xl active:scale-[0.98] transition-transform flex items-center justify-center gap-3"
                 >
                   <X size={34} strokeWidth={3} /> Clear
                 </button>
               ) : (
                 <>
                   <button
-                    onPointerDown={isActive ? onPause : onResume}
-                    className="p-7 rounded-full bg-white text-black shadow-2xl active:scale-90 transition-transform"
+                    aria-label={isActive ? 'Pause timer' : 'Resume timer'} onPointerDown={isActive ? onPause : onResume}
+                    className="p-4 rounded-2xl bg-white text-black shadow-2xl active:scale-90 transition-transform"
                   >
-                    {isActive ? <Pause size={42} fill="currentColor" /> : <Play size={42} fill="currentColor" className="ml-1" />}
+                    {isActive ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" className="ml-1" />}
                   </button>
                   <button
-                    onPointerDown={onReset}
-                    className="p-6 rounded-full bg-white/10 text-white shadow-xl active:scale-90 transition-transform"
+                    aria-label="Reset timer" onPointerDown={onReset}
+                    className="p-4 rounded-2xl bg-white/10 text-white shadow-xl active:scale-90 transition-transform"
                   >
                     <RotateCcw size={34} />
                   </button>
@@ -173,23 +164,23 @@ export function TimerView({
           </>
       ) : (
           <>
-            <div className="mt-8">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-white/25">Custom duration</p>
-              <p className="mt-3 text-white/35 font-bold">Set any short countdown without opening another control.</p>
-            </div>
-            
-            <div className="mt-10 flex items-center justify-between rounded-[2rem] border border-white/5 bg-white/[0.03] p-5">
-              <button onPointerDown={() => handleAdjustCustom(-1)} className="p-4 rounded-2xl bg-white/5 active:scale-90 transition-all"><Minus size={32} /></button>
-              <div className="flex flex-col items-center">
-                <span className="text-7xl font-black">{customMinutes}</span>
-                <span className="text-white/20 font-bold uppercase text-xs">Minutes</span>
-              </div>
-              <button onPointerDown={() => handleAdjustCustom(1)} className="p-4 rounded-2xl bg-white/5 active:scale-90 transition-all"><Plus size={32} /></button>
+            <div className="mt-3">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">Custom duration</p>
+              <p className="mt-3 text-white/75 font-bold">Set any short countdown without opening another control.</p>
             </div>
 
-            <button 
+            <div className="mt-2 flex items-center justify-between rounded-[2rem] border border-white/5 bg-white/[0.03] p-5">
+              <button aria-label="Decrease timer minutes" disabled={customMinutes <= 1} onPointerDown={() => handleAdjustCustom(-1)} className="p-4 rounded-2xl bg-white/5 active:scale-90 transition-all"><Minus size={32} /></button>
+              <div className="flex flex-col items-center">
+                <span className="text-7xl font-black">{customMinutes}</span>
+                <span className="text-white/65 font-bold uppercase text-xs">Minutes</span>
+              </div>
+              <button aria-label="Increase timer minutes" onPointerDown={() => handleAdjustCustom(1)} className="p-4 rounded-2xl bg-white/5 active:scale-90 transition-all"><Plus size={32} /></button>
+            </div>
+
+            <button
               onPointerDown={() => onStart(customMinutes * 60)}
-              className="mt-auto w-full py-6 rounded-[2rem] bg-white text-black font-black text-2xl uppercase tracking-widest active:scale-[0.98] transition-all shadow-xl"
+              className="mt-auto w-full py-3 rounded-[2rem] bg-white text-black font-black text-2xl uppercase tracking-widest active:scale-[0.98] transition-all shadow-xl"
             >
               Start
             </button>

@@ -64,11 +64,11 @@ export function OnScreenKeyboard({ value, onChange, onClose, onSubmit }: OnScree
   };
 
   return (
-    <div className="fixed inset-0 w-screen h-screen z-[300] bg-black flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-200">
-      <div className="w-full max-w-5xl space-y-10">
+    <div className="fixed inset-0 w-screen h-screen z-[300] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
+      <div className="w-full max-w-5xl space-y-5">
         {/* Input Bar */}
         <div className="flex items-center justify-between gap-6">
-          <div className="flex-1 bg-white/5 border border-white/10 rounded-3xl p-8 text-5xl font-bold min-h-[1.8em] flex items-center shadow-inner overflow-hidden whitespace-nowrap">
+          <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-3xl font-bold min-h-[1.8em] flex items-center shadow-inner overflow-hidden whitespace-nowrap">
             {value}<span className="animate-pulse ml-1 text-blue-500">|</span>
           </div>
           <BackButton onClick={onClose} aria-label="Back to previous screen" />
@@ -112,10 +112,10 @@ export function OnScreenKeyboard({ value, onChange, onClose, onSubmit }: OnScree
                       h-24 rounded-2xl flex items-center justify-center text-3xl font-black active:scale-95 transition-all border border-white/5 shadow-lg
                     `}
                   >
-                    {isBackspace ? <Delete size={32} /> : 
-                     isSubmit ? <Check size={40} strokeWidth={3} /> : 
-                     isClear ? <div className="flex items-center gap-2 text-xl"><Eraser size={24} /> CLEAR</div> : 
-                     isSpace ? 'SPACE' : 
+                    {isBackspace ? <Delete size={32} /> :
+                     isSubmit ? <Check size={40} strokeWidth={3} /> :
+                     isClear ? <div className="flex items-center gap-2 text-xl"><Eraser size={24} /> CLEAR</div> :
+                     isSpace ? 'SPACE' :
                      isShift ? <ArrowUpCircle size={32} strokeWidth={key === 'SHIFT_ACTIVE' ? 3 : 2} /> :
                      key}
                   </button>

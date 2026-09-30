@@ -317,11 +317,11 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="grid h-full w-full grid-cols-[0.9fr_1.1fr] gap-8 p-8"
+      className="grid h-full w-full grid-cols-[0.9fr_1.1fr] gap-4"
     >
-      <section className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+      <section className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-950/50 to-slate-950 p-5">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-          <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] text-white/30">
+          <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-white/65">
             <ShieldQuestion size={18} />
             Rule
           </div>
@@ -333,7 +333,7 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
                   key={level}
                   onPointerDown={() => setLevel(level)}
                   className={`min-h-10 rounded-2xl py-2 text-sm font-black uppercase tracking-[0.18em] transition-all active:scale-95 ${
-                    difficulty === level ? 'bg-white text-black' : 'text-white/40'
+                    difficulty === level ? 'bg-white text-black' : 'text-white/75'
                   }`}
                 >
                   {difficultyConfig[level].label}
@@ -387,7 +387,7 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
         <div className={`grid min-h-12 flex-[0.12_1_0] gap-3 ${lockMode ? 'grid-cols-2' : 'grid-cols-3'}`}>
           <button
             onPointerDown={() => setSelected([])}
-            className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white/[0.04] text-white/50 active:scale-95"
+            className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white/[0.04] text-white/75 active:scale-95"
             aria-label="Clear"
             title="Clear"
           >
@@ -396,7 +396,7 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
           {!lockMode && (
             <button
               onPointerDown={() => setShowTrace(value => !value)}
-              className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white/[0.04] text-white/50 active:scale-95"
+              className="flex h-full items-center justify-center rounded-[1.25rem] border border-white/10 bg-white/[0.04] text-white/75 active:scale-95"
               aria-label="Reveal"
               title="Reveal"
             >
@@ -441,7 +441,7 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
         </div>
 
         <div className="flex min-h-0 flex-[1.2_1_0] flex-col gap-3 overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-white/25">Keys</div>
+          <div className="text-xs font-black uppercase tracking-[0.28em] text-white/65">Keys</div>
           <div
             className="grid min-h-0 flex-1 gap-2 overflow-y-auto scrollbar-hide"
             style={{ gridTemplateRows: `repeat(${visibleHouses.length}, minmax(0, 1fr))` }}
@@ -472,13 +472,13 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
                             ? 'border-sky-300/40 bg-sky-300/10 text-sky-100'
                             : isAnchor
                               ? 'border-white/25 bg-white/10 text-white'
-                              : 'border-white/10 bg-black/20 text-white/35'
+                              : 'border-white/10 bg-black/20 text-white/75'
                         }`}
                         aria-label={label}
                         title={label}
                       >
                         <Icon className="size-[clamp(1.6rem,6vh,2.65rem)]" strokeWidth={1.9} />
-                        <span className="absolute left-1.5 top-1 text-[9px] font-black text-white/25">{index + 1}</span>
+                        <span className="absolute left-1.5 top-1 text-xs font-black text-white/65">{index + 1}</span>
                       </div>
                     );
                   })}
@@ -489,12 +489,12 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
         </div>
 
         <div
-          className={`flex min-h-24 items-center justify-between rounded-[1.5rem] border px-6 ${
+          className={`flex min-h-16 items-center justify-between rounded-[1.5rem] border px-6 ${
             solved
               ? 'border-emerald-300/30 bg-emerald-300/10 text-emerald-100'
               : missed
                 ? 'border-rose-300/30 bg-rose-300/10 text-rose-100'
-                : 'border-white/10 bg-white/[0.04] text-white/40'
+                : 'border-white/10 bg-white/[0.04] text-white/75'
           }`}
         >
           <div className="flex items-center gap-3">

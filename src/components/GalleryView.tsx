@@ -144,21 +144,24 @@ export function GalleryView() {
     }
   };
 
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const visiblePhotos = onlyFavorites ? photos.filter(photo => photo.favorite) : photos;
+
   const secondsRemaining = pairing ? Math.max(0, Math.ceil((pairing.expiresAt - now) / 1000)) : 0;
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03]">
-      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-8 py-6 pr-28">
-        <div><div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.28em] text-white/30"><Images size={18} /> Gallery</div><h2 className="mt-2 text-4xl font-black tracking-tight">Your photos</h2></div>
-        <div className="flex items-center gap-4"><span className="text-sm font-black text-white/30">{photos.length} photos · {photos.filter(photo => photo.favorite).length} favourites</span><button onClick={() => setShowAdd(true)} className="flex h-14 items-center gap-3 rounded-2xl bg-white px-6 font-black text-black active:scale-95"><ImagePlus size={22} /> Add photos</button></div>
+    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-amber-950/30 to-slate-950">
+      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-4">
+        <div><div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.28em] text-white/65"><Images size={18} /> Gallery</div><h2 className="mt-2 text-3xl font-black tracking-tight">Your photos</h2></div>
+        <div className="flex items-center gap-3"><button type="button" aria-pressed={onlyFavorites} onClick={() => setOnlyFavorites(!onlyFavorites)} className={`min-h-11 rounded-xl border px-4 font-bold ${onlyFavorites ? 'border-amber-200/40 bg-amber-200 text-amber-950' : 'border-white/15 bg-white/5 text-white'}`}>Favourites</button><span className="text-sm font-black text-white/65">{photos.length} photos · {photos.filter(photo => photo.favorite).length} favourites</span><button onClick={() => setShowAdd(true)} className="flex h-14 items-center gap-3 rounded-2xl bg-white px-6 font-black text-black active:scale-95"><ImagePlus size={22} /> Add photos</button></div>
       </header>
 
       <div className="min-h-0 flex-1 touch-pan-y overscroll-contain overflow-y-auto p-6 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
         {loading ? (
-          <div className="flex h-full items-center justify-center text-white/25"><LoaderCircle size={42} className="animate-spin" /></div>
-        ) : photos.length > 0 ? (
-          <div className="grid grid-cols-5 gap-4">
-            {photos.map(photo => (
+          <div className="flex h-full items-center justify-center text-white/65"><LoaderCircle size={42} className="animate-spin" /></div>
+        ) : visiblePhotos.length > 0 ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3">
+            {visiblePhotos.map(photo => (
               <div key={photo.name} className="group relative aspect-square overflow-hidden rounded-3xl bg-white/5" style={{ contentVisibility: 'auto', containIntrinsicSize: '220px' }}>
                 <button onClick={() => setSelected(photo)} className="absolute inset-0 touch-pan-y"><Image src={photo.thumbnailUrl} alt="Gallery photo" fill unoptimized sizes="18vw" className="object-cover" /></button>
                 <button onClick={() => toggleFavorite(photo)} aria-label={photo.favorite ? 'Remove from favourites' : 'Add to favourites'} className={`absolute bottom-3 right-3 flex size-11 items-center justify-center rounded-2xl backdrop-blur active:scale-90 ${photo.favorite ? 'bg-white text-rose-500' : 'bg-black/65 text-white/65'}`}><Heart size={21} className={photo.favorite ? 'fill-current' : ''} /></button>
@@ -166,7 +169,7 @@ export function GalleryView() {
             ))}
           </div>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-5 text-white/20"><Images size={72} strokeWidth={1.2} /><p className="text-xl font-black">Your gallery is empty</p><button onClick={() => setShowAdd(true)} className="rounded-2xl bg-white px-6 py-4 font-black text-black">Add your first photos</button></div>
+          <div className="flex h-full flex-col items-center justify-center gap-5 text-white/65"><Images size={72} strokeWidth={1.2} /><p className="text-xl font-black">{onlyFavorites ? 'No favourite photos yet' : 'Your gallery is empty'}</p><button onClick={() => setShowAdd(true)} className="rounded-2xl bg-white px-6 py-4 font-black text-black">Add your first photos</button></div>
         )}
       </div>
 
@@ -200,7 +203,7 @@ export function GalleryView() {
               <>
                 <button onClick={() => navigateSelected(-1)} aria-label="Previous photo" className="absolute left-6 top-1/2 z-10 flex size-16 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white/75 backdrop-blur active:scale-90"><ChevronLeft size={36} /></button>
                 <button onClick={() => navigateSelected(1)} aria-label="Next photo" className="absolute right-6 top-1/2 z-10 flex size-16 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white/75 backdrop-blur active:scale-90"><ChevronRight size={36} /></button>
-                <p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-xs font-black tracking-widest text-white/45">
+                <p className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-xs font-black tracking-widest text-white/75">
                   {photos.findIndex(photo => photo.name === selected.name) + 1} / {photos.length}
                 </p>
               </>
@@ -213,8 +216,8 @@ export function GalleryView() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[190] flex flex-col bg-black/90 p-8 backdrop-blur-xl">
             <div className="mb-4 flex w-full shrink-0 justify-end"><BackButton onClick={closeAdd} aria-label="Back to gallery" /></div>
             <div className="grid min-h-0 flex-1 w-full self-center max-w-5xl grid-cols-2 overflow-hidden rounded-[2rem] border border-white/10 bg-[#0a0a0a] shadow-2xl">
-              <section className="flex flex-col items-center justify-center border-r border-white/10 p-8 text-center"><MonitorSmartphone size={38} className="text-white/60" /><h3 className="mt-4 text-3xl font-black">Add from phone</h3><p className="mt-3 max-w-sm text-sm font-bold leading-relaxed text-white/35">Scan while your phone is on the same Wi-Fi network.</p>{pairing && secondsRemaining > 0 ? <><div className="mt-6 aspect-square w-64 rounded-3xl bg-white p-3"><Image src={pairing.qrCode} alt="Phone upload QR code" width={560} height={560} unoptimized className="size-full" /></div><p className="mt-3 text-sm font-black text-white/45">Expires in {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, '0')}</p></> : <button onPointerDown={startPairing} className="mt-7 flex h-16 w-full max-w-xs items-center justify-center gap-3 rounded-2xl bg-white font-black text-black active:scale-95"><MonitorSmartphone size={22} /> Show QR code</button>}</section>
-              <section className="relative flex flex-col items-center justify-center p-8 text-center"><Upload size={38} className="text-white/60" /><h3 className="mt-4 text-3xl font-black">On this device</h3><p className="mt-3 max-w-sm text-sm font-bold leading-relaxed text-white/35">Use the local file picker as a fallback.</p><label className="mt-7 flex h-16 w-full max-w-xs cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 font-black text-white/55 active:scale-95">{uploading ? <LoaderCircle size={22} className="animate-spin" /> : <Upload size={22} />}{uploading ? 'Uploading…' : 'Choose photos'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple disabled={uploading} className="sr-only" onChange={event => uploadPhotos(event.target.files)} /></label>{status && <p className="mt-5 flex items-center gap-2 text-sm font-bold text-white/45"><Check size={18} />{status}</p>}</section>
+              <section className="flex flex-col items-center justify-center border-r border-white/10 p-8 text-center"><MonitorSmartphone size={38} className="text-white/60" /><h3 className="mt-4 text-3xl font-black">Add from phone</h3><p className="mt-3 max-w-sm text-sm font-bold leading-relaxed text-white/75">Scan while your phone is on the same Wi-Fi network.</p>{pairing && secondsRemaining > 0 ? <><div className="mt-6 aspect-square w-64 rounded-3xl bg-white p-3"><Image src={pairing.qrCode} alt="Phone upload QR code" width={560} height={560} unoptimized className="size-full" /></div><p className="mt-3 text-sm font-black text-white/75">Expires in {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, '0')}</p></> : <button onPointerDown={startPairing} className="mt-7 flex h-16 w-full max-w-xs items-center justify-center gap-3 rounded-2xl bg-white font-black text-black active:scale-95"><MonitorSmartphone size={22} /> Show QR code</button>}</section>
+              <section className="relative flex flex-col items-center justify-center p-8 text-center"><Upload size={38} className="text-white/60" /><h3 className="mt-4 text-3xl font-black">On this device</h3><p className="mt-3 max-w-sm text-sm font-bold leading-relaxed text-white/75">Use the local file picker as a fallback.</p><label className="mt-7 flex h-16 w-full max-w-xs cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 font-black text-white/55 active:scale-95">{uploading ? <LoaderCircle size={22} className="animate-spin" /> : <Upload size={22} />}{uploading ? 'Uploading…' : 'Choose photos'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple disabled={uploading} className="sr-only" onChange={event => uploadPhotos(event.target.files)} /></label>{status && <p className="mt-5 flex items-center gap-2 text-sm font-bold text-white/75"><Check size={18} />{status}</p>}</section>
             </div>
           </motion.div>
         )}

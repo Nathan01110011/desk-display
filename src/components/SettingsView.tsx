@@ -33,7 +33,7 @@ interface SettingsViewProps {
   onDisableScreensaverWhileSpotifyPlaying: (disabled: boolean) => void;
 }
 
-export function SettingsView({ 
+export function SettingsView({
   onSystemAdminChange,
   appConfig,
   onUpdateAppConfig,
@@ -52,6 +52,7 @@ export function SettingsView({
   disableScreensaverWhileSpotifyPlaying,
   onDisableScreensaverWhileSpotifyPlaying,
 }: SettingsViewProps) {
+  const [category, setCategory] = useState('display');
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showConsoleLogs, setShowConsoleLogs] = useState(false);
   const [kbMode, setKbMode] = useState<'weather' | 'clock'>('weather');
@@ -218,23 +219,24 @@ export function SettingsView({
     <motion.div
       key="settings-view"
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-      className="w-full max-w-6xl mx-auto flex flex-col space-y-6 py-8 h-full overflow-y-auto pr-4 scrollbar-hide"
+      className="w-full mx-auto flex min-h-0 flex-col gap-4 h-full overflow-hidden"
     >
-      <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs">
-        <Settings size={18} /> Settings
+      <div className="flex items-center gap-3 text-white/65 font-bold uppercase tracking-[0.3em] text-xs">
+        <Settings size={18} /> Settings & preferences
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+      <nav aria-label="Settings categories" className="flex shrink-0 flex-wrap gap-2">{[['display', 'Display'], ['clocks', 'World clocks'], ['apps', 'Apps & weather'], ['security', 'Rule lock'], ['system', 'System']].map(([id, label]) => <button key={id} type="button" aria-pressed={category === id} onClick={() => setCategory(id)} className={`min-h-11 rounded-xl border px-5 text-sm font-bold ${category === id ? 'border-sky-200/30 bg-sky-200 text-slate-950' : 'border-white/15 bg-white/5 text-white/80'}`}>{label}</button>)}</nav>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-3xl border border-sky-200/15 bg-gradient-to-br from-sky-950/40 to-slate-950 p-4">
+        <div className="contents">
+          <div hidden={category !== 'clocks'} className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white/80 flex items-center gap-3"><Globe size={20} /> World Clocks</h3>
-              <span className="text-xs font-bold text-white/20 uppercase">{worldClocks.length}/5</span>
+              <span className="text-xs font-bold text-white/65 uppercase">{worldClocks.length}/5</span>
             </div>
-            
-            <Reorder.Group 
-              axis="y" 
-              values={worldClocks} 
+
+            <Reorder.Group
+              axis="y"
+              values={worldClocks}
               onReorder={(newClocks) => {
                 onUpdateClocks(newClocks);
                 fetch('/api/system/settings', {
@@ -247,34 +249,34 @@ export function SettingsView({
             >
               {worldClocks.map(clock => (
                 <Reorder.Item key={clock.id} value={clock} className="flex items-center gap-3 group">
-                  <div className="cursor-grab active:cursor-grabbing p-2 text-white/10 group-active:text-blue-400 transition-colors">
+                  <div className="cursor-grab active:cursor-grabbing p-2 text-white/65 group-active:text-blue-400 transition-colors">
                     <GripVertical size={20} />
                   </div>
                   <div className="flex-1 flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
                     <span className="text-lg font-bold text-white/60">{clock.label}</span>
-                    <button onPointerDown={() => handleRemoveClock(clock.id)} className="text-red-500/40 hover:text-red-500 active:scale-90 p-2 transition-all"><Trash2 size={20} /></button>
+                    <button onPointerDown={() => handleRemoveClock(clock.id)} className="text-rose-200 hover:text-red-500 active:scale-90 p-2 transition-all"><Trash2 size={20} /></button>
                   </div>
                 </Reorder.Item>
               ))}
             </Reorder.Group>
 
             {worldClocks.length < 5 && (
-              <button 
+              <button
                 onPointerDown={() => { setKbMode('clock'); setKbValue(''); setShowKeyboard(true); }}
-                className="w-full py-3 rounded-xl border border-dashed border-white/10 text-white/30 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
+                className="w-full py-3 rounded-xl border border-dashed border-white/10 text-white/65 font-bold hover:bg-white/5 active:scale-[0.98] transition-all"
               >
                 + Add Clock
               </button>
             )}
           </div>
 
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+          <div hidden={category !== 'display'} className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-white/80">Screensaver</h3>
-                <p className="text-white/30 text-xs">Shown full-screen after inactivity</p>
+                <p className="text-white/65 text-xs">Shown full-screen after inactivity</p>
               </div>
-              <span className="text-xs font-black uppercase tracking-widest text-white/25">
+              <span className="text-xs font-black uppercase tracking-widest text-white/65">
                 {idleClockTimeoutMinutes}m
               </span>
             </div>
@@ -291,7 +293,7 @@ export function SettingsView({
                     key={option.type}
                     onPointerDown={() => updateScreensaverType(option.type)}
                     className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
-                      selected ? 'border-white/40 bg-white text-black' : 'border-white/5 bg-white/[0.03] text-white/45'
+                      selected ? 'border-white/40 bg-white text-black' : 'border-white/5 bg-white/[0.03] text-white/75'
                     }`}
                   >
                     <Icon size={22} />
@@ -304,25 +306,25 @@ export function SettingsView({
 
             {screensaverType === 'photos' && (
               <div className="space-y-2 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Photos from Gallery</p>
+                <p className="text-xs font-black uppercase tracking-widest text-white/75">Photos from Gallery</p>
                 <div className="grid grid-cols-2 gap-2">
                   {([{ value: 'all' as const, label: 'All photos' }, { value: 'favorites' as const, label: 'Favourites' }]).map(option => (
-                    <button key={option.value} onPointerDown={() => updateScreensaverPhotoSource(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSource === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/40'}`}>{option.label}</button>
+                    <button key={option.value} onPointerDown={() => updateScreensaverPhotoSource(option.value)} className={`rounded-xl border px-3 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSource === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/75'}`}>{option.label}</button>
                   ))}
                 </div>
-                <p className="pt-2 text-[10px] font-black uppercase tracking-widest text-white/35">Time per slide</p>
+                <p className="pt-2 text-xs font-black uppercase tracking-widest text-white/75">Time per slide</p>
                 <div className="grid grid-cols-4 gap-2">
                   {PHOTO_SLIDE_DURATION_OPTIONS.map(option => (
                     <button
                       key={option.value}
                       onPointerDown={() => updateScreensaverPhotoSlideDuration(option.value)}
-                      className={`rounded-xl border px-2 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSlideDuration === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/40'}`}
+                      className={`rounded-xl border px-2 py-3 text-sm font-black transition-all active:scale-95 ${screensaverPhotoSlideDuration === option.value ? 'border-white bg-white text-black' : 'border-white/10 bg-black/20 text-white/75'}`}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
-                <p className="text-center text-[10px] text-white/20">Manage and upload photos in the Gallery app.</p>
+                <p className="text-center text-xs text-white/65">Manage and upload photos in the Gallery app.</p>
               </div>
             )}
 
@@ -332,7 +334,7 @@ export function SettingsView({
             >
               <div>
                 <p className="text-sm font-black text-white/65">Stay awake while Spotify is playing</p>
-                <p className="mt-1 text-[10px] text-white/25">Prevents the screensaver while active playback is detected.</p>
+                <p className="mt-1 text-xs text-white/65">Prevents the screensaver while active playback is detected.</p>
               </div>
               <span className={`ml-4 flex size-8 shrink-0 items-center justify-center rounded-xl border ${disableScreensaverWhileSpotifyPlaying ? 'border-white bg-white text-black' : 'border-white/20 text-transparent'}`}>
                 <Check size={18} strokeWidth={4} />
@@ -340,44 +342,44 @@ export function SettingsView({
             </button>
 
             <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Inactivity Timeout</p>
+              <p className="text-white/75 uppercase tracking-widest text-xs font-black">Inactivity Timeout</p>
               <div className="space-y-2">
-                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button
                     onPointerDown={() => updateIdleClockTime(Math.max(0, idleClockHours - 1), idleClockMinutes)}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Decrease clock timeout hours"
                   >
                     <Minus size={18} />
                   </button>
                   <div className="text-center">
                     <div className="text-2xl font-black tabular-nums leading-none">{idleClockHours}</div>
-                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Hours</div>
+                    <div className="text-xs font-black uppercase tracking-[0.14em] text-white/65 mt-1">Hours</div>
                   </div>
                   <button
                     onPointerDown={() => updateIdleClockTime(Math.min(24, idleClockHours + 1), idleClockMinutes)}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Increase clock timeout hours"
                   >
                     <Plus size={18} />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button
                     onPointerDown={() => updateIdleClockTime(idleClockHours, Math.max(0, idleClockMinutes - 5))}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Decrease clock timeout minutes"
                   >
                     <Minus size={18} />
                   </button>
                   <div className="text-center">
                     <div className="text-2xl font-black tabular-nums leading-none">{idleClockMinutes}</div>
-                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Minutes</div>
+                    <div className="text-xs font-black uppercase tracking-[0.14em] text-white/65 mt-1">Minutes</div>
                   </div>
                   <button
                     onPointerDown={() => updateIdleClockTime(idleClockHours, Math.min(55, idleClockMinutes + 5))}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Increase clock timeout minutes"
                   >
                     <Plus size={18} />
@@ -387,10 +389,10 @@ export function SettingsView({
             </div>
           </div>
 
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+          <div hidden={category !== 'system'} className="p-4 space-y-4">
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-white/80">System</h3>
-              <p className="text-white/30 text-xs">Diagnostics and kiosk controls</p>
+              <p className="text-white/65 text-xs">Diagnostics and kiosk controls</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button onPointerDown={() => { setShowConsoleLogs(true); onSystemAdminChange?.(true); }} className="px-5 py-3 rounded-xl bg-white/5 text-white/60 border border-white/10 font-bold text-sm active:scale-95 transition-all">System Admin</button>
@@ -399,12 +401,12 @@ export function SettingsView({
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+        <div className="contents">
+          <div hidden={category !== 'security'} className="p-4 space-y-4">
             <div className="space-y-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-white/80">Rule Lock</h3>
-                <p className="text-white/30 text-xs">Password gate on open or inactivity</p>
+                <p className="text-white/65 text-xs">Password gate on open or inactivity</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -412,7 +414,7 @@ export function SettingsView({
                   onPointerDown={() => updateRuleLock({ ...ruleLock, lockOnOpen: !ruleLock.lockOnOpen })}
                   className="flex items-center justify-between rounded-2xl bg-white/[0.03] border border-white/5 p-4 active:scale-[0.98] transition-all"
                 >
-                  <span className="text-sm font-black uppercase tracking-widest text-white/50">On Open</span>
+                  <span className="text-sm font-black uppercase tracking-widest text-white/75">On Open</span>
                   <span className={`size-8 rounded-xl border flex items-center justify-center ${
                     ruleLock.lockOnOpen ? 'bg-white text-black border-white' : 'border-white/20'
                   }`}>
@@ -424,7 +426,7 @@ export function SettingsView({
                   onPointerDown={() => updateRuleLock({ ...ruleLock, lockOnInactivity: !ruleLock.lockOnInactivity })}
                   className="flex items-center justify-between rounded-2xl bg-white/[0.03] border border-white/5 p-4 active:scale-[0.98] transition-all"
                 >
-                  <span className="text-sm font-black uppercase tracking-widest text-white/50">Idle Lock</span>
+                  <span className="text-sm font-black uppercase tracking-widest text-white/75">Idle Lock</span>
                   <span className={`size-8 rounded-xl border flex items-center justify-center ${
                     ruleLock.lockOnInactivity ? 'bg-white text-black border-white' : 'border-white/20'
                   }`}>
@@ -435,44 +437,44 @@ export function SettingsView({
             </div>
 
             <div className="space-y-3 bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-              <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Lock Timeout</p>
+              <p className="text-white/75 uppercase tracking-widest text-xs font-black">Lock Timeout</p>
               <div className="space-y-2">
-                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button
                     onPointerDown={() => updateRuleLockTime(Math.max(0, ruleLockHours - 1), ruleLockMinutes)}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Decrease hours"
                   >
                     <Minus size={18} />
                   </button>
                   <div className="text-center">
                     <div className="text-2xl font-black tabular-nums leading-none">{ruleLockHours}</div>
-                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Hours</div>
+                    <div className="text-xs font-black uppercase tracking-[0.14em] text-white/65 mt-1">Hours</div>
                   </div>
                   <button
                     onPointerDown={() => updateRuleLockTime(Math.min(24, ruleLockHours + 1), ruleLockMinutes)}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Increase hours"
                   >
                     <Plus size={18} />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
+                <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2 rounded-2xl bg-black/20 p-2 border border-white/5">
                   <button
                     onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.max(0, ruleLockMinutes - 5))}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Decrease minutes"
                   >
                     <Minus size={18} />
                   </button>
                   <div className="text-center">
                     <div className="text-2xl font-black tabular-nums leading-none">{ruleLockMinutes}</div>
-                    <div className="text-[9px] font-black uppercase tracking-[0.14em] text-white/30 mt-1">Minutes</div>
+                    <div className="text-xs font-black uppercase tracking-[0.14em] text-white/65 mt-1">Minutes</div>
                   </div>
                   <button
                     onPointerDown={() => updateRuleLockTime(ruleLockHours, Math.min(55, ruleLockMinutes + 5))}
-                    className="size-9 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
+                    className="size-11 rounded-xl bg-white/5 active:scale-90 transition-all flex items-center justify-center"
                     aria-label="Increase minutes"
                   >
                     <Plus size={18} />
@@ -482,18 +484,18 @@ export function SettingsView({
             </div>
           </div>
 
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+          <div hidden={category !== 'apps'} className="p-4 space-y-4">
             <h3 className="text-lg font-bold text-white/80">Dashboard Apps</h3>
-            
-            <Reorder.Group 
-              axis="y" 
-              values={appOrder} 
+
+            <Reorder.Group
+              axis="y"
+              values={appOrder}
               onReorder={(newOrder) => onUpdateAppConfig({ ...appConfig, appOrder: newOrder })}
               className="space-y-3"
             >
               {appOrder.map((app) => (
                 <Reorder.Item key={app} value={app} className="flex items-center gap-3 group">
-                  <div className="cursor-grab active:cursor-grabbing p-3 text-white/10 group-active:text-blue-400 transition-colors">
+                  <div className="cursor-grab active:cursor-grabbing p-3 text-white/65 group-active:text-blue-400 transition-colors">
                     <GripVertical size={24} />
                   </div>
                   <button
@@ -512,19 +514,19 @@ export function SettingsView({
                 </Reorder.Item>
               ))}
             </Reorder.Group>
-            
+
             {appConfig.weather && (
               <div className="pt-4 border-t border-white/5 space-y-4">
                 <div className="space-y-2">
-                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Weather Location</p>
+                  <p className="text-white/75 uppercase tracking-widest text-xs font-black">Weather Location</p>
                   <div className="flex gap-2">
-                    <div 
+                    <div
                       onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
                       className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-lg min-h-[3rem] flex items-center overflow-hidden truncate"
                     >
-                      {localStorage.getItem('weatherLocation') || <span className="opacity-20 italic text-base">Auto-locate</span>}
+                      {localStorage.getItem('weatherLocation') || <span className="opacity-75 italic text-base">Auto-locate</span>}
                     </div>
-                    <button 
+                    <button
                       onPointerDown={() => { setKbMode('weather'); setKbValue(localStorage.getItem('weatherLocation') || ''); setShowKeyboard(true); }}
                       className="p-3 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 active:scale-90 transition-all"
                     >
@@ -534,17 +536,17 @@ export function SettingsView({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-white/40 uppercase tracking-widest text-[10px] font-black">Temperature Unit</p>
+                  <p className="text-white/75 uppercase tracking-widest text-xs font-black">Temperature Unit</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <button 
+                    <button
                       onPointerDown={() => handleUnitToggle('C')}
-                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'C' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'C' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/75 active:scale-95'}`}
                     >
                       Celsius (°C)
                     </button>
-                    <button 
+                    <button
                       onPointerDown={() => handleUnitToggle('F')}
-                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'F' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 active:scale-95'}`}
+                      className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold text-sm ${currentUnit === 'F' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 border-white/10 text-white/75 active:scale-95'}`}
                     >
                       Fahrenheit (°F)
                     </button>
@@ -557,7 +559,7 @@ export function SettingsView({
       </div>
 
       {showKeyboard && (
-        <OnScreenKeyboard 
+        <OnScreenKeyboard
           value={kbValue}
           onChange={setKbValue}
           onClose={() => setShowKeyboard(false)}
