@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, CalendarRange, Droplets, RefreshCw } from 'lucide-react';
+import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, Droplets, RefreshCw, Maximize2, ArrowLeft, Wind } from 'lucide-react';
 import { FitbitStats } from '@/types';
 import { healthDateKey, weightRangeStart, weightRanges, WeightRange } from '@/lib/healthWeightRange';
 
@@ -46,14 +46,14 @@ function StatTile({
   sublabel?: string;
 }) {
   return (
-    <div className="rounded-3xl border border-white/15 bg-white/[0.04] min-h-0 grid grid-rows-[minmax(3rem,1fr)_3fr] overflow-hidden @container">
-      <div className={`flex items-center gap-3 px-5 py-3 bg-white/10 border-b border-white/15 ${accent}`}>
+    <div className="rounded-3xl border border-white/15 bg-white/[0.04] min-h-0 grid grid-rows-[minmax(2.5rem,1fr)_3fr] overflow-hidden @container">
+      <div className={`flex items-center gap-3 px-4 py-2 bg-white/10 border-b border-white/15 ${accent}`}>
         {icon}
         <h3 className="text-[13px] font-black uppercase tracking-[0.12em] text-white/90">{label}</h3>
       </div>
-      <div className="min-w-0 p-5 flex flex-col justify-center">
+      <div className="min-w-0 px-4 py-3 flex flex-col justify-center">
         <div className="grid min-w-0 grid-cols-[minmax(0,auto)_auto] items-baseline justify-start gap-1.5 overflow-hidden">
-          <span className="min-w-0 whitespace-nowrap text-[clamp(1.65rem,22cqw,2.35rem)] font-black tabular-nums text-white/90 leading-none tracking-normal">
+          <span className="min-w-0 whitespace-nowrap text-[clamp(1.4rem,16cqw,2.1rem)] font-black tabular-nums text-white/90 leading-none tracking-normal">
             {value}
           </span>
           {suffix && <span className="min-w-0 whitespace-nowrap text-[clamp(0.6rem,6cqw,0.8rem)] font-black uppercase tracking-normal text-white/65">{suffix}</span>}
@@ -100,13 +100,13 @@ function ExerciseDaysTile({
   history: FitbitStats['exerciseHistory'];
 }) {
   return (
-    <div className="rounded-3xl border border-white/15 bg-white/[0.04] min-h-0 grid grid-rows-[minmax(3rem,1fr)_3fr] overflow-hidden">
-      <div className="flex items-center gap-3 px-5 py-3 bg-white/10 border-b border-white/15 text-lime-200">
+    <div className="rounded-3xl border border-white/15 bg-white/[0.04] min-h-0 grid grid-rows-[minmax(2.5rem,1fr)_3fr] overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-2 bg-white/10 border-b border-white/15 text-lime-200">
         <Dumbbell size={24} />
         <h3 className="text-[13px] font-black uppercase tracking-[0.12em] text-white/90">Exercise</h3>
       </div>
 
-      <div className="p-5 flex flex-col justify-center">
+      <div className="px-4 py-3 flex flex-col justify-center">
         <div className="grid grid-cols-7 gap-1.5">
           {history.map(day => (
             <div key={day.date} className="flex flex-col items-center gap-2">
@@ -122,6 +122,7 @@ function ExerciseDaysTile({
 }
 
 export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
+  const [detailView, setDetailView] = useState<'overview' | 'weight' | 'stats'>('overview');
   const [weightRange, setWeightRange] = useState<WeightRange>('90days');
   const rangeLabel = weightRanges.find(range => range.value === weightRange)?.label;
   const weightGraph = useMemo(() => {
@@ -139,7 +140,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
     const chartMax = maxValue + rangePadding;
     const chartRange = Math.max(1, chartMax - chartMin);
     const width = 900;
-    const height = 360;
+    const height = detailView === 'weight' ? 460 : 600;
     const left = 56;
     const right = 28;
     const top = 28;
@@ -182,7 +183,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
       area,
       labels,
     };
-  }, [stats, weightRange]);
+  }, [stats, weightRange, detailView]);
 
   if (loading && !stats) {
     return (
@@ -215,14 +216,17 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 12 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="w-full h-full flex flex-col gap-6"
+      className="w-full h-full min-h-0 flex flex-col gap-4 overflow-hidden"
     >
       <header className="shrink-0 flex items-end justify-between gap-8 pr-24">
         <div className="min-w-0">
           <div className="flex items-center gap-3 text-white/70 font-bold uppercase tracking-[0.3em] text-xs">
             <Activity size={18} /> Google Health
           </div>
-          <h2 className="mt-3 text-6xl font-black tracking-tight leading-none">Health</h2>
+          <div className="mt-2 flex items-center gap-4">
+            {detailView !== 'overview' && <button type="button" onClick={() => setDetailView('overview')} aria-label="Back to Health overview" className="size-11 rounded-xl bg-white/10 flex items-center justify-center"><ArrowLeft size={24} /></button>}
+            <h2 className="text-4xl font-black tracking-tight leading-none">{detailView === 'weight' ? 'Weight history' : detailView === 'stats' ? 'Detailed stats' : 'Health'}</h2>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
@@ -243,62 +247,18 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 flex flex-col gap-5 overflow-y-auto">
-        <section aria-label="Daily activity" className="grid grid-cols-2 xl:grid-cols-4 gap-4 shrink-0 min-h-36">
-            <StatTile
-              icon={<Footprints size={24} />}
-              label="Steps"
-              value={stats.steps.toLocaleString()}
-              suffix={stepProgress === null ? undefined : `/ ${Math.round(stepProgress)}%`}
-              sublabel={formatStepSublabel(stats)}
-              accent="text-sky-200/70"
-            />
-            <StatTile icon={<Mountain size={24} />} label="Floors" value={stats.floors.toLocaleString()} suffix={`/ ${stats.floorGoal}`} accent="text-violet-200/70" />
-            <StatTile icon={<Flame size={24} />} label="Calories" value={stats.calories.toLocaleString()} accent="text-orange-200/70" />
-            <StatTile icon={<TrendingUp size={24} />} label="Active" value={stats.activeMinutes.toLocaleString()} suffix="min" accent="text-emerald-200/70" />
-        </section>
-
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-5">
-          <section aria-label="Recovery and health" className="grid grid-cols-2 grid-rows-2 gap-4 min-h-72">
-            <StatTile icon={<Heart size={24} />} label="Resting HR" value={stats.restingHeartRate ? stats.restingHeartRate.toLocaleString() : '--'} suffix="BPM" accent="text-rose-200/70" />
-            <StatTile icon={<BedDouble size={24} />} label="Sleep" value={formatSleepDuration(stats.sleepMinutes)} accent="text-indigo-200/70" />
-            <ExerciseDaysTile history={exerciseHistory} />
-            <StatTile icon={<Droplets size={24} />} label="Blood oxygen" value={stats.bloodOxygen ? stats.bloodOxygen.toLocaleString() : '--'} suffix="%" accent="text-cyan-200/70" />
-          </section>
-
-        <aside aria-label="Weight history" className="min-h-80 min-w-0 rounded-[2rem] bg-white/[0.04] border border-white/10 p-5 flex flex-col">
-          <div className="-mx-5 -mt-5 px-5 py-4 mb-4 rounded-t-[2rem] bg-white/10 border-b border-white/15 shrink-0">
-            <div className="flex items-center gap-4">
-              <Scale size={30} className="text-teal-300/80" />
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Current weight</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-black tabular-nums">
-                    {latestWeight ? latestWeight.toFixed(1) : '--'}
-                  </span>
-                  <span className="text-sm font-black uppercase tracking-widest text-white/70">kg</span>
-                </div>
-              </div>
+      <div className={`min-h-0 flex-1 grid gap-5 overflow-hidden ${detailView === 'overview' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        {detailView !== 'stats' && <aside aria-label="Weight history" className="min-h-0 min-w-0 rounded-[2rem] bg-white/[0.04] border border-white/10 p-5 flex flex-col">
+          <div className="-mx-5 -mt-5 px-5 py-3 mb-3 rounded-t-[2rem] bg-white/10 border-b border-white/15 shrink-0 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Scale size={26} className="text-teal-200" />
+              <div><h3 className="text-sm font-black uppercase tracking-wider text-white/90">Weight</h3><p className="text-3xl font-black tabular-nums">{latestWeight ? latestWeight.toFixed(1) : '--'} <span className="text-sm text-white/65">kg</span></p></div>
             </div>
+            <div className="text-right"><p className="text-xl font-black tabular-nums text-teal-100">{hasWeightHistory && weightGraph.points.length > 1 ? formatWeightDelta(weightDelta) : '--'} kg</p><p className="text-xs text-white/70">Last {rangeLabel}</p></div>
+            {detailView === 'overview' && <button type="button" onClick={() => setDetailView('weight')} aria-label="Expand weight chart" className="size-11 shrink-0 rounded-xl bg-white/10 flex items-center justify-center"><Maximize2 size={22} /></button>}
           </div>
 
           <div className="min-h-0 flex-1 flex flex-col">
-            <div className="flex items-center justify-between gap-5 shrink-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-3 text-teal-200/60">
-                  <CalendarRange size={18} />
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/70">Last {rangeLabel}</p>
-                </div>
-                <p className="mt-2 text-xl font-black text-white/90">Weight trend</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className={`text-2xl font-black tabular-nums ${weightDelta > 0 ? 'text-rose-200' : weightDelta < 0 ? 'text-emerald-200' : 'text-white/70'}`}>
-                  {hasWeightHistory && weightGraph.points.length > 1 ? formatWeightDelta(weightDelta) : '--'}
-                </p>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/65">kg</p>
-              </div>
-            </div>
-
             <fieldset className="mt-3 flex gap-2 shrink-0" aria-label="Weight history range">
               {weightRanges.map(range => (
                 <button
@@ -313,7 +273,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               ))}
             </fieldset>
 
-            <div className="relative mt-4 flex-1 min-h-32">
+            <div className="relative mt-3 flex-1 min-h-0">
               {hasWeightHistory ? (
                 <svg viewBox={`0 0 ${weightGraph.width} ${weightGraph.height}`} className="h-full w-full overflow-visible" role="img" aria-label={`Weight over the last ${rangeLabel}`}>
                   <defs>
@@ -327,7 +287,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                     return (
                       <g key={label}>
                         <line x1={weightGraph.left} x2={weightGraph.left + weightGraph.plotWidth} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-                        <text x="0" y={y + 5} fill="rgba(255,255,255,0.28)" fontSize="18" fontWeight="800">
+                        <text x="0" y={y + 5} fill="rgba(255,255,255,0.65)" fontSize="18" fontWeight="800">
                           {label}
                         </text>
                       </g>
@@ -343,7 +303,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                           <text x={point.x} y={weightGraph.height - 24} textAnchor="middle" fill="rgba(255,255,255,0.42)" fontSize="16" fontWeight="900">
                             {formatWeekday(point.date)}
                           </text>
-                          <text x={point.x} y={weightGraph.height - 4} textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize="13" fontWeight="800">
+                          <text x={point.x} y={weightGraph.height - 4} textAnchor="middle" fill="rgba(255,255,255,0.65)" fontSize="13" fontWeight="800">
                             {formatHealthDate(point.date)}
                           </text>
                         </>
@@ -369,8 +329,36 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               </p>
             </div>
           </div>
-        </aside>
-        </div>
+        </aside>}
+        {detailView !== 'weight' && <section aria-label="Health stats" className="min-h-0 flex flex-col gap-3">
+          <div className="flex items-center justify-between shrink-0">
+            <h3 className="text-sm font-black uppercase tracking-wider text-white/85">{detailView === 'stats' ? 'All health metrics' : 'Daily stats'}</h3>
+            {detailView === 'overview' && <button type="button" onClick={() => setDetailView('stats')} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white/90">More stats →</button>}
+          </div>
+          <div className={`grid min-h-0 flex-1 gap-3 ${detailView === 'stats' ? 'grid-cols-5 grid-rows-2' : 'grid-cols-2 grid-rows-3'}`}>
+            <StatTile
+              icon={<Footprints size={24} />}
+              label="Steps"
+              value={stats.steps.toLocaleString()}
+              suffix={stepProgress === null ? undefined : `/ ${Math.round(stepProgress)}%`}
+              sublabel={formatStepSublabel(stats)}
+              accent="text-sky-200/70"
+            />
+            <StatTile icon={<Flame size={24} />} label="Calories" value={stats.calories.toLocaleString()} accent="text-orange-200/70" />
+            <StatTile icon={<TrendingUp size={24} />} label="Active" value={stats.activeMinutes.toLocaleString()} suffix="min" accent="text-emerald-200/70" />
+            <StatTile icon={<Heart size={24} />} label="Resting HR" value={stats.restingHeartRate ? stats.restingHeartRate.toLocaleString() : '--'} suffix="BPM" accent="text-rose-200/70" />
+            <StatTile icon={<BedDouble size={24} />} label="Sleep" value={formatSleepDuration(stats.sleepMinutes)} accent="text-indigo-200/70" />
+            <ExerciseDaysTile history={exerciseHistory} />
+
+            {detailView === 'stats' && <>
+              <StatTile icon={<Mountain size={24} />} label="Floors" value={stats.floors.toLocaleString()} suffix={`/ ${stats.floorGoal}`} accent="text-violet-200" />
+              <StatTile icon={<Droplets size={24} />} label="Blood oxygen" value={stats.bloodOxygen ? stats.bloodOxygen.toLocaleString() : '--'} suffix="%" accent="text-cyan-200" />
+              <StatTile icon={<Heart size={24} />} label="HR variability" value={stats.heartRateVariability?.value?.toFixed(1) ?? '--'} suffix="ms" sublabel={stats.heartRateVariability?.error ? 'Unavailable · refresh to retry' : stats.heartRateVariability?.date ? formatHealthDate(stats.heartRateVariability.date) : 'No recent reading'} accent="text-rose-200" />
+              <StatTile icon={<Wind size={24} />} label="Breathing rate" value={stats.respiratoryRate?.value?.toFixed(1) ?? '--'} suffix="/min" sublabel={stats.respiratoryRate?.error ? 'Unavailable · refresh to retry' : stats.respiratoryRate?.date ? formatHealthDate(stats.respiratoryRate.date) : 'No recent reading'} accent="text-sky-200" />
+            </>}
+          </div>
+        </section>}
+
       </div>
     </motion.div>
   );
