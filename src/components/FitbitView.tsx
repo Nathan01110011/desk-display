@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, Droplets, RefreshCw, Maximize2, ArrowLeft, Wind } from 'lucide-react';
 import { FitbitStats } from '@/types';
@@ -124,6 +124,18 @@ function ExerciseDaysTile({
 export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
   const [detailView, setDetailView] = useState<'overview' | 'weight' | 'stats'>('overview');
   const [weightRange, setWeightRange] = useState<WeightRange>('90days');
+  const [chartElement, setChartElement] = useState<HTMLDivElement | null>(null);
+  const [chartSize, setChartSize] = useState({ width: 900, height: 360 });
+  useEffect(() => {
+    if (!chartElement) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.max(1, Math.round(entry.contentRect.width));
+      const height = Math.max(1, Math.round(entry.contentRect.height));
+      setChartSize(previous => previous.width === width && previous.height === height ? previous : { width, height });
+    });
+    observer.observe(chartElement);
+    return () => observer.disconnect();
+  }, [chartElement]);
   const rangeLabel = weightRanges.find(range => range.value === weightRange)?.label;
   const weightGraph = useMemo(() => {
     const today = new Date();
@@ -139,14 +151,13 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
     const chartMin = Math.max(0, minValue - rangePadding);
     const chartMax = maxValue + rangePadding;
     const chartRange = Math.max(1, chartMax - chartMin);
-    const width = 900;
-    const height = detailView === 'weight' ? 460 : 600;
-    const left = 56;
-    const right = 28;
-    const top = 28;
-    const bottom = 54;
-    const plotWidth = width - left - right;
-    const plotHeight = height - top - bottom;
+    const { width, height } = chartSize;
+    const left = 44;
+    const right = 24;
+    const top = 16;
+    const bottom = 42;
+    const plotWidth = Math.max(1, width - left - right);
+    const plotHeight = Math.max(1, height - top - bottom);
 
     const dateTime = (date: string) => {
       const [year, month, day] = date.split('-').map(Number);
@@ -154,7 +165,8 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
     };
     const firstTime = history.length ? dateTime(history[0].date) : 0;
     const timeSpan = history.length > 1 ? dateTime(history[history.length - 1].date) - firstTime : 0;
-    const labelIndices = new Set(Array.from({ length: Math.min(5, history.length) }, (_, index) => Math.round(index * (history.length - 1) / Math.max(1, Math.min(5, history.length) - 1))));
+    const labelCount = Math.min(history.length, Math.max(2, Math.min(8, Math.floor(plotWidth / 100))));
+    const labelIndices = new Set(Array.from({ length: labelCount }, (_, index) => Math.round(index * (history.length - 1) / Math.max(1, labelCount - 1))));
     const points = history.map(point => {
       const x = timeSpan === 0 ? left + plotWidth : left + plotWidth * (dateTime(point.date) - firstTime) / timeSpan;
       const y = top + plotHeight - ((point.weightKg - chartMin) / chartRange) * plotHeight;
@@ -183,7 +195,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
       area,
       labels,
     };
-  }, [stats, weightRange, detailView]);
+  }, [stats, weightRange, chartSize]);
 
   if (loading && !stats) {
     return (
@@ -273,9 +285,9 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               ))}
             </fieldset>
 
-            <div className="relative mt-3 flex-1 min-h-0">
+            <div ref={setChartElement} className="relative mt-3 flex-1 min-h-0">
               {hasWeightHistory ? (
-                <svg viewBox={`0 0 ${weightGraph.width} ${weightGraph.height}`} className="h-full w-full overflow-visible" role="img" aria-label={`Weight over the last ${rangeLabel}`}>
+                <svg viewBox={`0 0 ${weightGraph.width} ${weightGraph.height}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" role="img" aria-label={`Weight over the last ${rangeLabel}`}>
                   <defs>
                     <linearGradient id="weightArea" x1="0" x2="0" y1="0" y2="1">
                       <stop offset="0%" stopColor="#5eead4" stopOpacity="0.24" />
@@ -287,23 +299,24 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                     return (
                       <g key={label}>
                         <line x1={weightGraph.left} x2={weightGraph.left + weightGraph.plotWidth} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-                        <text x="0" y={y + 5} fill="rgba(255,255,255,0.65)" fontSize="18" fontWeight="800">
+                        <text x="0" y={y + 5} fill="rgba(255,255,255,0.65)" fontSize="13" fontWeight="800">
                           {label}
                         </text>
                       </g>
                     );
                   })}
                   <path d={weightGraph.area} fill="url(#weightArea)" />
-                  <path d={weightGraph.line} fill="none" stroke="#5eead4" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d={weightGraph.line} fill="none" stroke="#5eead4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   {weightGraph.points.map((point, index) => (
                     <g key={point.date}>
-                      <circle cx={point.x} cy={point.y} r="8" fill="#020617" stroke="#99f6e4" strokeWidth="5" />
+                      <title>{`${formatHealthDate(point.date)}: ${point.weightKg.toFixed(1)} kg`}</title>
+                      <circle cx={point.x} cy={point.y} r="3" fill="#020617" stroke="#99f6e4" strokeWidth="2" />
                       {weightGraph.labelIndices.has(index) && (
                         <>
-                          <text x={point.x} y={weightGraph.height - 24} textAnchor="middle" fill="rgba(255,255,255,0.42)" fontSize="16" fontWeight="900">
+                          <text x={point.x} y={weightGraph.height - 24} textAnchor="middle" fill="rgba(255,255,255,0.42)" fontSize="12" fontWeight="900">
                             {formatWeekday(point.date)}
                           </text>
-                          <text x={point.x} y={weightGraph.height - 4} textAnchor="middle" fill="rgba(255,255,255,0.65)" fontSize="13" fontWeight="800">
+                          <text x={point.x} y={weightGraph.height - 4} textAnchor="middle" fill="rgba(255,255,255,0.65)" fontSize="11" fontWeight="800">
                             {formatHealthDate(point.date)}
                           </text>
                         </>
