@@ -46,7 +46,7 @@ function StatTile({
   sublabel?: string;
 }) {
   return (
-    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 flex flex-col justify-between overflow-hidden @container">
+    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 gap-4 flex flex-col justify-between overflow-hidden @container">
       <div className={`flex items-center gap-3 ${accent}`}>
         {icon}
         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 truncate">{label}</span>
@@ -100,7 +100,7 @@ function ExerciseDaysTile({
   history: FitbitStats['exerciseHistory'];
 }) {
   return (
-    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 flex flex-col justify-between overflow-hidden">
+    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 gap-4 flex flex-col justify-between overflow-hidden">
       <div className="flex items-center gap-3 text-lime-200/70">
         <Dumbbell size={24} />
         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 truncate">Exercise</span>
@@ -243,17 +243,8 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 grid grid-cols-[minmax(0,1fr)_26rem] gap-6 items-stretch">
-        <section className="min-h-0 rounded-[2rem] bg-white/[0.04] border border-white/10 p-7 flex flex-col overflow-hidden">
-          <div className="shrink-0 flex items-center justify-between gap-6">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Today</p>
-              <p className="mt-2 text-3xl font-black text-white/90">Health summary</p>
-            </div>
-            <Activity size={34} className="text-sky-300/75" />
-          </div>
-
-          <div className="mt-7 grid min-h-0 flex-1 grid-cols-4 grid-rows-2 gap-4">
+      <div className="min-h-0 flex-1 flex flex-col gap-5 overflow-y-auto">
+        <section aria-label="Daily activity" className="grid grid-cols-2 xl:grid-cols-4 gap-4 shrink-0 min-h-36">
             <StatTile
               icon={<Footprints size={24} />}
               label="Steps"
@@ -265,15 +256,18 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
             <StatTile icon={<Mountain size={24} />} label="Floors" value={stats.floors.toLocaleString()} suffix={`/ ${stats.floorGoal}`} accent="text-violet-200/70" />
             <StatTile icon={<Flame size={24} />} label="Calories" value={stats.calories.toLocaleString()} accent="text-orange-200/70" />
             <StatTile icon={<TrendingUp size={24} />} label="Active" value={stats.activeMinutes.toLocaleString()} suffix="min" accent="text-emerald-200/70" />
+        </section>
+
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-5">
+          <section aria-label="Recovery and health" className="grid grid-cols-2 grid-rows-2 gap-4 min-h-72">
             <StatTile icon={<Heart size={24} />} label="Resting HR" value={stats.restingHeartRate ? stats.restingHeartRate.toLocaleString() : '--'} suffix="BPM" accent="text-rose-200/70" />
             <StatTile icon={<BedDouble size={24} />} label="Sleep" value={formatSleepDuration(stats.sleepMinutes)} accent="text-indigo-200/70" />
             <ExerciseDaysTile history={exerciseHistory} />
             <StatTile icon={<Droplets size={24} />} label="Blood oxygen" value={stats.bloodOxygen ? stats.bloodOxygen.toLocaleString() : '--'} suffix="%" accent="text-cyan-200/70" />
-          </div>
-        </section>
+          </section>
 
-        <aside className="min-h-0 flex flex-col gap-5 overflow-hidden">
-          <div className="rounded-[2rem] bg-white/[0.04] border border-white/10 p-6 shrink-0">
+        <aside aria-label="Weight history" className="min-h-80 min-w-0 rounded-[2rem] bg-white/[0.04] border border-white/10 p-5 flex flex-col">
+          <div className="pb-4 mb-4 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-4">
               <Scale size={30} className="text-teal-300/80" />
               <div>
@@ -288,7 +282,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
             </div>
           </div>
 
-          <div className="min-h-0 h-[24rem] rounded-[2rem] bg-white/[0.04] border border-white/10 p-5 flex flex-col">
+          <div className="min-h-0 flex-1 flex flex-col">
             <div className="flex items-center justify-between gap-5 shrink-0">
               <div className="min-w-0">
                 <div className="flex items-center gap-3 text-teal-200/60">
@@ -319,7 +313,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               ))}
             </fieldset>
 
-            <div className="relative mt-4 flex-1 min-h-0">
+            <div className="relative mt-4 flex-1 min-h-32">
               {hasWeightHistory ? (
                 <svg viewBox={`0 0 ${weightGraph.width} ${weightGraph.height}`} className="h-full w-full overflow-visible" role="img" aria-label={`Weight over the last ${rangeLabel}`}>
                   <defs>
@@ -367,15 +361,16 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
             </div>
           </div>
 
-          <div className="rounded-[2rem] bg-white/[0.04] border border-white/10 p-6">
+          <div className="pt-3 mt-3 border-t border-white/10 shrink-0">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Selected range</p>
-              <p className="mt-2 text-lg font-black text-white/70">
+              <p className="mt-1 text-sm font-black text-white/70">
                 {hasWeightHistory ? `${formatHealthDate(weightGraph.points[0].date)} to ${formatHealthDate(weightGraph.points[weightGraph.points.length - 1].date)}` : '--'}
               </p>
             </div>
           </div>
         </aside>
+        </div>
       </div>
     </motion.div>
   );
