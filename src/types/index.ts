@@ -147,6 +147,7 @@ export interface FitbitStats {
     exercised: boolean;
   }[];
   bloodOxygen: number;
+  weightHistoryError?: string | null;
   weightHistory: {
     date: string;
     weightKg: number;

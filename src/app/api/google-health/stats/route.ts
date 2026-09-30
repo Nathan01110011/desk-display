@@ -317,7 +317,18 @@ async function fetchDailyRollupSeries(
   dataType: 'weight',
   start: DateParts,
   end: DateParts,
-) {
+): Promise<GoogleHealthRollupPoint[]> {
+  // Keep each request safely within Google's 90-day maximum rollup range.
+  // Split into closed-open ranges so no day is omitted or requested twice.
+  const chunkEnd = addDays(start, 30);
+  if (formatDate(chunkEnd) < formatDate(end)) {
+    const [first, remaining] = await Promise.all([
+      fetchDailyRollupSeries(accessToken, dataType, start, chunkEnd),
+      fetchDailyRollupSeries(accessToken, dataType, chunkEnd, end),
+    ]);
+    return [...first, ...remaining];
+  }
+
   const response = await fetchWithRetry(
     `${GOOGLE_HEALTH_BASE_URL}/users/me/dataTypes/${dataType}/dataPoints:dailyRollUp`,
     {
@@ -339,7 +350,7 @@ async function fetchDailyRollupSeries(
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(`Google Health ${dataType} rollup failed`);
+    throw new Error(`Google Health ${dataType} rollup failed (HTTP ${response.status})`);
   }
 
   return (data.rollupDataPoints || []) as GoogleHealthRollupPoint[];
@@ -444,8 +455,10 @@ export async function GET() {
     const end = addDays(start, 1);
     const weekStart = addDays(start, -6);
     const fortnightStart = addDays(start, -13);
-    const weightStartDate = weightRangeStart(new Date(start.year, start.month - 1, start.day), '3months');
+    const weightStartDate = weightRangeStart(new Date(start.year, start.month - 1, start.day), '90days');
     const weightStart = { year: weightStartDate.getFullYear(), month: weightStartDate.getMonth() + 1, day: weightStartDate.getDate() };
+
+    let weightHistoryError: string | null = null;
 
     const [
       stepsSummary,
@@ -501,6 +514,7 @@ export async function GET() {
           .sort((a, b) => a.date.localeCompare(b.date))
       )).catch(error => {
         logger.warn('Google Health: Weight history unavailable', error);
+        weightHistoryError = error instanceof Error ? error.message : 'Weight history request failed';
         return [];
       }),
     ]);
@@ -527,6 +541,7 @@ export async function GET() {
       exerciseHistory: exerciseSummary.exerciseHistory,
       bloodOxygen,
       weightHistory,
+      weightHistoryError,
       lastSyncTime: new Date().toISOString(),
     });
   } catch (error) {

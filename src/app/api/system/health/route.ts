@@ -190,6 +190,7 @@ export async function GET(req: NextRequest) {
       classify: (response, body) => {
         const record = asRecord(body);
         if (!response.ok || record.error) return { status: 'down', detail: String(record.error || `HTTP ${response.status}`) };
+        if (record.weightHistoryError) return { status: 'degraded', detail: String(record.weightHistoryError) };
         return { status: 'healthy', detail: 'Google Health API responding.' };
       },
     }),
