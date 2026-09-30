@@ -16,12 +16,12 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    
+
     // Calculate fades (max 40px)
     const newTop = Math.min(scrollTop, 40);
     const scrollBottom = scrollHeight - clientHeight - scrollTop;
     const newBottom = Math.max(0, Math.min(scrollBottom, 40));
-    
+
     setTopFade(newTop);
     setBottomFade(newBottom);
   };
@@ -40,7 +40,7 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
 
   const getEventState = (event: CalendarEvent) => {
     if (event.isAllDay) return null;
-    
+
     const start = new Date(event.start).getTime();
     const end = new Date(event.end).getTime();
 
@@ -53,7 +53,7 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
       const diffMin = Math.ceil(diffMs / 60000);
 
       if (diffMin < 0) return null;
-      
+
       let label = '';
       if (diffMin <= 0) label = 'starting now';
       else if (diffMin < 60) label = `in ${diffMin}m`;
@@ -63,8 +63,8 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
         label = `in ${diffHrs}h ${remMin}m`;
       }
 
-      return { 
-        label: `(${label})`, 
+      return {
+        label: `(${label})`,
         type: 'upcoming',
         isUrgent: diffMin <= 15
       };
@@ -80,14 +80,14 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <h2 className="text-sm uppercase tracking-[0.2em] text-white/30 font-bold flex items-center gap-3 mb-8 shrink-0">
+      <h2 className="text-sm uppercase tracking-[0.2em] text-white/65 font-bold flex items-center gap-3 mb-4 shrink-0">
         <CalendarIcon size={18} /> Today
       </h2>
-      
-      <div 
+
+      <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 space-y-10 overflow-y-auto scrollbar-hide pr-2"
+        className="flex-1 space-y-3 overflow-y-auto scrollbar-hide pr-2"
         style={maskStyle}
       >
         {calendar.length > 0 ? (
@@ -95,20 +95,20 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
             const state = getEventState(event);
 
             return (
-              <div key={i} className="space-y-1">
-                <p className={`text-2xl font-bold leading-tight line-clamp-2 ${state?.type === 'ongoing' ? 'text-white' : 'text-white/90'}`}>
+              <div key={i} className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className={`text-xl font-bold leading-tight line-clamp-2 ${state?.type === 'ongoing' ? 'text-white' : 'text-white/90'}`}>
                   {event.summary}
                 </p>
-                <div className="text-white/40 text-lg flex items-center gap-2">
+                <div className="text-white/75 text-base flex items-center gap-2">
                   <Clock size={16} />
                   <span>
                     {event.isAllDay ? "All Day" : new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                   </span>
                   {state && (
                     <span className={`ml-1 font-bold ${
-                      state.type === 'ongoing' 
-                        ? 'text-green-400 animate-pulse' 
-                        : (state.isUrgent ? 'text-blue-400 animate-pulse' : 'text-white/20')
+                      state.type === 'ongoing'
+                        ? 'text-green-400 animate-pulse'
+                        : (state.isUrgent ? 'text-blue-400 animate-pulse' : 'text-white/65')
                     }`}>
                       {state.label}
                     </span>
@@ -118,7 +118,7 @@ export function CalendarView({ calendar, now }: CalendarViewProps) {
             );
           })
         ) : (
-          <div className="text-white/20 italic text-xl">No events left</div>
+          <div className="text-white/65 italic text-xl">No events left</div>
         )}
       </div>
     </div>

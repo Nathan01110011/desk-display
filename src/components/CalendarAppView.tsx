@@ -158,7 +158,7 @@ function DateTimeControl({ label, value, isAllDay, onChange }: DateTimeControlPr
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-2.5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-black uppercase tracking-[0.22em] text-white/30">{label}</span>
+        <span className="text-xs font-black uppercase tracking-[0.22em] text-white/65">{label}</span>
         <span className="text-sm font-black text-rose-100/70">{compactDateFormatter.format(date)}</span>
       </div>
 
@@ -173,7 +173,7 @@ function DateTimeControl({ label, value, isAllDay, onChange }: DateTimeControlPr
         </button>
         <div className="min-w-0 rounded-xl border border-white/5 bg-black/20 px-3 py-1.5 text-center">
           <p className="truncate text-lg font-black leading-none text-white">{date.getDate()}</p>
-          <p className="mt-1 truncate text-xs font-black uppercase tracking-[0.18em] text-white/35">
+          <p className="mt-1 truncate text-xs font-black uppercase tracking-[0.18em] text-white/75">
             {date.toLocaleDateString(undefined, { weekday: 'long', month: 'long' })}
           </p>
         </div>
@@ -194,7 +194,7 @@ function DateTimeControl({ label, value, isAllDay, onChange }: DateTimeControlPr
             { name: 'Minute', value: minute, field: 'minute' as const, step: 15 }
           ].map(control => (
             <div key={control.name} className="rounded-xl border border-white/5 bg-black/20 p-1.5">
-              <p className="text-center text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/25">{control.name}</p>
+              <p className="text-center text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/65">{control.name}</p>
               <div className="mt-1.5 grid grid-cols-[2rem_minmax(0,1fr)_2rem] items-center gap-2">
                 <button
                   type="button"
@@ -340,14 +340,14 @@ export function CalendarAppView({
   };
 
   return (
-    <div className="relative w-full h-full grid grid-cols-[minmax(0,1fr)_22rem] gap-8 items-stretch">
-      <section className="min-h-0 flex flex-col rounded-[2rem] bg-white/[0.04] border border-white/10 overflow-hidden">
-        <div className="shrink-0 flex items-center justify-between gap-6 px-8 py-6 border-b border-white/10">
+    <div className="relative w-full h-full grid grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)] gap-4 items-stretch">
+      <section className="min-h-0 flex flex-col rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-slate-950 border border-rose-200/15 overflow-hidden">
+        <div className="shrink-0 flex items-center justify-between gap-6 px-5 py-4 border-b border-white/10">
           <div className="min-w-0">
-            <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs">
+            <div className="flex items-center gap-3 text-white/65 font-bold uppercase tracking-[0.3em] text-xs">
               <CalendarDays size={18} /> Calendar
             </div>
-            <h2 className="mt-3 text-5xl font-black tracking-tight leading-none truncate">
+            <h2 className="mt-2 text-3xl font-black tracking-tight leading-none truncate">
               {monthFormatter.format(visibleMonth)}
             </h2>
           </div>
@@ -378,7 +378,7 @@ export function CalendarAppView({
 
         <div className="grid grid-cols-7 px-6 pt-5 pb-3 gap-2 shrink-0">
           {dayLabels.map(day => (
-            <div key={day} className="text-center text-xs font-black uppercase tracking-[0.24em] text-white/25">
+            <div key={day} className="text-center text-xs font-black uppercase tracking-[0.24em] text-white/65">
               {day}
             </div>
           ))}
@@ -423,7 +423,7 @@ export function CalendarAppView({
                   )}
                 </div>
                 <span className={`text-xs font-black uppercase tracking-widest ${
-                  isSelected ? 'text-black/45' : isWeekend ? 'text-sky-200/45' : 'text-white/25'
+                  isSelected ? 'text-black/45' : isWeekend ? 'text-sky-200/45' : 'text-white/65'
                 }`}>
                   {date.toLocaleDateString(undefined, { weekday: 'short' })}
                 </span>
@@ -433,9 +433,9 @@ export function CalendarAppView({
         </div>
       </section>
 
-      <aside className="min-h-0 rounded-[2rem] bg-white/[0.04] border border-white/10 p-8 flex flex-col">
+      <aside className="min-h-0 rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-slate-950 border border-rose-200/15 p-8 flex flex-col">
         <div className="space-y-2">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-white/25">Selected date</p>
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">Selected date</p>
           <h3 className="text-5xl font-black tracking-tight leading-none">{selectedDate.getDate()}</h3>
           <p className="text-xl font-bold leading-snug text-white/80">{sameDayFormatter.format(selectedDate)}</p>
         </div>
@@ -443,12 +443,12 @@ export function CalendarAppView({
         <div className="mt-6 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
             <BriefcaseBusiness size={22} className="text-sky-300/70" />
-            <p className="mt-3 text-sm font-black uppercase tracking-widest text-white/30">Work</p>
+            <p className="mt-3 text-sm font-black uppercase tracking-widest text-white/65">Work</p>
             <p className="text-2xl font-black text-white/80">{selectedWorkEvents.length}</p>
           </div>
           <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
             <Heart size={22} className="text-rose-300/70" />
-            <p className="mt-3 text-sm font-black uppercase tracking-widest text-white/30">Personal</p>
+            <p className="mt-3 text-sm font-black uppercase tracking-widest text-white/65">Personal</p>
             <p className="text-2xl font-black text-white/80">{selectedPersonalEvents.length}</p>
           </div>
         </div>
@@ -458,14 +458,14 @@ export function CalendarAppView({
             {selectedEvents.length === 0 ? (
               <div className="h-full min-h-36 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center px-5 text-center">
                 <div className="space-y-3">
-                  <Clock size={24} className="mx-auto text-white/20" />
-                  <p className="text-base font-bold text-white/30">No calendar events</p>
+                  <Clock size={24} className="mx-auto text-white/65" />
+                  <p className="text-base font-bold text-white/65">No calendar events</p>
                 </div>
               </div>
             ) : null}
 
             <div className="space-y-3">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Work calendar</p>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Work calendar</p>
               {selectedWorkEvents.length > 0 ? (
                 selectedWorkEvents.map(event => (
                   <div key={`${event.start}-${event.summary}`} className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3">
@@ -475,18 +475,18 @@ export function CalendarAppView({
                     </div>
                     <p className="mt-2 text-base font-bold leading-snug text-white/80 line-clamp-2">{event.summary}</p>
                     {event.location && (
-                      <p className="mt-1 text-xs font-bold leading-snug text-white/30 line-clamp-1">{event.location}</p>
+                      <p className="mt-1 text-xs font-bold leading-snug text-white/65 line-clamp-1">{event.location}</p>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3 text-sm font-bold text-white/25">No work events</p>
+                <p className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3 text-sm font-bold text-white/65">No work events</p>
               )}
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Personal calendar</p>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Personal calendar</p>
                 <button
                   onPointerDown={startNewPersonalEvent}
                   className="ml-auto h-9 w-9 rounded-xl bg-rose-300 text-black flex items-center justify-center active:scale-95 transition-all"
@@ -497,7 +497,7 @@ export function CalendarAppView({
               </div>
 
               {personalCalendarLoading ? (
-                <p className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3 text-sm font-bold text-white/25">Loading personal events</p>
+                <p className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3 text-sm font-bold text-white/65">Loading personal events</p>
               ) : selectedPersonalEvents.length > 0 ? (
                 selectedPersonalEvents.map(event => (
                   <div key={`${event.id}-${event.start}`} className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3">
@@ -510,7 +510,7 @@ export function CalendarAppView({
                           setSaveError('');
                           setDraft(eventToDraft(event));
                         }}
-                        className="ml-auto h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 active:scale-95 transition-all"
+                        className="ml-auto h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/75 active:scale-95 transition-all"
                         aria-label="Edit personal event"
                       >
                         <Pencil size={15} />
@@ -518,12 +518,12 @@ export function CalendarAppView({
                     </div>
                     <p className="mt-2 text-base font-bold leading-snug text-white/80 line-clamp-2">{event.summary}</p>
                     {event.location && (
-                      <p className="mt-1 text-xs font-bold leading-snug text-white/30 line-clamp-1">{event.location}</p>
+                      <p className="mt-1 text-xs font-bold leading-snug text-white/65 line-clamp-1">{event.location}</p>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3 text-sm font-bold text-white/25">No personal events</p>
+                <p className="rounded-2xl bg-white/[0.03] border border-white/5 px-4 py-3 text-sm font-bold text-white/65">No personal events</p>
               )}
             </div>
           </div>
@@ -548,11 +548,11 @@ export function CalendarAppView({
                 <div className="min-w-0 min-h-0 overflow-y-auto scrollbar-hide pr-1">
                   <div className="grid min-h-full grid-rows-[auto_auto_auto_auto] gap-3">
                   <label className="block">
-                    <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.22em] text-white/30">Title</span>
+                    <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.22em] text-white/65">Title</span>
                     <input
                       value={draft.summary}
                       onChange={event => updateDraft({ summary: event.target.value })}
-                      className="h-14 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-xl font-black text-white outline-none transition-colors placeholder:text-white/15 focus:border-rose-200/60"
+                      className="h-14 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-xl font-black text-white outline-none transition-colors placeholder:text-white/65 focus:border-rose-200/60"
                       placeholder="Event title"
                     />
                   </label>
@@ -573,11 +573,11 @@ export function CalendarAppView({
                   </div>
 
                   <label className="block min-h-0">
-                    <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.22em] text-white/30">Location</span>
+                    <span className="mb-1.5 block text-xs font-black uppercase tracking-[0.22em] text-white/65">Location</span>
                     <input
                       value={draft.location || ''}
                       onChange={event => updateDraft({ location: event.target.value })}
-                      className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-base font-bold text-white outline-none transition-colors placeholder:text-white/15 focus:border-rose-200/60"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-base font-bold text-white outline-none transition-colors placeholder:text-white/65 focus:border-rose-200/60"
                       placeholder="Location"
                     />
                   </label>
@@ -599,7 +599,7 @@ export function CalendarAppView({
                     </button>
 
                     <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-2.5">
-                      <div className="mb-1.5 flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-white/30">
+                      <div className="mb-1.5 flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-white/65">
                         <Repeat size={16} /> Repeat
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -614,7 +614,7 @@ export function CalendarAppView({
                               className={`h-9 rounded-xl border text-xs font-black uppercase tracking-[0.16em] transition-all active:scale-95 ${
                                 isActive
                                   ? 'border-rose-200/40 bg-rose-200/20 text-rose-50'
-                                  : 'border-white/10 bg-black/20 text-white/40'
+                                  : 'border-white/10 bg-black/20 text-white/75'
                               }`}
                               aria-pressed={isActive}
                             >
@@ -630,17 +630,17 @@ export function CalendarAppView({
 
                 <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                   <div className="space-y-2">
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Date</p>
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Date</p>
                     <p className="text-3xl font-black leading-tight text-white">{sameDayFormatter.format(fromDateTimeInputValue(draft.start))}</p>
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Summary</p>
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Summary</p>
                     <div className="rounded-2xl border border-white/5 bg-black/20 px-4 py-4">
                       <p className="line-clamp-2 text-lg font-black leading-snug text-white/85">
                         {draft.summary.trim() || 'Untitled event'}
                       </p>
-                      <p className="mt-3 text-sm font-bold text-white/35">
+                      <p className="mt-3 text-sm font-bold text-white/75">
                         {draft.isAllDay ? 'All day' : `${formatDraftDateTime(draft.start)} - ${formatDraftDateTime(draft.end)}`}
                       </p>
                       {draft.recurrence && draft.recurrence !== 'none' && (
@@ -649,7 +649,7 @@ export function CalendarAppView({
                         </p>
                       )}
                       {draft.location && (
-                        <p className="mt-2 line-clamp-2 text-sm font-bold text-white/30">{draft.location}</p>
+                        <p className="mt-2 line-clamp-2 text-sm font-bold text-white/65">{draft.location}</p>
                       )}
                     </div>
                   </div>

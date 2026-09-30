@@ -17,14 +17,14 @@ interface PomodoroViewProps {
   onClose: () => void;
 }
 
-export function PomodoroView({ 
-  pomoTime, 
-  pomoActive, 
-  pomoMode, 
+export function PomodoroView({
+  pomoTime,
+  pomoActive,
+  pomoMode,
   workDuration,
   breakDuration,
-  onToggle, 
-  onReset, 
+  onToggle,
+  onReset,
   onSwitchMode,
   onUpdateDurations
 }: PomodoroViewProps) {
@@ -46,15 +46,15 @@ export function PomodoroView({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, y: 14 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="w-full h-full grid grid-cols-[minmax(0,1fr)_22rem] gap-8"
+      className="w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"
     >
-      <section className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex flex-col">
-        <div className="flex items-center justify-between gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
+      <section className="min-h-0 rounded-[2rem] border border-rose-200/15 bg-gradient-to-br from-rose-950/70 to-slate-950 p-5 flex flex-col">
+        <div className="flex items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
           <span className="flex items-center gap-3"><Timer size={18} /> Pomodoro</span>
           <span>{isBreak ? 'Break' : 'Focus'}</span>
         </div>
 
-        <div className="flex-1 min-h-0 flex items-center justify-center py-6">
+        <div className="flex-1 min-h-0 flex items-center justify-center py-3">
           <div className="relative aspect-square w-[min(100%,46vh,30rem)] shrink">
             <div
               className="absolute inset-0 rounded-full"
@@ -84,7 +84,7 @@ export function PomodoroView({
                   <div className={`mt-4 max-w-[78%] whitespace-nowrap ${timeTextSize} font-black tracking-tighter leading-none tabular-nums`}>
                     {displayTime}
                   </div>
-                  <div className="mt-4 text-[clamp(0.65rem,1.3vw,0.75rem)] font-black uppercase tracking-[0.28em] text-white/35">
+                  <div className="mt-4 text-[clamp(0.65rem,1.3vw,0.75rem)] font-black uppercase tracking-[0.28em] text-white/75">
                     {remaining}% left
                   </div>
                 </>
@@ -95,24 +95,24 @@ export function PomodoroView({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Elapsed</p>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Elapsed</p>
             <p className="mt-1 text-2xl font-black tabular-nums">{Math.round(progress * 100)}%</p>
           </div>
           <div className="rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Left</p>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Left</p>
             <p className="mt-1 text-2xl font-black tabular-nums">{remaining}%</p>
           </div>
         </div>
       </section>
 
-      <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 flex flex-col">
-        <div className="flex items-center gap-4 text-white/30 font-bold uppercase tracking-[0.3em] text-sm">
+      <aside className="min-h-0 rounded-[2rem] border border-white/10 bg-slate-900/70 p-5 flex flex-col gap-3 overflow-y-auto">
+        <div className="flex items-center gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
           <Timer size={20} /> Pomodoro
         </div>
 
-        <div className="mt-8">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-white/25">Current mode</p>
-          <div className="mt-4 flex items-center gap-4">
+        <div className="mt-3">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">Current mode</p>
+          <div className="mt-2 flex items-center gap-4">
             <div
               className="size-14 rounded-2xl border border-white/10 flex items-center justify-center"
               style={{ background: softAccent }}
@@ -121,39 +121,30 @@ export function PomodoroView({
             </div>
             <div>
               <h2 className="text-4xl font-black tracking-tight">{isBreak ? 'Break' : 'Focus'}</h2>
-              <p className="text-white/35 font-bold">{pomoActive ? 'Running now' : isFinished ? 'Finished' : 'Ready'}</p>
+              <p className="text-white/75 font-bold">{pomoActive ? 'Running now' : isFinished ? 'Finished' : 'Ready'}</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Elapsed</p>
-            <p className="mt-2 text-3xl font-black tabular-nums">{Math.round(progress * 100)}%</p>
-          </div>
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Left</p>
-            <p className="mt-2 text-3xl font-black tabular-nums">{remaining}%</p>
-          </div>
-        </div>
 
-        <div className="mt-8 space-y-3">
+
+        <div className="mt-3 space-y-3">
           <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/25">Durations</p>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Durations</p>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-black uppercase tracking-widest text-white/35">Focus</span>
+              <span className="text-sm font-black uppercase tracking-widest text-white/75">Focus</span>
               <div className="flex items-center gap-3">
                 <button
                   onPointerDown={() => onUpdateDurations(Math.max(1, workDuration - 1), breakDuration)}
-                  className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
-                  aria-label="Decrease focus duration"
+                  className="p-3 rounded-xl bg-white/10 active:scale-90 transition-all"
+                  aria-label="Decrease focus duration" disabled={workDuration <= 1}
                 >
                   <Minus size={18} />
                 </button>
                 <span className="text-2xl font-black min-w-12 text-center tabular-nums">{workDuration}</span>
                 <button
                   onPointerDown={() => onUpdateDurations(workDuration + 1, breakDuration)}
-                  className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                  className="p-3 rounded-xl bg-white/10 active:scale-90 transition-all"
                   aria-label="Increase focus duration"
                 >
                   <Plus size={18} />
@@ -161,19 +152,19 @@ export function PomodoroView({
               </div>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-black uppercase tracking-widest text-white/35">Break</span>
+              <span className="text-sm font-black uppercase tracking-widest text-white/75">Break</span>
               <div className="flex items-center gap-3">
                 <button
                   onPointerDown={() => onUpdateDurations(workDuration, Math.max(1, breakDuration - 1))}
-                  className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
-                  aria-label="Decrease break duration"
+                  className="p-3 rounded-xl bg-white/10 active:scale-90 transition-all"
+                  aria-label="Decrease break duration" disabled={breakDuration <= 1}
                 >
                   <Minus size={18} />
                 </button>
                 <span className="text-2xl font-black min-w-12 text-center tabular-nums">{breakDuration}</span>
                 <button
                   onPointerDown={() => onUpdateDurations(workDuration, breakDuration + 1)}
-                  className="p-2 rounded-xl bg-white/5 active:scale-90 transition-all"
+                  className="p-3 rounded-xl bg-white/10 active:scale-90 transition-all"
                   aria-label="Increase break duration"
                 >
                   <Plus size={18} />
@@ -195,23 +186,23 @@ export function PomodoroView({
         <div className="mt-auto flex items-center gap-4">
           {isFinished ? (
             <button
-              onPointerDown={onReset}
-              className="flex-1 py-6 rounded-[2rem] bg-white text-black text-2xl font-black uppercase tracking-widest shadow-2xl active:scale-[0.98] transition-transform flex items-center justify-center gap-3"
+              aria-label="Reset focus timer" onPointerDown={onReset}
+              className="flex-1 py-3 rounded-[2rem] bg-white text-black text-2xl font-black uppercase tracking-widest shadow-2xl active:scale-[0.98] transition-transform flex items-center justify-center gap-3"
             >
               <X size={34} strokeWidth={3} /> Clear
             </button>
           ) : (
             <>
               <button
-                onPointerDown={onToggle}
-                className="p-7 rounded-full bg-white text-black shadow-2xl active:scale-90 transition-transform"
+                aria-label={pomoActive ? 'Pause focus timer' : 'Start focus timer'} onPointerDown={onToggle}
+                className="p-4 rounded-2xl bg-white text-black shadow-2xl active:scale-90 transition-transform"
               >
-                {pomoActive ? <Pause size={42} fill="currentColor" /> : <Play size={42} fill="currentColor" className="ml-1" />}
+                {pomoActive ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" className="ml-1" />}
               </button>
 
               <button
-                onPointerDown={onReset}
-                className="p-6 rounded-full bg-white/10 text-white shadow-xl active:scale-90 transition-transform"
+                aria-label="Reset focus timer" onPointerDown={onReset}
+                className="p-4 rounded-2xl bg-white/10 text-white shadow-xl active:scale-90 transition-transform"
               >
                 <RotateCcw size={34} />
               </button>

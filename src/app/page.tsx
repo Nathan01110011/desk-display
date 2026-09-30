@@ -34,7 +34,7 @@ import { formatPomoTime } from '@/lib/format';
 import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import dynamic from 'next/dynamic';
 
-const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), { 
+const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full opacity-20"><Timer size={48} className="animate-spin" /></div>
 });
@@ -68,8 +68,8 @@ const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
 
 type FullscreenReturnPhase = 'idle' | 'app-exit' | 'sidebar-enter';
 
-function isFullscreenAppView(view: ViewState) {
-  return view === 'calendar' || view === 'gallery' || view === 'fitbit' || view === 'weather' || view === 'todo' || view === 'rule';
+function isFullscreenAppView(view: ViewState): boolean {
+  return view !== 'dashboard';
 }
 
 export default function Dashboard() {
@@ -103,13 +103,13 @@ export default function Dashboard() {
   const { weather, refresh: refreshWeather } = useWeather();
   const { stats: fitbitStats, loading: fitbitLoading, refresh: refreshFitbit } = useFitbit(appConfig.fitbit);
   const { devices: smartDevices, loading: smartLoading, updateDevice } = useSmartHome(appConfig.home);
-  const { 
+  const {
     timeLeft: timerSeconds, duration: timerDuration, isActive: timerRunning, isFinished: timerUp,
     startTimer, pauseTimer, resumeTimer, resetTimer, dismissAlert
   } = useTimer();
-  const { 
-    pomoTime, pomoActive, pomoMode, workDuration, breakDuration, 
-    togglePomo, resetPomo, switchMode, updateDurations 
+  const {
+    pomoTime, pomoActive, pomoMode, workDuration, breakDuration,
+    togglePomo, resetPomo, switchMode, updateDurations
   } = usePomodoro();
 
   const { time, date, clocks, updateClocks, rawTime } = useTime(weather?.timezone);
@@ -126,7 +126,7 @@ export default function Dashboard() {
       try {
         const res = await fetch('/api/system/settings');
         const data = await res.json();
-        
+
         if (data.appConfig) {
           const mergedConfig = { ...DEFAULT_CONFIG, ...data.appConfig };
           if (mergedConfig.appOrder) {
@@ -159,7 +159,7 @@ export default function Dashboard() {
         );
         setDisableScreensaverWhileSpotifyPlaying(Boolean(data.disableScreensaverWhileSpotifyPlaying));
         setIsRuleLocked(loadedRuleLock.lockOnOpen);
-        
+
         if (data.worldClocks) updateClocks(data.worldClocks);
         if (data.weatherLocation) localStorage.setItem('weatherLocation', data.weatherLocation);
         if (data.weatherUnit) localStorage.setItem('weatherUnit', data.weatherUnit);
@@ -341,10 +341,10 @@ export default function Dashboard() {
             <img src={spotify.albumImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover blur-[40px] saturate-125 opacity-30" />
           </div>
         ) : (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 z-0" 
+            className="absolute inset-0 z-0"
             style={{ background: 'radial-gradient(circle at center, #333333 0%, #000000 70%)' }}
           />
         )}
@@ -381,7 +381,7 @@ export default function Dashboard() {
               <BellOff size={120} className="text-white" />
               <h1 className="text-8xl font-black uppercase tracking-tighter italic">Time&apos;s Up!</h1>
             </motion.div>
-            
+
             <button
               onPointerDown={dismissAlert}
               className="px-16 py-8 rounded-[3rem] bg-white text-black text-4xl font-black uppercase tracking-widest shadow-2xl active:scale-90 transition-transform"
@@ -416,7 +416,7 @@ export default function Dashboard() {
                 }`}
               >
                 <div className={`${clocks.length > 0 ? 'text-left' : 'text-center'}`}>
-                  <p className="text-[clamp(2.25rem,4vw,5rem)] font-black uppercase tracking-[0.35em] text-white/35">{date}</p>
+                  <p className="text-[clamp(2.25rem,4vw,5rem)] font-black uppercase tracking-[0.35em] text-white/70">{date}</p>
                   <h1 className={`${clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
                     {time}
                   </h1>
@@ -425,7 +425,7 @@ export default function Dashboard() {
                   <div className="flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]">
                     {clocks.map(clock => (
                       <div key={clock.id} className="flex flex-col items-end gap-1">
-                        <span className="text-[clamp(1.1rem,1.7vw,2rem)] font-black uppercase tracking-[0.22em] text-white/35">{clock.label}</span>
+                        <span className="text-[clamp(1.1rem,1.7vw,2rem)] font-black uppercase tracking-[0.22em] text-white/70">{clock.label}</span>
                         <span className="text-[clamp(2.75rem,5vw,5.75rem)] font-black tabular-nums leading-none text-white/80">{clock.displayTime}</span>
                       </div>
                     ))}
@@ -441,19 +441,19 @@ export default function Dashboard() {
         {/* Sidebar (Animated Width) */}
         <AnimatePresence>
           {showSidebar && (
-            <motion.div 
+            <motion.div
               key="sidebar"
               initial={{ x: -64, opacity: 0 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ x: -64, opacity: 0 }}
-              transition={{ duration: 0.22, ease: "easeOut" }} 
+              transition={{ duration: 0.22, ease: "easeOut" }}
               className="w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative"
             >
               <div className="p-8 w-[33.33vw] h-full flex flex-col">
                 <div className="mb-10 flex items-start justify-between w-full">
                   <div className="flex-1">
                     <h1 className="text-7xl font-black tracking-tighter leading-none">{time}</h1>
-                    <p className="text-xl text-white/40 font-bold uppercase tracking-widest mt-2">{date}</p>
+                    <p className="text-xl text-white/70 font-bold uppercase tracking-widest mt-2">{date}</p>
                   </div>
                   {clocks.length > 0 && (
                     <div className="flex flex-col items-end gap-2 pt-1 shrink-0">
@@ -502,7 +502,7 @@ export default function Dashboard() {
                         exit={{ opacity: 0, y: -20 }}
                         className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-white/60 active:scale-95 transition-all"
                       >
-                        <div 
+                        <div
                           onPointerDown={() => openView('pomodoro')}
                           className="flex items-center gap-2 cursor-pointer"
                         >
@@ -512,7 +512,7 @@ export default function Dashboard() {
                           </span>
                         </div>
                         {!pomoActive && (
-                          <button 
+                          <button
                             onPointerDown={(e) => { e.stopPropagation(); resetPomo(); }}
                             className="p-1 hover:bg-white/10 rounded-lg transition-colors"
                           >
@@ -529,7 +529,7 @@ export default function Dashboard() {
                         exit={{ opacity: 0, y: -20 }}
                         className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-white/60 active:scale-95 transition-all"
                       >
-                        <div 
+                        <div
                           onPointerDown={() => openView('timer')}
                           className="flex items-center gap-2 cursor-pointer"
                         >
@@ -539,7 +539,7 @@ export default function Dashboard() {
                           </span>
                         </div>
                         {!timerRunning && (
-                          <button 
+                          <button
                             onPointerDown={(e) => { e.stopPropagation(); dismissAlert(); }}
                             className="p-1 hover:bg-white/10 rounded-lg transition-colors"
                           >
@@ -635,10 +635,10 @@ export default function Dashboard() {
                 </AnimatePresence>
 
                 <motion.div layout transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="w-full flex justify-center">
-                  <AppLauncher 
+                  <AppLauncher
                     onOpenCalendar={() => openView('calendar')}
                     onOpenGallery={() => openView('gallery')}
-                    onOpenPomo={() => openView('pomodoro')} 
+                    onOpenPomo={() => openView('pomodoro')}
                     onOpenSettings={() => openView('settings')}
                     onOpenSports={() => openView('sports')}
                     onOpenWeather={() => openView('weather')}
@@ -649,8 +649,8 @@ export default function Dashboard() {
                     onOpenRule={() => openView('rule')}
                     onResetPomo={resetPomo}
                     onResetTimer={dismissAlert}
-                    pomoActive={pomoActive} 
-                    pomoTime={pomoTime} 
+                    pomoActive={pomoActive}
+                    pomoTime={pomoTime}
                     pomoFinished={pomoTime === 0 && !pomoActive}
                     pomoMode={pomoMode}
                     timerActive={timerRunning}
@@ -679,7 +679,7 @@ export default function Dashboard() {
                 className="w-full min-h-0 flex-1 flex items-center justify-center"
               >
                 {activeView === 'pomodoro' && (
-                  <PomodoroView 
+                  <PomodoroView
                     pomoTime={pomoTime} pomoActive={pomoActive} pomoMode={pomoMode}
                     workDuration={workDuration} breakDuration={breakDuration}
                     onToggle={togglePomo} onReset={resetPomo} onSwitchMode={() => switchMode()}
@@ -700,9 +700,9 @@ export default function Dashboard() {
                 {activeView === 'gallery' && <GalleryView />}
                 {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
                 {activeView === 'weather' && (
-                  <WeatherView 
-                    weather={weather} 
-                    onClose={closeActiveView} 
+                  <WeatherView
+                    weather={weather}
+                    onClose={closeActiveView}
                     isExtended={weatherDetail}
                     onToggleExtended={setWeatherDetail}
                   />
@@ -710,7 +710,7 @@ export default function Dashboard() {
                 {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onRefresh={refreshFitbit} onClose={closeActiveView} />}
                 {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={closeActiveView} />}
                 {activeView === 'timer' && (
-                  <TimerView 
+                  <TimerView
                     timeLeft={timerSeconds} totalTime={timerDuration} isActive={timerRunning} isFinished={timerUp}
                     onStart={startTimer} onPause={pauseTimer} onResume={resumeTimer} onReset={resetTimer}
                     onDismiss={dismissAlert}
@@ -718,7 +718,7 @@ export default function Dashboard() {
                   />
                 )}
                 {activeView === 'settings' && (
-                  <SettingsView 
+                  <SettingsView
                     onClose={closeActiveView}
                     onSystemAdminChange={setSystemAdminOpen}
                   appConfig={appConfig} onUpdateAppConfig={updateAppConfig}

@@ -1,7 +1,9 @@
 'use client';
 
+import BackButton from './BackButton';
+
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, Clipboard, RefreshCw, Trash2 } from 'lucide-react';
+import { Check, Clipboard, RefreshCw, Trash2 } from 'lucide-react';
 import { SpotifyConnectionCard } from './SpotifyConnectionCard';
 import { SystemInfoCard } from './SystemInfoCard';
 
@@ -228,19 +230,13 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
         : 'Update & Rebuild';
 
   return (
-    <div className="w-full max-w-6xl mx-auto h-full overflow-y-auto overscroll-contain py-8 pr-4 scrollbar-hide touch-pan-y">
+    <div className="w-full max-w-6xl mx-auto h-full overflow-y-auto overscroll-contain py-2 pr-2 scrollbar-hide touch-pan-y">
       <div className="flex min-h-full flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button
-            onPointerDown={onBack}
-            className="flex size-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 active:scale-90 transition-all"
-            aria-label="Back to settings"
-          >
-            <ArrowLeft size={20} />
-          </button>
+          <BackButton onClick={onBack} aria-label="Back to settings" />
           <div>
-            <div className="text-xs font-bold uppercase tracking-[0.3em] text-white/30">Settings</div>
+            <div className="text-xs font-bold uppercase tracking-[0.3em] text-white/65">Settings</div>
             <h2 className="text-2xl font-black text-white/85">System Admin</h2>
           </div>
         </div>
@@ -300,19 +296,19 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
               key={option}
               onPointerDown={() => { setLevel(option); setRenderLimit(INITIAL_RENDER_LIMIT); }}
               className={`rounded-xl border px-4 py-2 text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
-                selected ? 'border-white bg-white text-black' : 'border-white/10 bg-white/[0.03] text-white/35'
+                selected ? 'border-white bg-white text-black' : 'border-white/10 bg-white/[0.03] text-white/75'
               }`}
             >
               {option}
             </button>
           );
         })}
-        <span className="ml-auto text-xs font-bold text-white/25">{visibleLogs.length} shown · {filteredLogs.length} matching · {logs.length} stored</span>
+        <span className="ml-auto text-xs font-bold text-white/65">{visibleLogs.length} shown · {filteredLogs.length} matching · {logs.length} stored</span>
       </div>
 
       <div className="rounded-3xl border border-white/10 bg-black/40 p-4 font-mono text-xs">
         {filteredLogs.length === 0 ? (
-          <div className="flex h-full min-h-56 items-center justify-center text-center text-white/25">
+          <div className="flex h-full min-h-56 items-center justify-center text-center text-white/65">
             No logs captured yet. Errors and console output will appear here automatically.
           </div>
         ) : (
@@ -320,14 +316,14 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
             {filteredLogs.length > visibleLogs.length && (
               <button
                 onPointerDown={() => setRenderLimit((current) => current + RENDER_LIMIT_STEP)}
-                className="mb-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-black uppercase tracking-widest text-white/35 active:scale-[0.99] transition-all"
+                className="mb-2 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-black uppercase tracking-widest text-white/75 active:scale-[0.99] transition-all"
               >
                 Load older logs ({filteredLogs.length - visibleLogs.length} remaining)
               </button>
             )}
             {visibleLogs.map((entry) => (
               <div key={entry.id} className={`rounded-xl border bg-white/[0.025] p-3 ${levelStyles[entry.level]}`}>
-                <div className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-60">
+                <div className="mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-widest opacity-60">
                   <span>{entry.level}</span>
                   <span>·</span>
                   <time dateTime={entry.timestamp}>{new Date(entry.timestamp).toLocaleString()}</time>
@@ -339,7 +335,7 @@ export function ConsoleLogViewer({ onBack }: ConsoleLogViewerProps) {
         )}
       </div>
 
-      <p className="pb-4 text-center text-[10px] text-white/20">
+      <p className="pb-4 text-center text-xs text-white/65">
         Stores the latest {MAX_ENTRIES} browser-side entries on this device, including uncaught errors and rejected promises.
       </p>
       </div>

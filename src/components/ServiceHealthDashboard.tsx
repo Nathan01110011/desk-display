@@ -76,14 +76,14 @@ export function ServiceHealthDashboard() {
             <h3 className="font-black text-white/80">Service Health</h3>
             {overall && <span className={`text-xs font-black ${overall.text}`}>{overall.label}</span>}
           </div>
-          <p className="mt-0.5 text-xs text-white/30">
+          <p className="mt-0.5 text-xs text-white/65">
             {data ? `Last checked ${new Date(data.checkedAt).toLocaleTimeString()}` : 'Checking configured integrations…'}
           </p>
         </div>
         <button
           onPointerDown={() => void refresh()}
           disabled={loading}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white/50 disabled:opacity-40 active:scale-95 transition-all"
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white/75 disabled:opacity-40 active:scale-95 transition-all"
         >
           <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
           Check now
@@ -105,11 +105,11 @@ export function ServiceHealthDashboard() {
                   <span className="truncate text-sm font-black text-white/70">{service.name}</span>
                 </div>
                 <p className={`mt-2 text-[11px] font-bold ${style.text}`}>{style.label}</p>
-                <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-white/30" title={service.detail}>
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/65" title={service.detail}>
                   {service.detail}
                 </p>
                 {typeof service.latencyMs === 'number' && (
-                  <p className="mt-2 text-[9px] font-black uppercase tracking-widest text-white/15">{service.latencyMs} ms</p>
+                  <p className="mt-2 text-xs font-black uppercase tracking-widest text-white/65">{service.latencyMs} ms</p>
                 )}
               </div>
             );
@@ -121,7 +121,7 @@ export function ServiceHealthDashboard() {
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[9px] font-black uppercase tracking-widest text-white/20">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-black uppercase tracking-widest text-white/65">
         <span><i className="mr-1.5 inline-block size-2 rounded-full bg-green-400" />Healthy</span>
         <span><i className="mr-1.5 inline-block size-2 rounded-full bg-amber-400" />Fallback / partial / unconfigured</span>
         <span><i className="mr-1.5 inline-block size-2 rounded-full bg-red-400" />Failed / auth required</span>

@@ -54,7 +54,7 @@ export function SystemUpdateButton() {
           {starting ? 'Starting Update…' : armed ? 'Tap Again to Update' : 'Update & Rebuild'}
         </span>
       </button>
-      {error && <p className="text-center text-[10px] text-red-300/70">{error}</p>}
+      {error && <p className="text-center text-xs text-red-300/70">{error}</p>}
     </div>
   );
 }

@@ -30,12 +30,12 @@ interface AppLauncherProps {
   centered?: boolean;
 }
 
-export function AppLauncher({ 
-  onOpenPomo, 
+export function AppLauncher({
+  onOpenPomo,
   onOpenCalendar,
   onOpenGallery,
-  onOpenSettings, 
-  onOpenSports, 
+  onOpenSettings,
+  onOpenSports,
   onOpenWeather,
   onOpenFitbit,
   onOpenHome,
@@ -44,7 +44,7 @@ export function AppLauncher({
   onOpenRule,
   onResetPomo,
   onResetTimer,
-  pomoActive, 
+  pomoActive,
   pomoFinished,
   timerActive,
   timerFinished,
@@ -58,26 +58,26 @@ export function AppLauncher({
     calendar: (
       <button
         onPointerDown={onOpenCalendar}
-        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <CalendarDays size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Calendar</span>
+        <span className="text-base font-bold text-white/85">Calendar</span>
       </button>
     ),
     gallery: (
-      <button onPointerDown={onOpenGallery} className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5">
+      <button onPointerDown={onOpenGallery} className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15">
         <Images size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Gallery</span>
+        <span className="text-base font-bold text-white/85">Gallery</span>
       </button>
     ),
     pomodoro: (
       <div className="relative group">
         <button
           onPointerDown={onOpenPomo}
-          className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
+          className={`w-full aspect-square rounded-3xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
             pomoActive || pomoFinished
-              ? 'bg-white/10 border-white/20' 
-              : 'bg-white/5 border-white/5'
+              ? 'bg-white/10 border-white/20'
+              : 'bg-gradient-to-br from-slate-800/80 to-slate-950 border-white/15'
           }`}
         >
           <div className="relative">
@@ -92,12 +92,12 @@ export function AppLauncher({
               </>
             )}
           </div>
-          <span className={`text-base font-bold ${pomoActive || pomoFinished ? 'text-white' : 'text-white/40'}`}>
+          <span className={`text-base font-bold ${pomoActive || pomoFinished ? 'text-white' : 'text-white/85'}`}>
             {pomoFinished ? 'Done!' : 'Pomodoro'}
           </span>
         </button>
         {pomoFinished && (
-          <button 
+          <button
             onPointerDown={(e) => { e.stopPropagation(); onResetPomo(); }}
             className="absolute -top-2 -right-2 p-3 bg-white text-black rounded-full shadow-xl active:scale-90 transition-all z-20"
           >
@@ -109,10 +109,10 @@ export function AppLauncher({
     sports: (
       <button
         onPointerDown={onOpenSports}
-        className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
-          isSportsLive 
-            ? 'bg-red-500/10 border-red-500/20' 
-            : 'bg-white/5 border-white/5'
+        className={`w-full aspect-square rounded-3xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
+          isSportsLive
+            ? 'bg-red-500/10 border-red-500/20'
+            : 'bg-gradient-to-br from-slate-800/80 to-slate-950 border-white/15'
         }`}
       >
         <div className="relative">
@@ -121,7 +121,7 @@ export function AppLauncher({
             <div className="absolute -top-2 -right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-black" />
           )}
         </div>
-        <span className={`text-base font-bold ${isSportsLive ? 'text-white' : 'text-white/40'}`}>
+        <span className={`text-base font-bold ${isSportsLive ? 'text-white' : 'text-white/85'}`}>
           {isSportsLive ? 'Live' : 'Sports'}
         </span>
       </button>
@@ -129,38 +129,38 @@ export function AppLauncher({
     weather: (
       <button
         onPointerDown={onOpenWeather}
-        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <CloudSun size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Weather</span>
+        <span className="text-base font-bold text-white/85">Weather</span>
       </button>
     ),
     fitbit: (
       <button
         onPointerDown={onOpenFitbit}
-        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <Activity size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Health</span>
+        <span className="text-base font-bold text-white/85">Health</span>
       </button>
     ),
     home: (
       <button
         onPointerDown={onOpenHome}
-        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <Home size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Home</span>
+        <span className="text-base font-bold text-white/85">Home</span>
       </button>
     ),
     timer: (
       <div className="relative group">
         <button
           onPointerDown={onOpenTimer}
-          className={`w-full aspect-square rounded-[2.5rem] flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
+          className={`w-full aspect-square rounded-3xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
             timerActive || timerFinished
-              ? 'bg-white/10 border-white/20' 
-              : 'bg-white/5 border-white/5'
+              ? 'bg-white/10 border-white/20'
+              : 'bg-gradient-to-br from-slate-800/80 to-slate-950 border-white/15'
           }`}
         >
           <div className="relative">
@@ -175,12 +175,12 @@ export function AppLauncher({
               </>
             )}
           </div>
-          <span className={`text-base font-bold ${timerActive || timerFinished ? 'text-white' : 'text-white/40'}`}>
+          <span className={`text-base font-bold ${timerActive || timerFinished ? 'text-white' : 'text-white/85'}`}>
             {timerFinished ? 'Done!' : 'Timer'}
           </span>
         </button>
         {timerFinished && (
-          <button 
+          <button
             onPointerDown={(e) => { e.stopPropagation(); onResetTimer(); }}
             className="absolute -top-2 -right-2 p-3 bg-white text-black rounded-full shadow-xl active:scale-90 transition-all z-20"
           >
@@ -192,19 +192,19 @@ export function AppLauncher({
     todo: (
       <button
         onPointerDown={onOpenTodo}
-        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <List size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">TODO</span>
+        <span className="text-base font-bold text-white/85">TODO</span>
       </button>
     ),
     rule: (
       <button
         onPointerDown={onOpenRule}
-        className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <ShieldQuestion size={40} className="text-white/80" />
-        <span className="text-base font-bold text-white/40">Rule</span>
+        <span className="text-base font-bold text-white/85">Rule</span>
       </button>
     )
   };
@@ -217,10 +217,10 @@ export function AppLauncher({
       content: (
         <button
           onPointerDown={onOpenSettings}
-          className="w-full aspect-square rounded-[2.5rem] bg-white/5 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/5"
+          className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
         >
           <Settings size={40} className="text-white/80" />
-          <span className="text-base font-bold text-white/40">Settings</span>
+          <span className="text-base font-bold text-white/85">Settings</span>
         </button>
       )
     }
@@ -238,7 +238,7 @@ export function AppLauncher({
       className={`w-full px-4 transition-all duration-500 ease-out ${
         centered
           ? 'max-w-5xl'
-          : `border-t border-white/5 ${isMultiRow ? 'max-w-5xl pt-5' : 'max-w-5xl pt-10'}`
+          : `border-t border-white/15 ${isMultiRow ? 'max-w-5xl pt-5' : 'max-w-5xl pt-10'}`
       }`}
     >
       <div className={`flex flex-col w-full mx-auto ${isMultiRow ? 'gap-3' : 'gap-5'}`}>
