@@ -1,5 +1,7 @@
 "use client";
 
+import BackButton from '@/components/BackButton';
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, BellOff, Timer, Hourglass } from 'lucide-react';
@@ -472,20 +474,11 @@ export default function Dashboard() {
 
         {/* Main Area (Flex-1) */}
         <div className="flex-1 p-8 flex flex-col h-full overflow-hidden relative">
-          <AnimatePresence>
-            {activeView !== 'dashboard' && (
-              <motion.button
-                key="close-button"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onPointerDown={closeActiveView}
-                className="absolute top-6 right-6 z-[100] p-6 text-white/50 hover:text-white active:scale-90 transition-all rounded-full bg-black/70 border border-white/10 shadow-2xl"
-              >
-                <X size={48} strokeWidth={3} />
-              </motion.button>
-            )}
-          </AnimatePresence>
+          {activeView !== 'dashboard' && (
+            <nav aria-label="App navigation" className="mb-3 flex shrink-0 items-center">
+              <BackButton onClick={closeActiveView} aria-label="Back to dashboard" />
+            </nav>
+          )}
 
           <AnimatePresence mode="wait">
             {showDashboardHome ? (
@@ -683,7 +676,7 @@ export default function Dashboard() {
                 key="app-view"
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="w-full h-full flex items-center justify-center"
+                className="w-full min-h-0 flex-1 flex items-center justify-center"
               >
                 {activeView === 'pomodoro' && (
                   <PomodoroView 
