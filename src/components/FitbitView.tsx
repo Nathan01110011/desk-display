@@ -46,19 +46,19 @@ function StatTile({
   sublabel?: string;
 }) {
   return (
-    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 gap-4 flex flex-col justify-between overflow-hidden @container">
-      <div className={`flex items-center gap-3 ${accent}`}>
+    <div className="rounded-3xl border border-white/15 bg-white/[0.04] min-h-0 grid grid-rows-[minmax(3rem,1fr)_3fr] overflow-hidden @container">
+      <div className={`flex items-center gap-3 px-5 py-3 bg-white/10 border-b border-white/15 ${accent}`}>
         {icon}
-        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 truncate">{label}</span>
+        <h3 className="text-[13px] font-black uppercase tracking-[0.12em] text-white/90">{label}</h3>
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 p-5 flex flex-col justify-center">
         <div className="grid min-w-0 grid-cols-[minmax(0,auto)_auto] items-baseline justify-start gap-1.5 overflow-hidden">
           <span className="min-w-0 whitespace-nowrap text-[clamp(1.65rem,22cqw,2.35rem)] font-black tabular-nums text-white/90 leading-none tracking-normal">
             {value}
           </span>
-          {suffix && <span className="min-w-0 whitespace-nowrap text-[clamp(0.6rem,6cqw,0.8rem)] font-black uppercase tracking-normal text-white/25">{suffix}</span>}
+          {suffix && <span className="min-w-0 whitespace-nowrap text-[clamp(0.6rem,6cqw,0.8rem)] font-black uppercase tracking-normal text-white/65">{suffix}</span>}
         </div>
-        {sublabel && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/20 truncate">{sublabel}</p>}
+        {sublabel && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/60 truncate">{sublabel}</p>}
       </div>
     </div>
   );
@@ -100,13 +100,13 @@ function ExerciseDaysTile({
   history: FitbitStats['exerciseHistory'];
 }) {
   return (
-    <div className="rounded-3xl border border-white/5 bg-white/[0.04] p-5 min-h-0 gap-4 flex flex-col justify-between overflow-hidden">
-      <div className="flex items-center gap-3 text-lime-200/70">
+    <div className="rounded-3xl border border-white/15 bg-white/[0.04] min-h-0 grid grid-rows-[minmax(3rem,1fr)_3fr] overflow-hidden">
+      <div className="flex items-center gap-3 px-5 py-3 bg-white/10 border-b border-white/15 text-lime-200">
         <Dumbbell size={24} />
-        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 truncate">Exercise</span>
+        <h3 className="text-[13px] font-black uppercase tracking-[0.12em] text-white/90">Exercise</h3>
       </div>
 
-      <div>
+      <div className="p-5 flex flex-col justify-center">
         <div className="grid grid-cols-7 gap-1.5">
           {history.map(day => (
             <div key={day.date} className="flex flex-col items-center gap-2">
@@ -115,7 +115,7 @@ function ExerciseDaysTile({
             </div>
           ))}
         </div>
-        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/20 truncate">Last 7 days</p>
+        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/60 truncate">Last 7 days</p>
       </div>
     </div>
   );
@@ -219,7 +219,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
     >
       <header className="shrink-0 flex items-end justify-between gap-8 pr-24">
         <div className="min-w-0">
-          <div className="flex items-center gap-3 text-white/30 font-bold uppercase tracking-[0.3em] text-xs">
+          <div className="flex items-center gap-3 text-white/70 font-bold uppercase tracking-[0.3em] text-xs">
             <Activity size={18} /> Google Health
           </div>
           <h2 className="mt-3 text-6xl font-black tracking-tight leading-none">Health</h2>
@@ -227,7 +227,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Last synced</p>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Last synced</p>
             <p className="mt-2 text-2xl font-black text-white/70">
               {new Date(stats.lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
@@ -267,16 +267,16 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
           </section>
 
         <aside aria-label="Weight history" className="min-h-80 min-w-0 rounded-[2rem] bg-white/[0.04] border border-white/10 p-5 flex flex-col">
-          <div className="pb-4 mb-4 border-b border-white/10 shrink-0">
+          <div className="-mx-5 -mt-5 px-5 py-4 mb-4 rounded-t-[2rem] bg-white/10 border-b border-white/15 shrink-0">
             <div className="flex items-center gap-4">
               <Scale size={30} className="text-teal-300/80" />
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Current weight</p>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Current weight</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black tabular-nums">
                     {latestWeight ? latestWeight.toFixed(1) : '--'}
                   </span>
-                  <span className="text-sm font-black uppercase tracking-widest text-white/30">kg</span>
+                  <span className="text-sm font-black uppercase tracking-widest text-white/70">kg</span>
                 </div>
               </div>
             </div>
@@ -287,7 +287,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               <div className="min-w-0">
                 <div className="flex items-center gap-3 text-teal-200/60">
                   <CalendarRange size={18} />
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/30">Last {rangeLabel}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/70">Last {rangeLabel}</p>
                 </div>
                 <p className="mt-2 text-xl font-black text-white/90">Weight trend</p>
               </div>
@@ -295,7 +295,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                 <p className={`text-2xl font-black tabular-nums ${weightDelta > 0 ? 'text-rose-200' : weightDelta < 0 ? 'text-emerald-200' : 'text-white/70'}`}>
                   {hasWeightHistory && weightGraph.points.length > 1 ? formatWeightDelta(weightDelta) : '--'}
                 </p>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/25">kg</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/65">kg</p>
               </div>
             </div>
 
@@ -306,7 +306,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                   type="button"
                   aria-pressed={weightRange === range.value}
                   onClick={() => setWeightRange(range.value)}
-                  className={`min-h-10 flex-1 rounded-xl px-3 text-xs font-black transition-colors ${weightRange === range.value ? 'bg-teal-300/20 text-teal-100 border border-teal-300/40' : 'bg-white/5 text-white/45 border border-white/10 hover:bg-white/10'}`}
+                  className={`min-h-10 flex-1 rounded-xl px-3 text-xs font-black transition-colors ${weightRange === range.value ? 'bg-teal-300/20 text-teal-100 border border-teal-300/40' : 'bg-white/5 text-white/75 border border-white/10 hover:bg-white/10'}`}
                 >
                   {range.label}
                 </button>
@@ -352,7 +352,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
                   ))}
                 </svg>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 text-white/25">
+                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 text-white/65">
                   <Scale size={48} />
                   <p className="mt-4 text-xs font-black uppercase tracking-[0.24em]">{stats.weightHistoryError ? 'Weight data unavailable' : 'No weight data'}</p>
                   {stats.weightHistoryError && <p className="mt-2 px-4 text-center text-xs text-rose-200/70">{stats.weightHistoryError}</p>}
@@ -363,7 +363,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
 
           <div className="pt-3 mt-3 border-t border-white/10 shrink-0">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/25">Selected range</p>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/65">Selected range</p>
               <p className="mt-1 text-sm font-black text-white/70">
                 {hasWeightHistory ? `${formatHealthDate(weightGraph.points[0].date)} to ${formatHealthDate(weightGraph.points[weightGraph.points.length - 1].date)}` : '--'}
               </p>
