@@ -58,14 +58,14 @@ export function AppLauncher({
     calendar: (
       <button
         onPointerDown={onOpenCalendar}
-        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
+        className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <CalendarDays size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/85">Calendar</span>
       </button>
     ),
     gallery: (
-      <button onPointerDown={onOpenGallery} className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15">
+      <button onPointerDown={onOpenGallery} className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15">
         <Images size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/85">Gallery</span>
       </button>
@@ -77,7 +77,7 @@ export function AppLauncher({
           className={`w-full aspect-square rounded-3xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
             pomoActive || pomoFinished
               ? 'bg-white/10 border-white/20'
-              : 'bg-gradient-to-br from-slate-800/80 to-slate-950 border-white/15'
+              : 'bg-white/[0.06] hover:bg-white/10 border-white/15'
           }`}
         >
           <div className="relative">
@@ -112,7 +112,7 @@ export function AppLauncher({
         className={`w-full aspect-square rounded-3xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
           isSportsLive
             ? 'bg-red-500/10 border-red-500/20'
-            : 'bg-gradient-to-br from-slate-800/80 to-slate-950 border-white/15'
+            : 'bg-white/[0.06] hover:bg-white/10 border-white/15'
         }`}
       >
         <div className="relative">
@@ -129,7 +129,7 @@ export function AppLauncher({
     weather: (
       <button
         onPointerDown={onOpenWeather}
-        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
+        className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <CloudSun size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/85">Weather</span>
@@ -138,7 +138,7 @@ export function AppLauncher({
     fitbit: (
       <button
         onPointerDown={onOpenFitbit}
-        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
+        className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <Activity size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/85">Health</span>
@@ -147,7 +147,7 @@ export function AppLauncher({
     home: (
       <button
         onPointerDown={onOpenHome}
-        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
+        className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <Home size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/85">Home</span>
@@ -160,7 +160,7 @@ export function AppLauncher({
           className={`w-full aspect-square rounded-3xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border ${
             timerActive || timerFinished
               ? 'bg-white/10 border-white/20'
-              : 'bg-gradient-to-br from-slate-800/80 to-slate-950 border-white/15'
+              : 'bg-white/[0.06] hover:bg-white/10 border-white/15'
           }`}
         >
           <div className="relative">
@@ -192,7 +192,7 @@ export function AppLauncher({
     todo: (
       <button
         onPointerDown={onOpenTodo}
-        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
+        className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <List size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/85">TODO</span>
@@ -201,7 +201,7 @@ export function AppLauncher({
     rule: (
       <button
         onPointerDown={onOpenRule}
-        className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
+        className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
       >
         <ShieldQuestion size={40} className="text-white/80" />
         <span className="text-base font-bold text-white/85">Rule</span>
@@ -217,7 +217,7 @@ export function AppLauncher({
       content: (
         <button
           onPointerDown={onOpenSettings}
-          className="w-full aspect-square rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-950 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
+          className="w-full aspect-square rounded-3xl bg-white/[0.06] hover:bg-white/10 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all border border-white/15"
         >
           <Settings size={40} className="text-white/80" />
           <span className="text-base font-bold text-white/85">Settings</span>

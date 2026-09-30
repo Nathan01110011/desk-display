@@ -358,7 +358,7 @@ export default function Dashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[800] bg-black"
+            className="fixed inset-0 z-[800] bg-black p-6 sm:p-8"
           >
             <RuleView lockMode onSolved={handleRuleUnlock} />
           </motion.div>
