@@ -226,7 +226,7 @@ export function SettingsView({
       </div>
 
       <nav aria-label="Settings categories" className="flex shrink-0 flex-wrap gap-2">{[['display', 'Display'], ['clocks', 'World clocks'], ['apps', 'Apps & weather'], ['security', 'Rule lock'], ['system', 'System']].map(([id, label]) => <button key={id} type="button" aria-pressed={category === id} onClick={() => setCategory(id)} className={`min-h-11 rounded-xl border px-5 text-sm font-bold ${category === id ? 'border-sky-200/30 bg-sky-200 text-slate-950' : 'border-white/15 bg-white/5 text-white/80'}`}>{label}</button>)}</nav>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-3xl border border-sky-200/15 bg-gradient-to-br from-sky-950/40 to-slate-950 p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-3xl border border-sky-200/15 bg-gradient-to-br from-neutral-950/40 to-neutral-950 p-4">
         <div className="contents">
           <div hidden={category !== 'clocks'} className="p-4 space-y-4">
             <div className="flex items-center justify-between">

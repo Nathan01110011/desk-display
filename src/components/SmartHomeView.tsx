@@ -104,8 +104,8 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
                   className={`
                     relative flex min-h-44 flex-col items-start justify-between gap-4 p-5 rounded-3xl border transition-all active:scale-95 overflow-hidden
                     ${device.isOn
-                      ? 'bg-gradient-to-br from-amber-900/60 to-slate-950 border-amber-200/30 text-amber-100'
-                      : 'bg-slate-900/70 border-white/15 text-white/75 hover:bg-white/10'}
+                      ? 'bg-gradient-to-br from-amber-900/60 to-neutral-950 border-amber-200/30 text-amber-100'
+                      : 'bg-neutral-900/70 border-white/15 text-white/75 hover:bg-white/10'}
                   `}
                 >
                   {device.isOn && (
@@ -151,7 +151,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
             </div>
 
             <div className="grid grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden">
-              <div className="space-y-4 bg-gradient-to-br from-amber-950/50 to-slate-950 p-5 rounded-[2.5rem] border border-white/5 flex flex-col justify-start overflow-y-auto">
+              <div className="space-y-4 bg-gradient-to-br from-amber-950/50 to-neutral-950 p-5 rounded-[2.5rem] border border-white/5 flex flex-col justify-start overflow-y-auto">
                 <div className="flex p-1 bg-black/40 rounded-2xl border border-white/5">
                   <button
                     onPointerDown={() => handleToggle(false)}

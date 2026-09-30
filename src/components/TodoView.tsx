@@ -103,7 +103,7 @@ export function TodoView() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-950 rounded-3xl overflow-hidden border border-sky-200/15 relative">
+    <div className="w-full h-full flex flex-col bg-neutral-950 rounded-3xl overflow-hidden border border-sky-200/15 relative">
       {loading && !configError && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md">
           <Loader2 className="animate-spin text-blue-500 mb-4" size={64} />
@@ -122,7 +122,7 @@ export function TodoView() {
         </div>
       )}
 
-      {!loading && !configError && <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-sky-950/40 px-4 py-3"><h2 className="text-lg font-black">Your tracker</h2><button type="button" onClick={() => setShowKeyboard(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 text-sm font-bold text-sky-100"><Keyboard size={20} /> Keyboard</button></header>}
+      {!loading && !configError && <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-neutral-950/40 px-4 py-3"><h2 className="text-lg font-black">Your tracker</h2><button type="button" onClick={() => setShowKeyboard(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 text-sm font-bold text-sky-100"><Keyboard size={20} /> Keyboard</button></header>}
       {!configError && (
         <iframe
           ref={iframeRef}

@@ -150,7 +150,7 @@ export function GalleryView() {
   const secondsRemaining = pairing ? Math.max(0, Math.ceil((pairing.expiresAt - now) / 1000)) : 0;
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-amber-950/30 to-slate-950">
+    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-amber-950/30 to-neutral-950">
       <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-4">
         <div><div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.28em] text-white/65"><Images size={18} /> Gallery</div><h2 className="mt-2 text-3xl font-black tracking-tight">Your photos</h2></div>
         <div className="flex items-center gap-3"><button type="button" aria-pressed={onlyFavorites} onClick={() => setOnlyFavorites(!onlyFavorites)} className={`min-h-11 rounded-xl border px-4 font-bold ${onlyFavorites ? 'border-amber-200/40 bg-amber-200 text-amber-950' : 'border-white/15 bg-white/5 text-white'}`}>Favourites</button><span className="text-sm font-black text-white/65">{photos.length} photos · {photos.filter(photo => photo.favorite).length} favourites</span><button onClick={() => setShowAdd(true)} className="flex h-14 items-center gap-3 rounded-2xl bg-white px-6 font-black text-black active:scale-95"><ImagePlus size={22} /> Add photos</button></div>
