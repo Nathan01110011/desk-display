@@ -147,6 +147,8 @@ export interface FitbitStats {
     exercised: boolean;
   }[];
   bloodOxygen: number;
+  heartRateVariability?: { value: number | null; date: string | null; error?: string };
+  respiratoryRate?: { value: number | null; date: string | null; error?: string };
   weightHistoryError?: string | null;
   weightHistory: {
     date: string;

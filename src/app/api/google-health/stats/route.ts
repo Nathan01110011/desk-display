@@ -39,6 +39,8 @@ type GoogleHealthRollupPoint = {
 };
 
 type GoogleHealthDataPoint = {
+  dailyHeartRateVariability?: { date?: DateParts; averageHeartRateVariabilityMilliseconds?: number };
+  dailyRespiratoryRate?: { date?: DateParts; breathsPerMinute?: number };
   steps?: {
     count?: string;
     interval?: GoogleHealthSessionInterval;
@@ -376,7 +378,7 @@ async function fetchRestingHeartRate(accessToken: string, start: DateParts, end:
   return Math.round(toNumber(dataPoint.dailyRestingHeartRate?.beatsPerMinute));
 }
 
-async function fetchDataPoints(accessToken: string, dataType: 'daily-oxygen-saturation' | 'exercise' | 'sleep', filter?: string) {
+async function fetchDataPoints(accessToken: string, dataType: 'daily-oxygen-saturation' | 'exercise' | 'sleep' | 'daily-heart-rate-variability' | 'daily-respiratory-rate', filter?: string) {
   const url = new URL(`${GOOGLE_HEALTH_BASE_URL}/users/me/dataTypes/${dataType}/dataPoints`);
   if (filter) {
     url.searchParams.set('filter', filter);
@@ -448,6 +450,23 @@ async function fetchBloodOxygen(accessToken: string, start: DateParts, end: Date
   return Math.round(toNumber(sorted[0]?.dailyOxygenSaturation?.averagePercentage));
 }
 
+async function fetchExtraDailyMetric(accessToken: string, type: 'daily-heart-rate-variability' | 'daily-respiratory-rate', start: DateParts, end: DateParts) {
+  try {
+    const field = type.replaceAll('-', '_');
+    const points = await fetchDataPoints(accessToken, type, `${field}.date >= "${formatDate(start)}" AND ${field}.date < "${formatDate(end)}"`);
+    const readings = points.map(point => {
+      const record = type === 'daily-heart-rate-variability' ? point.dailyHeartRateVariability : point.dailyRespiratoryRate;
+      const value = type === 'daily-heart-rate-variability' ? point.dailyHeartRateVariability?.averageHeartRateVariabilityMilliseconds : point.dailyRespiratoryRate?.breathsPerMinute;
+      return { value: value ?? null, date: record?.date ? formatDate(record.date) : null };
+    }).filter(point => point.value !== null && Number.isFinite(point.value) && point.date)
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    return readings[0] || { value: null, date: null };
+  } catch (error) {
+    logger.warn(`Google Health: ${type} unavailable`, error);
+    return { value: null, date: null, error: 'Reading unavailable' };
+  }
+}
+
 export async function GET() {
   try {
     const accessToken = await getAccessToken();
@@ -470,6 +489,8 @@ export async function GET() {
       exerciseSummary,
       bloodOxygen,
       weightHistory,
+      heartRateVariability,
+      respiratoryRate,
     ] = await Promise.all([
       fetchReconciledSteps(accessToken, start, end).catch(async error => {
         logger.warn('Google Health: Reconciled steps unavailable; using daily rollup', error);
@@ -517,6 +538,8 @@ export async function GET() {
         weightHistoryError = error instanceof Error ? error.message : 'Weight history request failed';
         return [];
       }),
+      fetchExtraDailyMetric(accessToken, 'daily-heart-rate-variability', weekStart, end),
+      fetchExtraDailyMetric(accessToken, 'daily-respiratory-rate', weekStart, end),
     ]);
 
     const activeMinutes = activeMinutesData.activeMinutes?.activeMinutesRollupByActivityLevel
@@ -542,6 +565,8 @@ export async function GET() {
       bloodOxygen,
       weightHistory,
       weightHistoryError,
+      heartRateVariability,
+      respiratoryRate,
       lastSyncTime: new Date().toISOString(),
     });
   } catch (error) {
