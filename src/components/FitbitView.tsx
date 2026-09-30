@@ -122,7 +122,7 @@ function ExerciseDaysTile({
 }
 
 export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
-  const [weightRange, setWeightRange] = useState<WeightRange>('3months');
+  const [weightRange, setWeightRange] = useState<WeightRange>('90days');
   const rangeLabel = weightRanges.find(range => range.value === weightRange)?.label;
   const weightGraph = useMemo(() => {
     const today = new Date();
@@ -360,7 +360,8 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 text-white/25">
                   <Scale size={48} />
-                  <p className="mt-4 text-xs font-black uppercase tracking-[0.24em]">No weight data</p>
+                  <p className="mt-4 text-xs font-black uppercase tracking-[0.24em]">{stats.weightHistoryError ? 'Weight data unavailable' : 'No weight data'}</p>
+                  {stats.weightHistoryError && <p className="mt-2 px-4 text-center text-xs text-rose-200/70">{stats.weightHistoryError}</p>}
                 </div>
               )}
             </div>

@@ -1,22 +1,15 @@
-export type WeightRange = '3months' | 'month' | '2weeks';
+export type WeightRange = '90days' | '30days' | '14days';
 
 export const weightRanges: { value: WeightRange; label: string }[] = [
-  { value: '3months', label: '3 months' },
-  { value: 'month', label: '1 month' },
-  { value: '2weeks', label: '2 weeks' },
+  { value: '90days', label: '90 days' },
+  { value: '30days', label: '30 days' },
+  { value: '14days', label: '14 days' },
 ];
 
 export function weightRangeStart(today: Date, range: WeightRange): Date {
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  if (range === '2weeks') {
-    start.setDate(start.getDate() - 13);
-  } else {
-    const day = start.getDate();
-    start.setDate(1);
-    start.setMonth(start.getMonth() - (range === '3months' ? 3 : 1));
-    const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
-    start.setDate(Math.min(day, lastDay));
-  }
+  const days = range === '90days' ? 90 : range === '30days' ? 30 : 14;
+  start.setDate(start.getDate() - (days - 1));
   return start;
 }
 
