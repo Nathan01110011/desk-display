@@ -1,7 +1,8 @@
+import BackButton from './BackButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronLeft, ChevronRight, Heart, ImagePlus, Images, LoaderCircle, MonitorSmartphone, Trash2, Upload, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Heart, ImagePlus, Images, LoaderCircle, MonitorSmartphone, Trash2, Upload } from 'lucide-react';
 import type { GalleryPhoto } from '@/types';
 
 interface PairingSession {
@@ -175,8 +176,10 @@ export function GalleryView() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onPointerDown={handleViewerPointerDown}
             onPointerUp={handleViewerPointerUp}
-            className="absolute inset-0 z-[180] flex touch-none items-center justify-center bg-black/95 p-8"
+            className="absolute inset-0 z-[180] flex touch-none flex-col bg-black/95 p-8"
           >
+            <div className="mb-4 flex w-full shrink-0 items-center justify-end gap-3"><button onClick={() => toggleFavorite(selected)} className={`flex size-14 items-center justify-center rounded-2xl ${selected.favorite ? 'bg-white text-rose-500' : 'bg-white/10 text-white'}`}><Heart size={25} className={selected.favorite ? 'fill-current' : ''} /></button><button onClick={() => removePhoto(selected)} className="flex size-14 items-center justify-center rounded-2xl bg-red-500/20 text-red-200"><Trash2 size={24} /></button><BackButton onClick={() => setSelected(null)} aria-label="Back to gallery" /></div>
+            <div className="relative min-h-0 w-full flex-1">
             <AnimatePresence mode="wait">
               <motion.button
                 key={selected.name}
@@ -202,15 +205,16 @@ export function GalleryView() {
                 </p>
               </>
             )}
-            <div className="absolute right-7 top-7 flex gap-3"><button onClick={() => toggleFavorite(selected)} className={`flex size-14 items-center justify-center rounded-2xl ${selected.favorite ? 'bg-white text-rose-500' : 'bg-white/10 text-white'}`}><Heart size={25} className={selected.favorite ? 'fill-current' : ''} /></button><button onClick={() => removePhoto(selected)} className="flex size-14 items-center justify-center rounded-2xl bg-red-500/20 text-red-200"><Trash2 size={24} /></button><button onClick={() => setSelected(null)} className="flex size-14 items-center justify-center rounded-2xl bg-white/10 text-white"><X size={26} /></button></div>
+            </div>
           </motion.div>
         )}
 
         {showAdd && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[190] flex items-center justify-center bg-black/90 p-8 backdrop-blur-xl">
-            <div className="grid h-full w-full max-w-5xl grid-cols-2 overflow-hidden rounded-[2rem] border border-white/10 bg-[#0a0a0a] shadow-2xl">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[190] flex flex-col bg-black/90 p-8 backdrop-blur-xl">
+            <div className="mb-4 flex w-full shrink-0 justify-end"><BackButton onClick={closeAdd} aria-label="Back to gallery" /></div>
+            <div className="grid min-h-0 flex-1 w-full self-center max-w-5xl grid-cols-2 overflow-hidden rounded-[2rem] border border-white/10 bg-[#0a0a0a] shadow-2xl">
               <section className="flex flex-col items-center justify-center border-r border-white/10 p-8 text-center"><MonitorSmartphone size={38} className="text-white/60" /><h3 className="mt-4 text-3xl font-black">Add from phone</h3><p className="mt-3 max-w-sm text-sm font-bold leading-relaxed text-white/35">Scan while your phone is on the same Wi-Fi network.</p>{pairing && secondsRemaining > 0 ? <><div className="mt-6 aspect-square w-64 rounded-3xl bg-white p-3"><Image src={pairing.qrCode} alt="Phone upload QR code" width={560} height={560} unoptimized className="size-full" /></div><p className="mt-3 text-sm font-black text-white/45">Expires in {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, '0')}</p></> : <button onPointerDown={startPairing} className="mt-7 flex h-16 w-full max-w-xs items-center justify-center gap-3 rounded-2xl bg-white font-black text-black active:scale-95"><MonitorSmartphone size={22} /> Show QR code</button>}</section>
-              <section className="relative flex flex-col items-center justify-center p-8 text-center"><button onPointerDown={closeAdd} className="absolute right-5 top-5 flex size-12 items-center justify-center rounded-2xl bg-white/5 text-white/60"><X size={24} /></button><Upload size={38} className="text-white/60" /><h3 className="mt-4 text-3xl font-black">On this device</h3><p className="mt-3 max-w-sm text-sm font-bold leading-relaxed text-white/35">Use the local file picker as a fallback.</p><label className="mt-7 flex h-16 w-full max-w-xs cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 font-black text-white/55 active:scale-95">{uploading ? <LoaderCircle size={22} className="animate-spin" /> : <Upload size={22} />}{uploading ? 'Uploading…' : 'Choose photos'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple disabled={uploading} className="sr-only" onChange={event => uploadPhotos(event.target.files)} /></label>{status && <p className="mt-5 flex items-center gap-2 text-sm font-bold text-white/45"><Check size={18} />{status}</p>}</section>
+              <section className="relative flex flex-col items-center justify-center p-8 text-center"><Upload size={38} className="text-white/60" /><h3 className="mt-4 text-3xl font-black">On this device</h3><p className="mt-3 max-w-sm text-sm font-bold leading-relaxed text-white/35">Use the local file picker as a fallback.</p><label className="mt-7 flex h-16 w-full max-w-xs cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/5 font-black text-white/55 active:scale-95">{uploading ? <LoaderCircle size={22} className="animate-spin" /> : <Upload size={22} />}{uploading ? 'Uploading…' : 'Choose photos'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple disabled={uploading} className="sr-only" onChange={event => uploadPhotos(event.target.files)} /></label>{status && <p className="mt-5 flex items-center gap-2 text-sm font-bold text-white/45"><Check size={18} />{status}</p>}</section>
             </div>
           </motion.div>
         )}

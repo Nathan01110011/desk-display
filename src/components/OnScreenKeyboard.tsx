@@ -1,5 +1,6 @@
+import BackButton from './BackButton';
 import React, { useState } from 'react';
-import { Delete, Check, X, Eraser, ArrowUpCircle } from 'lucide-react';
+import { Delete, Check, Eraser, ArrowUpCircle } from 'lucide-react';
 
 interface OnScreenKeyboardProps {
   value: string;
@@ -70,12 +71,7 @@ export function OnScreenKeyboard({ value, onChange, onClose, onSubmit }: OnScree
           <div className="flex-1 bg-white/5 border border-white/10 rounded-3xl p-8 text-5xl font-bold min-h-[1.8em] flex items-center shadow-inner overflow-hidden whitespace-nowrap">
             {value}<span className="animate-pulse ml-1 text-blue-500">|</span>
           </div>
-          <button 
-            onPointerDown={onClose} 
-            className="p-8 rounded-full bg-white/5 border border-white/10 active:scale-90 transition-all text-white/40 hover:bg-white/10 hover:text-white"
-          >
-            <X size={56} />
-          </button>
+          <BackButton onClick={onClose} aria-label="Back to previous screen" />
         </div>
 
         {/* Keyboard Grid */}

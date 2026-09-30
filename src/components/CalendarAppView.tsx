@@ -1,3 +1,4 @@
+import BackButton from './BackButton';
 import React, { useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, BriefcaseBusiness, Heart, Circle, Clock, Plus, Pencil, Trash2, X, Save, Minus, LoaderCircle, Check, Repeat } from 'lucide-react';
 import { CalendarEvent, CalendarEventInput } from '@/types';
@@ -539,17 +540,7 @@ export function CalendarAppView({
                   {isEditingPersonalEvent ? 'Edit event' : 'New event'}
                 </h2>
               </div>
-              <button
-                onPointerDown={() => {
-                  if (isSaving) return;
-                  setDraft(null);
-                }}
-                disabled={isSaving}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 transition-all active:scale-95 disabled:opacity-35"
-                aria-label="Close personal event editor"
-              >
-                <X size={24} />
-              </button>
+              <BackButton onClick={() => setDraft(null)} disabled={isSaving} aria-label="Back to calendar" />
             </div>
 
             <div className="min-h-0 flex-1 overflow-hidden px-6 py-4">

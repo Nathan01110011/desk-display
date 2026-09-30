@@ -150,7 +150,7 @@ export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherVi
             transition={{ duration: 0.22, ease: "easeOut" }}
             className="w-full h-full flex flex-col p-4"
           >
-            <div className="flex items-center justify-between mb-6 pr-24">
+            <div className="flex items-center justify-between mb-6">
               <button 
                 onPointerDown={() => onToggleExtended(false)}
                 className="p-4 rounded-2xl bg-white/5 text-white/60 flex items-center gap-3 font-bold active:scale-90 transition-all"

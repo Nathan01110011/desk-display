@@ -1,6 +1,7 @@
+import BackButton from './BackButton';
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, Droplets, RefreshCw, Maximize2, ArrowLeft, Wind } from 'lucide-react';
+import { Activity, BedDouble, Dumbbell, Flame, Footprints, Heart, TrendingUp, Mountain, Scale, Droplets, RefreshCw, Maximize2, Wind } from 'lucide-react';
 import { FitbitStats } from '@/types';
 import { healthDateKey, weightRangeStart, weightRanges, WeightRange } from '@/lib/healthWeightRange';
 
@@ -230,13 +231,13 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
       transition={{ duration: 0.22, ease: 'easeOut' }}
       className="w-full h-full min-h-0 flex flex-col gap-4 overflow-hidden"
     >
-      <header className="shrink-0 flex items-end justify-between gap-8 pr-24">
+      <header className="shrink-0 flex items-end justify-between gap-8">
         <div className="min-w-0">
           <div className="flex items-center gap-3 text-white/70 font-bold uppercase tracking-[0.3em] text-xs">
             <Activity size={18} /> Google Health
           </div>
           <div className="mt-2 flex items-center gap-4">
-            {detailView !== 'overview' && <button type="button" onClick={() => setDetailView('overview')} aria-label="Back to Health overview" className="size-11 rounded-xl bg-white/10 flex items-center justify-center"><ArrowLeft size={24} /></button>}
+            {detailView !== 'overview' && <BackButton onClick={() => setDetailView('overview')} aria-label="Back to Health overview" />}
             <h2 className="text-4xl font-black tracking-tight leading-none">{detailView === 'weight' ? 'Weight history' : detailView === 'stats' ? 'Detailed stats' : 'Health'}</h2>
           </div>
         </div>

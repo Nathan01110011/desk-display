@@ -1,6 +1,7 @@
+import BackButton from './BackButton';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Lightbulb, Loader2, ChevronLeft, Sun, Thermometer, Palette, Flame, Snowflake, Sparkles, X } from 'lucide-react';
+import { Home, Lightbulb, Loader2, ChevronLeft, Sun, Thermometer, Palette, Flame, Snowflake, Sparkles } from 'lucide-react';
 import { SmartDevice } from '@/types';
 
 interface SmartHomeViewProps {
@@ -321,13 +322,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
                     </div>
                     <h3 className="text-3xl font-black mt-2">{selectedDevice?.name}</h3>
                   </div>
-                  <button
-                    onPointerDown={() => setColorPickerOpen(false)}
-                    className="size-14 rounded-2xl bg-white/5 border border-white/10 text-white/60 flex items-center justify-center active:scale-90 transition-all"
-                    aria-label="Close color picker"
-                  >
-                    <X size={26} />
-                  </button>
+                  <BackButton onClick={() => setColorPickerOpen(false)} aria-label="Back to smart home" />
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center gap-5">
