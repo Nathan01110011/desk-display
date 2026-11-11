@@ -179,8 +179,10 @@ Add this to `~/.config/labwc/autostart`:
 swayidle -w timeout 3600 'wlopm --off *' resume 'wlopm --on *' &
 
 # Launch Browser
-/usr/bin/chromium --kiosk --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport --force-device-scale-factor=1 --ozone-platform=wayland http://localhost:3000 &
+/usr/bin/chromium --kiosk --disable-pinch --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport --force-device-scale-factor=1 --ozone-platform=wayland http://localhost:3000 &
 ```
+
+The Chromium `--disable-pinch` flag blocks browser-level pinch zoom on the Pi. The dashboard also restricts viewport zoom and uses `touch-action: pan-x pan-y` to keep regular touch scrolling available. These settings do not disable in-app buttons or chart expansion.
 
 ---
 

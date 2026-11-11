@@ -44,7 +44,7 @@ pm2 restart "$APP_NAME" || pm2 start "$(command -v pnpm)" --name "$APP_NAME" -- 
 echo "--- 🖥️ Step 6: Refreshing Kiosk Browser ---"
 sleep 5
 # Launch with nohup and redirect ALL output to ensure total detachment
-nohup /usr/bin/chromium --kiosk --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport --force-device-scale-factor=1 --ozone-platform=wayland http://localhost:3000 > /dev/null 2>&1 &
+nohup /usr/bin/chromium --kiosk --disable-pinch --incognito --disable-infobars --noerrdialogs --password-store=basic --touch-events=enabled --enable-viewport --force-device-scale-factor=1 --ozone-platform=wayland http://localhost:3000 > /dev/null 2>&1 &
 
 echo "--- ✅ Deployment Successfully Completed ---"
 exit 0

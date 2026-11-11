@@ -63,9 +63,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Allow scrolling, but stop native browser pinch-to-zoom. */
+    touch-action: pan-x pan-y;
   }
   html {
     @apply font-sans;
+    touch-action: pan-x pan-y;
   }
 }
 
