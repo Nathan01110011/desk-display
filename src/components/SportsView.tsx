@@ -20,6 +20,7 @@ import {
   SportTeamSearchResult,
 } from "@/types";
 import { OnScreenKeyboard } from "./OnScreenKeyboard";
+import BackButton from "./BackButton";
 
 interface SportsViewProps {
   matches: SportMatch[];
@@ -100,6 +101,7 @@ export function SportsView({
   matches,
   loading = false,
   onRefresh,
+  onClose,
 }: SportsViewProps) {
   const [mode, setMode] = useState<"scores" | "teams">("scores");
   const [config, setConfig] = useState<SportsConfig | null>(null);
@@ -318,13 +320,16 @@ export function SportsView({
       className="flex h-full min-h-0 w-full flex-col gap-4 text-white"
     >
       <header className="flex shrink-0 items-center justify-between gap-4">
-        <div>
+        <div className="flex min-w-0 items-center gap-4">
+          <BackButton onPointerDown={onClose} aria-label="Back to dashboard" />
+          <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-emerald-200">
             <Trophy size={16} /> Your sports desk
           </p>
           <h2 className="mt-1 text-3xl font-black tracking-tight">
             {mode === "scores" ? "Match centre" : "Your teams & leagues"}
           </h2>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex rounded-2xl border border-white/15 bg-white/5 p-1">

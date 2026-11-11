@@ -43,9 +43,9 @@ function TemperatureTimeline({ hours }: { hours: Forecast }) {
   );
 }
 
-export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherViewProps) {
+export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: WeatherViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  if (!weather) return <div role="status" className="flex h-full w-full flex-col items-center justify-center gap-4 text-sky-100"><CloudSun className="size-16 animate-pulse" /><p className="text-xl font-bold">Loading weather…</p></div>;
+  if (!weather) return <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 text-sky-100"><div className="absolute left-0 top-0"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /></div><div role="status" className="flex flex-col items-center gap-4"><CloudSun className="size-16 animate-pulse" /><p className="text-xl font-bold">Loading weather…</p></div></div>;
 
   const groups: Record<string, Forecast> = {};
   for (const hour of weather.forecast) {
@@ -63,8 +63,8 @@ export function WeatherView({ weather, isExtended, onToggleExtended }: WeatherVi
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex h-full min-h-0 w-full flex-col gap-4 text-white">
       <header className="flex shrink-0 items-center justify-between gap-4">
-        <div><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-200"><MapPin size={16} />{weather.location}</p><h2 className="mt-1 text-3xl font-black tracking-tight">{isExtended ? 'Forecast explorer' : 'Weather'}</h2></div>
-        {isExtended ? <BackButton onClick={() => onToggleExtended(false)} aria-label="Back to weather overview" /> : <button type="button" onClick={() => { setSelectedDate(days[0]?.[0] ?? null); onToggleExtended(true); }} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 py-2 font-bold text-sky-100 active:bg-sky-200/20">Explore forecast <ArrowUpRight size={20} /></button>}
+        <div className="flex min-w-0 items-center gap-4"><BackButton onPointerDown={isExtended ? () => onToggleExtended(false) : onClose} aria-label={isExtended ? 'Back to weather overview' : 'Back to dashboard'} /><div className="min-w-0"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-200"><MapPin size={16} />{weather.location}</p><h2 className="mt-1 text-3xl font-black tracking-tight">{isExtended ? 'Forecast explorer' : 'Weather'}</h2></div></div>
+        {!isExtended && <button type="button" onPointerDown={() => { setSelectedDate(days[0]?.[0] ?? null); onToggleExtended(true); }} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 py-2 font-bold text-sky-100 active:bg-sky-200/20">Explore forecast <ArrowUpRight size={20} /></button>}
       </header>
 
       {isExtended ? (
