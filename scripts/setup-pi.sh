@@ -3,6 +3,14 @@
 # Configuration
 TARGET_DIR=$(pwd)
 
+# pnpm 12 needs a supported native binary; 32-bit Raspberry Pi OS is unsupported.
+case "$(uname -m)" in
+    armv6l|armv7l|armv8l|armhf)
+        echo "pnpm 12.18.0 requires a 64-bit Raspberry Pi OS (aarch64)." >&2
+        exit 1
+        ;;
+esac
+
 echo "--- 🥧 Raspberry Pi Setup Script ---"
 
 # 1. Update and install basic tools

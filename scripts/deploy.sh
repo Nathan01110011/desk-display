@@ -3,6 +3,15 @@
 # Exit on any error
 set -e
 
+# pnpm 12 ships native Linux arm64 builds but not 32-bit ARM binaries.
+# Refuse before stopping the kiosk so failed migrations leave it usable.
+case "$(uname -m)" in
+  armv6l|armv7l|armv8l|armhf)
+    echo "pnpm 12.18.0 requires a 64-bit Raspberry Pi OS (aarch64). This system is $(uname -m)." >&2
+    exit 1
+    ;;
+esac
+
 # Configuration
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="dashboard"
