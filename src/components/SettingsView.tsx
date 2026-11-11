@@ -4,6 +4,7 @@ import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Im
 import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 import { ConsoleLogViewer } from './ConsoleLogs';
+import BackButton from './BackButton';
 
 const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; label: string }[] = [
   { value: 15, label: '15s' },
@@ -34,6 +35,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({
+  onClose,
   onSystemAdminChange,
   appConfig,
   onUpdateAppConfig,
@@ -221,11 +223,28 @@ export function SettingsView({
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
       className="w-full mx-auto flex min-h-0 flex-col gap-4 h-full overflow-hidden"
     >
-      <div className="flex items-center gap-3 text-white/65 font-bold uppercase tracking-[0.3em] text-xs">
-        <Settings size={18} /> Settings & preferences
-      </div>
-
-      <nav aria-label="Settings categories" className="flex shrink-0 flex-wrap gap-2">{[['display', 'Display'], ['clocks', 'World clocks'], ['apps', 'Apps & weather'], ['security', 'Rule lock'], ['system', 'System']].map(([id, label]) => <button key={id} type="button" aria-pressed={category === id} onClick={() => setCategory(id)} className={`min-h-11 rounded-xl border px-5 text-sm font-bold ${category === id ? 'border-sky-200/30 bg-sky-200 text-slate-950' : 'border-white/15 bg-white/5 text-white/80'}`}>{label}</button>)}</nav>
+      <header className="flex shrink-0 flex-wrap items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
+          <BackButton onPointerDown={onClose} aria-label="Back to dashboard" />
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-white/65">
+            <Settings size={18} aria-hidden="true" />
+            <span>Settings & preferences</span>
+          </div>
+        </div>
+        <nav aria-label="Settings categories" className="ml-auto flex min-w-0 flex-wrap items-center gap-2">
+          {[['display', 'Display'], ['clocks', 'World clocks'], ['apps', 'Apps & weather'], ['security', 'Rule lock'], ['system', 'System']].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={category === id}
+              onPointerDown={() => setCategory(id)}
+              className={`min-h-11 rounded-xl border px-4 text-sm font-bold ${category === id ? 'border-sky-200/30 bg-sky-200 text-slate-950' : 'border-white/15 bg-white/5 text-white/80'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      </header>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-3xl border border-sky-200/15 bg-gradient-to-br from-neutral-950/40 to-neutral-950 p-4">
         <div className="contents">
           <div hidden={category !== 'clocks'} className="p-4 space-y-4">

@@ -474,7 +474,7 @@ export default function Dashboard() {
 
         {/* Main Area (Flex-1) */}
         <div className="flex-1 p-8 flex flex-col h-full overflow-hidden relative">
-          {activeView !== 'dashboard' && (
+          {activeView !== 'dashboard' && activeView !== 'settings' && (
             <nav aria-label="App navigation" className="mb-3 flex shrink-0 items-center">
               <BackButton onClick={closeActiveView} aria-label="Back to dashboard" />
             </nav>
