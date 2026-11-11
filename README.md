@@ -162,7 +162,7 @@ Service account keys such as `GOOGLE_SERVICE_ACCOUNT_EMAIL` and `GOOGLE_PRIVATE_
 
 The repository pins **pnpm 12.18.0** through the `packageManager` field. It supports Node.js 20+ as used by the Pi setup. Because pnpm 12 uses native binaries, use **64-bit Raspberry Pi OS (aarch64)**; 32-bit ARM is not supported. On the Pi, `uname -m` should print `aarch64`.
 
-The lockfile is managed using the pinned pnpm version and `pnpm install --frozen-lockfile` during deployment. Keep the manifest and lockfile in sync when updating dependencies.
+The lockfile is managed using the pinned pnpm version and `pnpm install --frozen-lockfile` during deployment. pnpm 12 keeps overrides and approved build scripts in `pnpm-workspace.yaml`. Keep the manifest and lockfile in sync when updating dependencies.
 
 ### Automatic Setup
 ```bash
