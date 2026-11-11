@@ -11,6 +11,9 @@ permissions:
 jobs:
   upgrade-and-build:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_RULE_LOCK_ROWS: '{"orbit":["anchor","aperture","bolt","brain","diamond","flame","flower","gem"],"ember":["key","landmark","leaf","moon","mountain","palette","puzzle","satellite"],"tide":["snow","spark","target","waves","anchor","bolt","diamond","gem"],"signal":["aperture","brain","flower","key","leaf","mountain","puzzle","spark"]}'
+      NEXT_PUBLIC_RULE_LOCK_LENS_OFFSETS: '{"sun":0,"moon":1,"compass":2,"mirror":3}'
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
