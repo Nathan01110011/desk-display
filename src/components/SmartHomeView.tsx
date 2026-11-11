@@ -1,7 +1,7 @@
 import BackButton from './BackButton';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Lightbulb, Loader2, ChevronLeft, Sun, Thermometer, Palette, Flame, Snowflake, Sparkles } from 'lucide-react';
+import { Home, Lightbulb, Loader2, Sun, Thermometer, Palette, Flame, Snowflake, Sparkles } from 'lucide-react';
 import { SmartDevice } from '@/types';
 
 interface SmartHomeViewProps {
