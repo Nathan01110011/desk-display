@@ -4,6 +4,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, BriefcaseBusiness, Heart, Circ
 import { CalendarEvent, CalendarEventInput } from '@/types';
 
 interface CalendarAppViewProps {
+  onClose: () => void;
   now: Date;
   calendar: CalendarEvent[];
   personalCalendar: CalendarEvent[];
@@ -223,6 +224,7 @@ function DateTimeControl({ label, value, isAllDay, onChange }: DateTimeControlPr
 }
 
 export function CalendarAppView({
+  onClose,
   now,
   calendar,
   personalCalendar,
@@ -342,14 +344,17 @@ export function CalendarAppView({
   return (
     <div className="relative w-full h-full grid grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)] gap-4 items-stretch">
       <section className="min-h-0 flex flex-col rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-neutral-950 border border-rose-200/15 overflow-hidden">
-        <div className="shrink-0 flex items-center justify-between gap-6 px-5 py-4 border-b border-white/10">
-          <div className="min-w-0">
+        <div className="shrink-0 flex items-center justify-between gap-4 px-5 py-4 border-b border-white/10">
+          <div className="flex min-w-0 items-center gap-4">
+            <BackButton onPointerDown={onClose} aria-label="Back to dashboard" />
+            <div className="min-w-0">
             <div className="flex items-center gap-3 text-white/65 font-bold uppercase tracking-[0.3em] text-xs">
               <CalendarDays size={18} /> Calendar
             </div>
             <h2 className="mt-2 text-3xl font-black tracking-tight leading-none truncate">
               {monthFormatter.format(visibleMonth)}
             </h2>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">

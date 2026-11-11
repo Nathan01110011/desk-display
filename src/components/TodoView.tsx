@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Loader2, Keyboard, AlertCircle } from 'lucide-react';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
+import BackButton from './BackButton';
 
 interface IframeWindow extends Window {
   HTMLTextAreaElement: typeof HTMLTextAreaElement;
@@ -11,7 +12,7 @@ interface IframeWindow extends Window {
   KeyboardEvent: typeof KeyboardEvent;
 }
 
-export function TodoView() {
+export function TodoView({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = React.useState(true);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [kbValue, setKbValue] = useState('');
@@ -105,7 +106,7 @@ export function TodoView() {
   return (
     <div className="w-full h-full flex flex-col bg-neutral-950 rounded-3xl overflow-hidden border border-sky-200/15 relative">
       {loading && !configError && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md">
+        <div className="absolute inset-x-0 bottom-0 top-[4.5rem] z-40 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md">
           <Loader2 className="animate-spin text-blue-500 mb-4" size={64} />
           <p className="text-xl font-bold text-white/75 uppercase tracking-widest">Loading Tracker...</p>
         </div>
@@ -113,7 +114,7 @@ export function TodoView() {
 
       {/* Configuration Error UI */}
       {configError && (
-        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 p-12 text-center gap-6 rounded-3xl">
+        <div className="absolute inset-x-0 bottom-0 top-[4.5rem] z-40 flex flex-col items-center justify-center bg-black/90 p-12 text-center gap-6 rounded-3xl">
           <AlertCircle size={80} className="text-red-500" />
           <h2 className="text-4xl font-bold text-white">TODO App Not Configured</h2>
           <p className="text-xl text-white/60 max-w-2xl leading-relaxed">
@@ -122,7 +123,7 @@ export function TodoView() {
         </div>
       )}
 
-      {!loading && !configError && <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-neutral-950/40 px-4 py-3"><h2 className="text-lg font-black">Your tracker</h2><button type="button" onClick={() => setShowKeyboard(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 text-sm font-bold text-sky-100"><Keyboard size={20} /> Keyboard</button></header>}
+      <header className="relative z-50 flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-neutral-950/40 px-4 py-3"><div className="flex items-center gap-3"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /><h2 className="text-lg font-black">Your tracker</h2></div>{!loading && !configError && <button type="button" onPointerDown={() => setShowKeyboard(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200/20 bg-sky-200/10 px-4 text-sm font-bold text-sky-100"><Keyboard size={20} /> Keyboard</button>}</header>
       {!configError && (
         <iframe
           ref={iframeRef}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import BackButton from './BackButton';
 import { motion } from 'framer-motion';
 import { Timer, Play, Pause, RotateCcw, Plus, Minus, X, CheckCircle2 } from 'lucide-react';
 import { formatPomoTime } from '@/lib/format';
@@ -25,7 +26,8 @@ export function TimerView({
   onPause,
   onResume,
   onReset,
-  onDismiss
+  onDismiss,
+  onClose
 }: TimerViewProps) {
   const [customMinutes, setCustomMinutes] = useState(5);
 
@@ -49,12 +51,12 @@ export function TimerView({
       className="w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"
     >
       <section className="min-h-0 rounded-[2rem] border border-sky-200/15 bg-gradient-to-br from-neutral-950/70 to-neutral-950 p-5 flex flex-col">
+        <header className="flex shrink-0 items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
+          <span className="flex items-center gap-3"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /><span className="flex items-center gap-3"><Timer size={18} /> Timer</span></span>
+          {hasTimer && <span>{isFinished ? 'Complete' : isActive ? 'Running' : 'Paused'}</span>}
+        </header>
         {hasTimer ? (
           <>
-            <div className="flex items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
-              <span className="flex items-center gap-3"><Timer size={18} /> Timer</span>
-              <span>{isFinished ? 'Complete' : isActive ? 'Running' : 'Paused'}</span>
-            </div>
             <div className="flex-1 min-h-0 flex items-center justify-center py-3">
               <div className="relative aspect-square w-[min(100%,46vh,30rem)] shrink">
                 <div

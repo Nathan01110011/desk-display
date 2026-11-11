@@ -122,7 +122,7 @@ function ExerciseDaysTile({
   );
 }
 
-export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
+export function FitbitView({ stats, loading, onRefresh, onClose }: FitbitViewProps) {
   const [detailView, setDetailView] = useState<'overview' | 'weight' | 'stats'>('overview');
   const [weightRange, setWeightRange] = useState<WeightRange>('90days');
   const [chartElement, setChartElement] = useState<HTMLDivElement | null>(null);
@@ -200,8 +200,9 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
 
   if (loading && !stats) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-6 opacity-20">
-        <Activity size={80} className="animate-pulse" />
+      <div className="relative flex h-full w-full flex-col items-center justify-center gap-6">
+        <div className="absolute left-0 top-0"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /></div>
+        <Activity size={80} className="animate-pulse opacity-20" />
         <p className="text-xl font-bold uppercase tracking-widest">Loading Health...</p>
       </div>
     );
@@ -209,8 +210,9 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
 
   if (!stats) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-6 opacity-20">
-        <Activity size={80} />
+      <div className="relative flex h-full w-full flex-col items-center justify-center gap-6">
+        <div className="absolute left-0 top-0"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /></div>
+        <Activity size={80} className="opacity-20" />
         <p className="text-xl font-bold uppercase tracking-widest text-red-500">Health Error</p>
         <p className="text-sm">Check your Google Health token</p>
       </div>
@@ -237,7 +239,7 @@ export function FitbitView({ stats, loading, onRefresh }: FitbitViewProps) {
             <Activity size={18} /> Google Health
           </div>
           <div className="mt-2 flex items-center gap-4">
-            {detailView !== 'overview' && <BackButton onClick={() => setDetailView('overview')} aria-label="Back to Health overview" />}
+            <BackButton onPointerDown={detailView === 'overview' ? onClose : () => setDetailView('overview')} aria-label={detailView === 'overview' ? 'Back to dashboard' : 'Back to Health overview'} />
             <h2 className="text-4xl font-black tracking-tight leading-none">{detailView === 'weight' ? 'Weight history' : detailView === 'stats' ? 'Detailed stats' : 'Health'}</h2>
           </div>
         </div>

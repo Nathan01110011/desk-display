@@ -1,7 +1,5 @@
 "use client";
 
-import BackButton from '@/components/BackButton';
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, BellOff, Timer, Hourglass } from 'lucide-react';
@@ -474,12 +472,6 @@ export default function Dashboard() {
 
         {/* Main Area (Flex-1) */}
         <div className="flex-1 p-8 flex flex-col h-full overflow-hidden relative">
-          {activeView !== 'dashboard' && activeView !== 'settings' && (
-            <nav aria-label="App navigation" className="mb-3 flex shrink-0 items-center">
-              <BackButton onClick={closeActiveView} aria-label="Back to dashboard" />
-            </nav>
-          )}
-
           <AnimatePresence mode="wait">
             {showDashboardHome ? (
               <motion.div
@@ -695,9 +687,10 @@ export default function Dashboard() {
                     personalCalendarLoading={personalCalendarLoading}
                     onSavePersonalEvent={savePersonalCalendarEvent}
                     onDeletePersonalEvent={deletePersonalCalendarEvent}
+                    onClose={closeActiveView}
                   />
                 )}
-                {activeView === 'gallery' && <GalleryView />}
+                {activeView === 'gallery' && <GalleryView onClose={closeActiveView} />}
                 {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
                 {activeView === 'weather' && (
                   <WeatherView
@@ -737,10 +730,10 @@ export default function Dashboard() {
                 />
                 )}
                 {activeView === 'todo' && (
-                  <TodoView />
+                  <TodoView onClose={closeActiveView} />
                 )}
                 {activeView === 'rule' && (
-                  <RuleView />
+                  <RuleView onClose={closeActiveView} />
                 )}
               </motion.div>
             )}

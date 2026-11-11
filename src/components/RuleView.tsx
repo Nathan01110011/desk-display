@@ -39,6 +39,7 @@ import {
   Waves
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import BackButton from './BackButton';
 
 type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
 type PromptHouse = 'orbit' | 'ember' | 'tide' | 'signal';
@@ -257,11 +258,12 @@ const choicesFor = (attemptRows: Record<PromptHouse, ResponseId[]>): IconMeta<Re
 const keyFor = (items: string[]) => [...items].sort().join('|');
 
 interface RuleViewProps {
+  onClose?: () => void;
   lockMode?: boolean;
   onSolved?: () => void;
 }
 
-export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
+export function RuleView({ lockMode = false, onSolved, onClose }: RuleViewProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>(lockMode ? 'hard' : 'easy');
   const [attempt, setAttempt] = useState<Attempt>(() => makeAttempt(lockMode ? 'hard' : 'easy'));
   const [selected, setSelected] = useState<ResponseId[]>([]);
@@ -321,10 +323,11 @@ export function RuleView({ lockMode = false, onSolved }: RuleViewProps) {
     >
       <section className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-gradient-to-br from-neutral-950/50 to-neutral-950 p-5">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-          <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-white/65">
+          <header className="flex shrink-0 items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-white/65">
+            {!lockMode && onClose && <BackButton onPointerDown={onClose} aria-label="Back to dashboard" />}
             <ShieldQuestion size={18} />
             Rule
-          </div>
+          </header>
 
           {!lockMode && (
             <div className="grid shrink-0 grid-cols-3 gap-2 rounded-[1.25rem] border border-white/10 bg-black/20 p-2">

@@ -1,4 +1,5 @@
 import React from 'react';
+import BackButton from './BackButton';
 import { motion } from 'framer-motion';
 import { Timer, X, Play, Pause, RotateCcw, CheckCircle2, Coffee, Focus, Minus, Plus } from 'lucide-react';
 import { PomodoroMode } from '@/types';
@@ -26,7 +27,8 @@ export function PomodoroView({
   onToggle,
   onReset,
   onSwitchMode,
-  onUpdateDurations
+  onUpdateDurations,
+  onClose
 }: PomodoroViewProps) {
   const isFinished = pomoTime === 0 && !pomoActive;
   const isBreak = pomoMode === 'break';
@@ -50,7 +52,7 @@ export function PomodoroView({
     >
       <section className="min-h-0 rounded-[2rem] border border-rose-200/15 bg-gradient-to-br from-rose-950/70 to-neutral-950 p-5 flex flex-col">
         <div className="flex items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
-          <span className="flex items-center gap-3"><Timer size={18} /> Pomodoro</span>
+          <div className="flex items-center gap-3"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /><span className="flex items-center gap-3"><Timer size={18} /> Pomodoro</span></div>
           <span>{isBreak ? 'Break' : 'Focus'}</span>
         </div>
 

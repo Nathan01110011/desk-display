@@ -1,7 +1,7 @@
 import BackButton from './BackButton';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Lightbulb, Loader2, ChevronLeft, Sun, Thermometer, Palette, Flame, Snowflake, Sparkles } from 'lucide-react';
+import { Home, Lightbulb, Loader2, Sun, Thermometer, Palette, Flame, Snowflake, Sparkles } from 'lucide-react';
 import { SmartDevice } from '@/types';
 
 interface SmartHomeViewProps {
@@ -24,7 +24,7 @@ const EFFECT_SCENES = [
   { id: 36, name: 'Snowy', swatch: '#bfdbfe' },
 ];
 
-export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps) {
+export function SmartHomeView({ devices, loading, onUpdate, onClose }: SmartHomeViewProps) {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [draftColor, setDraftColor] = useState({ r: 255, g: 255, b: 255 });
@@ -61,8 +61,9 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
 
   if (loading && devices.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-6 opacity-75">
-        <Home size={80} className="animate-pulse" />
+      <div className="relative flex h-full w-full flex-col items-center justify-center gap-6">
+        <div className="absolute left-0 top-0"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /></div>
+        <Home size={80} className="animate-pulse opacity-75" />
         <p className="text-xl font-bold uppercase tracking-widest">Scanning Network...</p>
       </div>
     );
@@ -91,9 +92,10 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
             className="w-full h-full min-h-0 flex flex-col gap-4"
           >
-            <div className="flex items-center gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm mb-0">
-              <Home size={20} /> Smart Home
-            </div>
+            <header className="flex shrink-0 items-center gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
+              <BackButton onPointerDown={onClose} aria-label="Back to dashboard" />
+              <span className="flex items-center gap-3"><Home size={20} /> Smart Home</span>
+            </header>
 
             <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 w-full min-h-0 overflow-y-auto overscroll-contain">
               {!devices.length && <p className="p-6 text-white/75">No devices found. Check that your lights are connected to the same network.</p>}
@@ -137,12 +139,7 @@ export function SmartHomeView({ devices, loading, onUpdate }: SmartHomeViewProps
             className="w-full h-full min-h-0 flex flex-col gap-4"
           >
             <div className="flex items-center justify-between">
-              <button
-                onPointerDown={() => setSelectedDeviceId(null)}
-                className="p-3 rounded-xl bg-white/5 text-white/60 flex items-center gap-3 font-bold active:scale-90 transition-all"
-              >
-                <ChevronLeft size={24} /> Back
-              </button>
+              <BackButton onPointerDown={() => setSelectedDeviceId(null)} aria-label="Back to smart home devices" />
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-black">{selectedDevice?.name}</span>
                 <div className={`w-2 h-2 rounded-full ${selectedDevice?.isOn ? 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'bg-white/10'}`} />
