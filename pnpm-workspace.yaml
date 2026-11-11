@@ -1,0 +1,12 @@
+# pnpm 12 reads project configuration from this file, not package.json#pnpm.
+packages:
+  - '.'
+
+overrides:
+  postcss: 8.5.14
+
+# Explicitly approve the same native build dependencies used by pnpm 10.
+allowBuilds:
+  msw: true
+  sharp: true
+  unrs-resolver: true
