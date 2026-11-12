@@ -23,7 +23,7 @@ async function capture(name) {
     if (await names.count() !== 3 || await times.count() !== 3) {
       throw new Error('Station board must render a flip-tile location and time for every configured clock');
     }
-    const labels = await names.evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')));
+    const labels = await names.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-flap-value')));
     if (labels.filter(name => name === 'Belfast').length !== 1 || labels.includes('LOCAL TIME')) {
       throw new Error('Station board must display configured Belfast once and must not invent a local-time row: ' + labels.join(', '));
     }
