@@ -484,7 +484,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ x: -64, opacity: 0 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className={isPortrait ? 'w-full h-[37%] shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative' : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
+              className={isPortrait ? 'w-full h-[29%] shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative' : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
             >
               <div className={isPortrait ? 'px-6 pt-6 pb-4 w-full h-full flex flex-col' : 'p-8 w-[33.33vw] h-full flex flex-col'}>
                 <div className={`flex items-start justify-between w-full ${isPortrait ? 'mb-4' : 'mb-10'}`}>
@@ -525,7 +525,7 @@ export default function Dashboard() {
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 layout
                 className={`w-full h-full flex flex-col items-center relative transition-[justify-content] duration-500 ease-out ${
-                  isPortrait ? 'justify-between py-2' : hasDashboardHero ? 'justify-between py-8' : 'justify-center py-8'
+                  isPortrait ? (hasDashboardHero ? 'justify-between py-2' : 'justify-center py-2') : hasDashboardHero ? 'justify-between py-8' : 'justify-center py-8'
                 }`}
               >
                 {/* Active Status Indicators */}
