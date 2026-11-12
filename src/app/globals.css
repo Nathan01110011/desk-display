@@ -115,7 +115,7 @@ main[data-display-orientation^="portrait"] .on-screen-keyboard .keyboard-row {
 main[data-display-orientation^="portrait"] .on-screen-keyboard .keyboard-key {
   flex: 1 1 0;
   min-width: 0;
-  width: auto !important;
+  width: auto;
   height: 4.25rem;
   padding: 0.25rem;
   font-size: 1.25rem;
