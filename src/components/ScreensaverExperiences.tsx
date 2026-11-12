@@ -145,7 +145,7 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks }: 
 }
 
 type BoardClock = { id: string; label: string; timeZone?: string; offset?: number };
-type BoardProps = { now: Date; clocks: AdditionalClock[]; mode: FlapboardMode; animation: FlapboardAnimation; intervalSeconds: number; primaryLabel?: string };
+type BoardProps = { now: Date; clocks: AdditionalClock[]; mode: FlapboardMode; animation: FlapboardAnimation; intervalSeconds: number };
 
 function zoneDisplay(clock: BoardClock, now: Date) {
   const zone = normalizeTimeZone(clock.timeZone);
@@ -179,18 +179,20 @@ function FlapText({ value, columns, identity, animation, fontSize, tileKind }: {
 }) {
   const chars = Array.from(value.toUpperCase().slice(0, columns).padEnd(columns, ' '));
   return (
-    <div data-flap-role={tileKind} className="grid h-full min-h-0 min-w-0 gap-[clamp(2px,0.25vw,6px)]" style={{ gridTemplateColumns: 'repeat(' + columns + ',minmax(0,1fr))' }}>
+    <div data-flap-role={tileKind} aria-label={value} className="grid h-full min-h-0 min-w-0 gap-[clamp(2px,0.25vw,6px)]" style={{ gridTemplateColumns: 'repeat(' + columns + ',minmax(0,1fr))' }}>
       {chars.map((char, index) => <FlapGlyph key={index} char={char} identity={identity + ':' + index} index={index} animation={animation} fontSize={fontSize} />)}
     </div>
   );
 }
 
-export function SplitFlapScreensaver({ now, clocks, mode, animation, intervalSeconds, primaryLabel }: BoardProps) {
+export function SplitFlapScreensaver({ now, clocks, mode, animation, intervalSeconds }: BoardProps) {
   const [rotation, setRotation] = useState(0);
-  const entries = useMemo<BoardClock[]>(() => [
-    { id: 'system-local', label: primaryLabel?.trim() || 'LOCAL' },
-    ...clocks.map(clock => ({ id: clock.id, label: clock.label, timeZone: clock.timeZone, offset: clock.offset })),
-  ], [clocks, primaryLabel]);
+  // The configured World Clocks are authoritative. Weather location is not the
+  // system timezone, so using its name for the device clock mislabels the time.
+  // Show one truthful local-time fallback only when no world clocks are set.
+  const entries = useMemo<BoardClock[]>(() => clocks.length > 0
+    ? clocks.map(clock => ({ id: clock.id, label: clock.label, timeZone: clock.timeZone, offset: clock.offset }))
+    : [{ id: 'system-local', label: 'LOCAL TIME' }], [clocks]);
 
   useEffect(() => {
     if (mode !== 'carousel' || entries.length < 2) return;
