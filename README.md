@@ -176,6 +176,40 @@ Use the provided deploy script for one-command updates (Pulls, Builds, Restarts 
 ./scripts/deploy.sh
 ```
 
+### Testing an unmerged GitHub branch on the Pi
+
+Use `deploy-dev.sh` from your **main checkout**, not the normal production `deploy.sh`. It builds an isolated Git worktree in a sibling `desk-display-dev` folder, starts a separate PM2 process called `dashboard-dev`, and serves the preview on **port 3001**. The production working tree, process, and port 3000 are not changed.
+
+```bash
+# In your existing desk-display installation:
+git pull --ff-only origin main
+chmod +x scripts/deploy-dev.sh
+
+# Install / refresh the screensaver PR branch without switching the production checkout.
+./scripts/deploy-dev.sh feat/animated-clocks-flapboard
+
+# Or put the preview directly on the Pi touchscreen instead of the production kiosk.
+./scripts/deploy-dev.sh feat/animated-clocks-flapboard --kiosk
+```
+
+View `http://<pi-address>:3001` from another device, or `http://localhost:3001` on the Pi. Running the same command a second time fetches the latest commit from that branch, rebuilds, and restarts only `dashboard-dev`.
+
+To return the Pi's display to the normal dashboard **without rebuilding production**:
+
+```bash
+./scripts/deploy-dev.sh --production-kiosk
+```
+
+When you are finished, optionally stop the preview server:
+
+```bash
+./scripts/deploy-dev.sh --stop
+```
+
+The preview imports **only** the configured World Clocks (in order) and saves its own screensaver display preferences. It disables the rule lock in the preview so you can test easily. It intentionally does **not** copy `.env.local`, authentication tokens, or other production secrets into unmerged code. Some external integrations will therefore be unavailable in the preview. Switching the kiosk closes other open Chromium windows; using the preview in a separate browser does not.
+
+Avoid using `scripts/deploy.sh` to deploy unmerged branches: that script explicitly resets the production checkout to `origin/main` and restarts the production kiosk.
+
 ### Manual Kiosk Mode (Wayland/Labwc)
 Add this to `~/.config/labwc/autostart`:
 ```bash
