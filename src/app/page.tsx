@@ -80,7 +80,7 @@ export default function Dashboard() {
   const [screensaverType, setScreensaverType] = useState<ScreensaverType>('clock');
   const [analogClockTheme, setAnalogClockTheme] = useState<AnalogClockTheme>('clockwork');
   const [analogShowWorldClocks, setAnalogShowWorldClocks] = useState(true);
-  const [flapboardMode, setFlapboardMode] = useState<FlapboardMode>('carousel');
+  const [flapboardMode, setFlapboardMode] = useState<FlapboardMode>('board');
   const [flapboardAnimation, setFlapboardAnimation] = useState<FlapboardAnimation>('cascade');
   const [flapboardInterval, setFlapboardInterval] = useState(20);
   const [screensaverPhotoSource, setScreensaverPhotoSource] = useState<ScreensaverPhotoSource>('all');
@@ -157,7 +157,7 @@ export default function Dashboard() {
         setScreensaverType(['clock', 'photos', 'analog', 'flapboard'].includes(data.screensaverType) ? data.screensaverType : 'clock');
         setAnalogClockTheme(['clockwork', 'orbital', 'station', 'chronograph'].includes(data.analogClockTheme) ? data.analogClockTheme : 'clockwork');
         setAnalogShowWorldClocks(data.analogShowWorldClocks !== false);
-        setFlapboardMode(data.flapboardMode === 'board' ? 'board' : 'carousel');
+        setFlapboardMode(data.flapboardMode === 'carousel' ? 'carousel' : 'board');
         setFlapboardAnimation(data.flapboardAnimation === 'mechanical' ? 'mechanical' : 'cascade');
         setFlapboardInterval([10, 20, 30, 60].includes(data.flapboardInterval) ? data.flapboardInterval : 20);
         setScreensaverPhotoSource(data.screensaverPhotoSource === 'favorites' ? 'favorites' : 'all');
@@ -417,7 +417,7 @@ export default function Dashboard() {
             ) : screensaverType === 'analog' ? (
               <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} />
             ) : screensaverType === 'flapboard' ? (
-              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} />
+              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} primaryLabel={weather?.location} />
             ) : (
               <motion.div
                 initial={{ y: 16, scale: 0.98 }}
