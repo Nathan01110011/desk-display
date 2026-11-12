@@ -91,7 +91,7 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, po
       {!isLight && <div className="pointer-events-none absolute inset-0" style={{ background: theme === 'orbital' ? 'radial-gradient(ellipse at center,#163832,#070909 75%)' : 'radial-gradient(ellipse at center,#2a251d,#080a09 75%)' }} />}
       <div className={'relative z-10 grid h-full min-h-0 w-full items-center gap-[clamp(8px,1.3vw,22px)] px-[clamp(12px,2vw,34px)] ' + (portrait ? 'grid-cols-1 grid-rows-[auto_minmax(0,1fr)_auto] py-6' : availableClocks.length > 0 ? 'grid-cols-[minmax(0,1fr)_minmax(0,2.7fr)_minmax(0,1.4fr)]' : 'grid-cols-[minmax(0,1fr)_minmax(0,3.2fr)]')}>
         <aside className={portrait ? 'flex min-w-0 flex-col justify-center text-center' : 'flex min-w-0 flex-col justify-center'}>
-          <div className="min-w-0">
+          <div className={portrait ? "flex min-w-0 items-baseline justify-center gap-3" : "min-w-0"}>
             <div className="text-[clamp(19px,2.4vw,38px)] font-medium leading-snug opacity-60">{live.toLocaleDateString([], { weekday: 'long' })}</div>
             <div className="text-[clamp(66px,8.1vw,130px)] font-semibold leading-none tracking-[-0.08em] tabular-nums">{live.getDate()}</div>
             <div className="mt-1 text-[clamp(17px,2.3vw,36px)] font-medium leading-snug">{live.toLocaleDateString([], { month: 'long' })}</div>
@@ -99,7 +99,7 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, po
           </div>
          </aside>
 
-        <svg viewBox="0 0 600 600" role="img" aria-label={'Analog clock at ' + live.toLocaleTimeString()} className={portrait ? "mx-auto h-auto max-h-full w-[min(78%,60vh)] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)]" : "mx-auto h-auto max-h-[88vh] w-full max-w-[min(88vh,850px)] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)]"}>
+        <svg viewBox="0 0 600 600" role="img" aria-label={'Analog clock at ' + live.toLocaleTimeString()} className={portrait ? "mx-auto h-auto max-h-full w-[min(86%,75vh)] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)]" : "mx-auto h-auto max-h-[88vh] w-full max-w-[min(88vh,850px)] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)]"}>
           <defs>
             <radialGradient id="clock-face"><stop offset="0" stopColor={isLight ? '#fffefa' : '#33312a'} /><stop offset="1" stopColor={isLight ? '#ede9dd' : '#0c100e'} /></radialGradient>
           </defs>
