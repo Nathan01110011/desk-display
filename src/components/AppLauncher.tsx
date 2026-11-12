@@ -230,7 +230,7 @@ export function AppLauncher({
   const totalIcons = launcherItems.length;
   const isMultiRow = totalIcons > 5;
   const columnCount = portrait ? 4 : isMultiRow ? Math.ceil(totalIcons / 2) : totalIcons;
-  const multiRowTileMaxWidth = portrait ? '7.25rem' : '8rem';
+  const multiRowTileMaxWidth = portrait ? '8.5rem' : '8rem';
   const rows = portrait
     ? Array.from({ length: Math.ceil(totalIcons / columnCount) }, (_, index) => launcherItems.slice(index * columnCount, (index + 1) * columnCount))
     : isMultiRow
