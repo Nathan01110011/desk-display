@@ -376,7 +376,7 @@ export function SettingsView({
                 </div>
                 <button type="button" onPointerDown={() => { onUpdateAnalogShowWorldClocks(!analogShowWorldClocks); void updateScreensaverPresentation({ analogShowWorldClocks: !analogShowWorldClocks }); }}
                   className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 text-left">
-                  <span className="text-sm font-semibold">Show configured world clocks beneath the dial</span>
+                  <span className="text-sm font-semibold">Show configured world clocks as smaller analog dials</span>
                   <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg border ${analogShowWorldClocks ? 'border-white bg-white text-black' : 'border-white/20 text-transparent'}`}><Check size={17} /></span>
                 </button>
               </div>
@@ -385,9 +385,9 @@ export function SettingsView({
             {screensaverType === 'flapboard' && (
               <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-xs font-black uppercase tracking-widest text-white/70">World clock display</p>
-                <p className="text-xs text-white/60">Automatically uses your system time and the locations in World Clocks, in their saved order.</p>
+                <p className="text-xs text-white/60">Every row is a split-flap display, showing a configured location on the left and its time on the right.</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {([{ id: 'carousel' as const, label: 'Cycle locations' }, { id: 'board' as const, label: 'Show all rows' }]).map(option => (
+                  {([{ id: 'carousel' as const, label: 'Rotate board rows' }, { id: 'board' as const, label: 'Station board' }]).map(option => (
                     <button key={option.id} type="button" onPointerDown={() => { onUpdateFlapboardMode(option.id); void updateScreensaverPresentation({ flapboardMode: option.id }); }}
                       className={`rounded-xl border px-3 py-3 text-sm font-black ${flapboardMode === option.id ? 'border-white/50 bg-white/15' : 'border-white/10 bg-black/20'}`}>{option.label}</button>
                   ))}
@@ -401,7 +401,7 @@ export function SettingsView({
                 </div>
                 {flapboardMode === 'carousel' && (
                   <>
-                    <p className="text-xs font-black uppercase tracking-widest text-white/70">Time per location</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-white/70">Rotate every</p>
                     <div className="grid grid-cols-4 gap-2">
                       {[10, 20, 30, 60].map(value => (
                         <button key={value} type="button" onPointerDown={() => { onUpdateFlapboardInterval(value); void updateScreensaverPresentation({ flapboardInterval: value }); }}
@@ -410,7 +410,7 @@ export function SettingsView({
                     </div>
                   </>
                 )}
-                <p className="text-xs text-white/50">Change or reorder cities in World Clocks. No separate location list is maintained here.</p>
+                <p className="text-xs text-white/50">Location names and timezones come directly from World Clocks. Reorder locations there to change the board.</p>
               </div>
             )}
 
