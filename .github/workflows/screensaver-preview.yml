@@ -27,7 +27,7 @@ jobs:
       - name: Set up screenshot test fixtures
         run: |
           cat > .dashboard-settings.json <<'JSON'
-          {"ruleLockOnOpen":false,"ruleLockOnInactivity":false,"worldClocks":[{"id":"sample-1","label":"Belfast","city":"Belfast","offset":0,"timeZone":"Europe/London"},{"id":"sample-2","label":"Austin","city":"Austin","offset":-21600,"timeZone":"America/Chicago"},{"id":"sample-3","label":"Tokyo","city":"Tokyo","offset":32400,"timeZone":"Asia/Tokyo"}]}
+          {"ruleLockOnOpen":false,"ruleLockOnInactivity":false,"weatherLocation":"Belfast","worldClocks":[{"id":"sample-1","label":"Belfast","city":"Belfast","offset":0,"timeZone":"Europe/London"},{"id":"sample-2","label":"Austin","city":"Austin","offset":-21600,"timeZone":"America/Chicago"},{"id":"sample-3","label":"Tokyo","city":"Tokyo","offset":32400,"timeZone":"Asia/Tokyo"}]}
           JSON
           npm --prefix /tmp/pi-preview install playwright
           /tmp/pi-preview/node_modules/.bin/playwright install chromium
