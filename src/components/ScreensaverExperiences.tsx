@@ -174,12 +174,12 @@ function FlapGlyph({ char, index, identity, animation, fontSize }: { char: strin
   );
 }
 
-function FlapText({ value, columns, identity, animation, fontSize, role }: {
-  value: string; columns: number; identity: string; animation: FlapboardAnimation; fontSize: string; role: 'location' | 'time';
+function FlapText({ value, columns, identity, animation, fontSize, tileKind }: {
+  value: string; columns: number; identity: string; animation: FlapboardAnimation; fontSize: string; tileKind: 'location' | 'time';
 }) {
   const chars = Array.from(value.toUpperCase().slice(0, columns).padEnd(columns, ' '));
   return (
-    <div data-flap-role={role} className="grid h-full min-h-0 min-w-0 gap-[clamp(2px,0.25vw,6px)]" style={{ gridTemplateColumns: 'repeat(' + columns + ',minmax(0,1fr))' }}>
+    <div data-flap-role={tileKind} className="grid h-full min-h-0 min-w-0 gap-[clamp(2px,0.25vw,6px)]" style={{ gridTemplateColumns: 'repeat(' + columns + ',minmax(0,1fr))' }}>
       {chars.map((char, index) => <FlapGlyph key={index} char={char} identity={identity + ':' + index} index={index} animation={animation} fontSize={fontSize} />)}
     </div>
   );
@@ -217,8 +217,8 @@ export function SplitFlapScreensaver({ now, clocks, mode, animation, intervalSec
             className="grid min-h-0 flex-1 grid-cols-[minmax(0,67fr)_minmax(0,33fr)] gap-[clamp(10px,1.5vw,26px)] border-b-[clamp(3px,0.35vw,7px)] border-[#343834] bg-[#171a18] p-[clamp(5px,0.65vw,12px)] shadow-[inset_0_3px_10px_rgba(0,0,0,0.6)] last:border-b-0"
             style={{ height: 'calc(100% / ' + rows + ')' }}
           >
-            <FlapText role="location" value={entry.label} columns={nameColumns} identity={'row-' + row + '-location'} animation={animation} fontSize={nameFont} />
-            <FlapText role="time" value={zoneDisplay(entry, now)} columns={5} identity={'row-' + row + '-time'} animation={animation} fontSize={timeFont} />
+            <FlapText tileKind="location" value={entry.label} columns={nameColumns} identity={'row-' + row + '-location'} animation={animation} fontSize={nameFont} />
+            <FlapText tileKind="time" value={zoneDisplay(entry, now)} columns={5} identity={'row-' + row + '-time'} animation={animation} fontSize={timeFont} />
           </div>
         ))}
       </div>
