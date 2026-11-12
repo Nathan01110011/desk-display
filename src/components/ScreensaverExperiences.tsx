@@ -46,12 +46,12 @@ function getZoneParts(clock: Pick<AdditionalClock, 'timeZone' | 'offset'>, now: 
   return { hours: adjusted.getHours(), minutes: adjusted.getMinutes(), seconds: adjusted.getSeconds() + now.getMilliseconds() / 1000 };
 }
 
-function MiniAnalogClock({ clock, now, light, accent }: { clock: AdditionalClock; now: Date; light: boolean; accent: string }) {
+function MiniAnalogClock({ clock, now, light, accent, portrait = false }: { clock: AdditionalClock; now: Date; light: boolean; accent: string; portrait?: boolean }) {
   const { hours, minutes, seconds } = getZoneParts(clock, now);
   const ink = light ? '#303333' : '#eee9d9';
 
   return (
-    <div className="flex min-w-0 items-center gap-[clamp(8px,1.1vw,18px)]">
+    <div className={portrait ? "flex min-w-0 flex-col items-center justify-center gap-2" : "flex min-w-0 items-center gap-[clamp(8px,1.1vw,18px)]"}>
       <svg viewBox="0 0 100 100" role="img" aria-label={'Analog clock for ' + clock.label} className="size-[min(11vw,17vh,150px)] shrink-0 overflow-visible">
         <circle cx="50" cy="50" r="47" fill={light ? '#eee9dc' : '#171d1a'} stroke={light ? '#83827b' : '#968261'} strokeWidth="2.5" />
         {Array.from({ length: 12 }, (_, index) => (
@@ -62,7 +62,7 @@ function MiniAnalogClock({ clock, now, light, accent }: { clock: AdditionalClock
         <line x1="50" y1="59" x2="50" y2="13" transform={'rotate(' + seconds * 6 + ' 50 50)'} stroke={accent} strokeWidth="1.8" strokeLinecap="round" />
         <circle cx="50" cy="50" r="4" fill={accent} />
       </svg>
-      <span className="min-w-0 break-words text-[clamp(13px,1.45vw,22px)] font-semibold leading-tight tracking-[0.04em] opacity-85">{clock.label}</span>
+      <span className={portrait ? "max-w-full truncate text-center text-[clamp(13px,1.45vw,22px)] font-semibold leading-tight tracking-[0.04em] opacity-85" : "min-w-0 break-words text-[clamp(13px,1.45vw,22px)] font-semibold leading-tight tracking-[0.04em] opacity-85"}>{clock.label}</span>
     </div>
   );
 }
@@ -135,7 +135,7 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, po
         </svg>
 
         {availableClocks.length > 0 && <aside data-world-clock-stack="right" className={portrait ? "grid min-h-0 w-full grid-cols-3 gap-2 pb-4" : "flex h-full min-h-0 min-w-0 flex-col justify-center gap-[clamp(8px,1.5vh,22px)] pl-[clamp(0px,0.5vw,10px)]"}>
-          {availableClocks.map(clock => <MiniAnalogClock key={clock.id} clock={clock} now={live} light={isLight} accent={accent} />)}
+          {availableClocks.map(clock => <MiniAnalogClock key={clock.id} clock={clock} now={live} light={isLight} accent={accent} portrait={portrait} />)}
         </aside>}
       </div>
     </div>
