@@ -94,3 +94,53 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms; transition-duration: 0.01ms; }
 }
+
+/*
+ * Portrait is an opt-in application rotation. Labwc/Chromium still report a
+ * landscape viewport, so orientation media queries cannot be used here.
+ * All selectors are scoped to the manually rotated Pi Frame canvas.
+ */
+main[data-display-orientation^="portrait"] .on-screen-keyboard {
+  padding: 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+main[data-display-orientation^="portrait"] .on-screen-keyboard-panel {
+  max-width: 100%;
+  min-width: 0;
+}
+main[data-display-orientation^="portrait"] .on-screen-keyboard .keyboard-row {
+  gap: 0.25rem;
+}
+main[data-display-orientation^="portrait"] .on-screen-keyboard .keyboard-key {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto !important;
+  height: 4.25rem;
+  padding: 0.25rem;
+  font-size: 1.25rem;
+  border-radius: 0.65rem;
+}
+main[data-display-orientation^="portrait"] .on-screen-keyboard .keyboard-space {
+  flex: 2.2 1 0;
+}
+main[data-display-orientation^="portrait"] .on-screen-keyboard .keyboard-row svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+main[data-display-orientation^="portrait"] [data-calendar-orientation="portrait"] .grid-cols-7 {
+  column-gap: 0.3rem;
+}
+main[data-display-orientation^="portrait"] [data-calendar-orientation="portrait"] .grid-rows-6 button {
+  padding: 0.4rem;
+  border-radius: 0.7rem;
+}
+main[data-display-orientation^="portrait"] [data-calendar-orientation="portrait"] .grid-rows-6 button .text-3xl {
+  font-size: 1.45rem;
+}
+main[data-display-orientation^="portrait"] [data-calendar-orientation="portrait"] .grid-rows-6 button .text-xs {
+  font-size: 0.65rem;
+}
+main[data-display-orientation^="portrait"] [data-weather-layout="portrait"] section {
+  min-width: 0;
+}
