@@ -14,8 +14,23 @@ async function capture(name) {
   await page.locator('[data-screensaver]').waitFor({ timeout: 20000 });
   await page.waitForTimeout(1400);
   if (name.startsWith('analog-')) {
-    const miniClocks = await page.locator('svg[aria-label^="Analog clock for "]').count();
-    if (miniClocks !== 3) throw new Error('Expected 3 smaller analog world clocks, found ' + miniClocks);
+    const miniClocks = page.locator('svg[aria-label^="Analog clock for "]');
+    if (await miniClocks.count() !== 3) throw new Error('Expected three secondary analog clocks');
+    const stack = page.locator('[data-world-clock-stack="right"]');
+    if (await stack.count() !== 1) throw new Error('Secondary clocks must share a right-side column');
+    const main = await page.locator('svg[aria-label^="Analog clock at "]').boundingBox();
+    const secondary = await miniClocks.evaluateAll(nodes => nodes.map(node => {
+      const { x, y, width, height } = node.getBoundingClientRect();
+      return { x, y, width, height };
+    }));
+    if (!main || secondary.some((box, index) =>
+      box.x < main.x + main.width - 1 ||
+      box.width < 118 ||
+      box.y + box.height > 800 ||
+      (index > 0 && box.y <= secondary[index - 1].y)
+    )) {
+      throw new Error('Mini analog clocks must be larger, vertically stacked and right of main dial: ' + JSON.stringify({ main, secondary }));
+    }
   }
   if (name.startsWith('flapboard-')) {
     const names = page.locator('[data-flap-role="location"]');
