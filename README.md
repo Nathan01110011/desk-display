@@ -178,37 +178,30 @@ Use the provided deploy script for one-command updates (Pulls, Builds, Restarts 
 
 ### Testing an unmerged GitHub branch on the Pi
 
-Use `deploy-dev.sh` from your **main checkout**, not the normal production `deploy.sh`. It builds an isolated Git worktree in a sibling `desk-display-dev` folder, starts a separate PM2 process called `dashboard-dev`, and serves the preview on **port 3001**. The production working tree, process, and port 3000 are not changed.
+The development deploy script uses the **existing Pi installation**. It fetches the selected branch, does a full dependency install and build, and restarts the same `dashboard` PM2 process and Chromium kiosk on **port 3000**. It preserves your existing ignored `.env.local` and `.dashboard-settings.json` files — no second copy of configuration is needed.
 
 ```bash
-# In your existing desk-display installation:
+# From the existing desk-display directory; first time only:
 git pull --ff-only origin main
-chmod +x scripts/deploy-dev.sh
 
-# Install / refresh the screensaver PR branch without switching the production checkout.
+# Build and run the screensaver feature branch:
 ./scripts/deploy-dev.sh feat/animated-clocks-flapboard
 
-# Or put the preview directly on the Pi touchscreen instead of the production kiosk.
-./scripts/deploy-dev.sh feat/animated-clocks-flapboard --kiosk
+# Or omit the argument to use the current screensaver feature branch:
+./scripts/deploy-dev.sh
 ```
 
-View `http://<pi-address>:3001` from another device, or `http://localhost:3001` on the Pi. Running the same command a second time fetches the latest commit from that branch, rebuilds, and restarts only `dashboard-dev`.
-
-To return the Pi's display to the normal dashboard **without rebuilding production**:
+To switch **back to production**, use the normal deployment command:
 
 ```bash
-./scripts/deploy-dev.sh --production-kiosk
+./scripts/deploy.sh
 ```
 
-When you are finished, optionally stop the preview server:
+Both commands overwrite the current build in place and restart the kiosk. There is no side-by-side dev server. The normal script always selects `origin/main`, even when you've been testing a feature branch. The dev script supports another remote branch as an argument. Existing local, ignored settings and environment variables are reused in both cases.
 
-```bash
-./scripts/deploy-dev.sh --stop
-```
+**Caution:** Because you are running feature-branch code with production credentials, only deploy branches you trust. As with the original deploy script, uncommitted tracked source changes in the app checkout are discarded; ignored local settings and environment files are retained. A failed build can leave the kiosk unavailable until you run the normal production deployment again.
 
-The preview imports **only** the configured World Clocks (in order) and saves its own screensaver display preferences. It disables the rule lock in the preview so you can test easily. It intentionally does **not** copy `.env.local`, authentication tokens, or other production secrets into unmerged code. Some external integrations will therefore be unavailable in the preview. Switching the kiosk closes other open Chromium windows; using the preview in a separate browser does not.
-
-Avoid using `scripts/deploy.sh` to deploy unmerged branches: that script explicitly resets the production checkout to `origin/main` and restarts the production kiosk.
+If you tested the earlier worktree-based script, its leftover `desk-display-dev` folder is not used by the new script. The new dev deployment also stops the old `dashboard-dev` PM2 process to free Pi resources.
 
 ### Manual Kiosk Mode (Wayland/Labwc)
 Add this to `~/.config/labwc/autostart`:
