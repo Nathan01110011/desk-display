@@ -179,7 +179,7 @@ function FlapText({ value, columns, identity, animation, fontSize, tileKind }: {
 }) {
   const chars = Array.from(value.toUpperCase().slice(0, columns).padEnd(columns, ' '));
   return (
-    <div data-flap-role={tileKind} aria-label={value} className="grid h-full min-h-0 min-w-0 gap-[clamp(2px,0.25vw,6px)]" style={{ gridTemplateColumns: 'repeat(' + columns + ',minmax(0,1fr))' }}>
+    <div data-flap-role={tileKind} data-flap-value={value} className="grid h-full min-h-0 min-w-0 gap-[clamp(2px,0.25vw,6px)]" style={{ gridTemplateColumns: 'repeat(' + columns + ',minmax(0,1fr))' }}>
       {chars.map((char, index) => <FlapGlyph key={index} char={char} identity={identity + ':' + index} index={index} animation={animation} fontSize={fontSize} />)}
     </div>
   );
