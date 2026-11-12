@@ -15,6 +15,7 @@ interface TimerViewProps {
   onReset: () => void;
   onDismiss: () => void;
   onClose: () => void;
+  portrait?: boolean;
 }
 
 export function TimerView({
@@ -27,7 +28,8 @@ export function TimerView({
   onResume,
   onReset,
   onDismiss,
-  onClose
+  onClose,
+  portrait = false
 }: TimerViewProps) {
   const [customMinutes, setCustomMinutes] = useState(5);
 
@@ -48,7 +50,7 @@ export function TimerView({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"
+      className={portrait ? "w-full h-full min-h-0 grid grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,0.8fr)] gap-3" : "w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"}
     >
       <section className="min-h-0 rounded-[2rem] border border-sky-200/15 bg-gradient-to-br from-neutral-950/70 to-neutral-950 p-5 flex flex-col">
         <header className="flex shrink-0 items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">

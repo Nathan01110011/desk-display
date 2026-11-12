@@ -10,6 +10,7 @@ interface FitbitViewProps {
   loading: boolean;
   onRefresh: () => void;
   onClose: () => void;
+  portrait?: boolean;
 }
 
 const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -122,7 +123,7 @@ function ExerciseDaysTile({
   );
 }
 
-export function FitbitView({ stats, loading, onRefresh, onClose }: FitbitViewProps) {
+export function FitbitView({ stats, loading, onRefresh, onClose, portrait = false }: FitbitViewProps) {
   const [detailView, setDetailView] = useState<'overview' | 'weight' | 'stats'>('overview');
   const [weightRange, setWeightRange] = useState<WeightRange>('90days');
   const [chartElement, setChartElement] = useState<HTMLDivElement | null>(null);
@@ -262,7 +263,7 @@ export function FitbitView({ stats, loading, onRefresh, onClose }: FitbitViewPro
         </div>
       </header>
 
-      <div className={`min-h-0 flex-1 grid gap-5 overflow-hidden ${detailView === 'overview' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      <div className={`min-h-0 flex-1 grid gap-3 overflow-hidden ${portrait && detailView === 'overview' ? 'grid-cols-1 grid-rows-2' : detailView === 'overview' ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {detailView !== 'stats' && <aside aria-label="Weight history" className="min-h-0 min-w-0 rounded-[2rem] bg-white/[0.04] border border-white/10 p-5 flex flex-col">
           <div className="-mx-5 -mt-5 px-5 py-3 mb-3 rounded-t-[2rem] bg-white/10 border-b border-white/15 shrink-0 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -351,7 +352,7 @@ export function FitbitView({ stats, loading, onRefresh, onClose }: FitbitViewPro
             <h3 className="text-sm font-black uppercase tracking-wider text-white/85">{detailView === 'stats' ? 'All health metrics' : 'Daily stats'}</h3>
             {detailView === 'overview' && <button type="button" onClick={() => setDetailView('stats')} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white/90">More stats →</button>}
           </div>
-          <div className={`grid min-h-0 flex-1 gap-3 ${detailView === 'stats' ? 'grid-cols-5 grid-rows-2' : 'grid-cols-2 grid-rows-3'}`}>
+          <div className={`grid min-h-0 flex-1 gap-3 ${detailView === 'stats' ? (portrait ? 'grid-cols-2 grid-rows-5' : 'grid-cols-5 grid-rows-2') : 'grid-cols-2 grid-rows-3'}`}>
             <StatTile
               icon={<Footprints size={24} />}
               label="Steps"

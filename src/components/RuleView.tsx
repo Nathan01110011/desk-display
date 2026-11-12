@@ -260,10 +260,11 @@ const keyFor = (items: string[]) => [...items].sort().join('|');
 interface RuleViewProps {
   onClose?: () => void;
   lockMode?: boolean;
+  portrait?: boolean;
   onSolved?: () => void;
 }
 
-export function RuleView({ lockMode = false, onSolved, onClose }: RuleViewProps) {
+export function RuleView({ lockMode = false, portrait = false, onSolved, onClose }: RuleViewProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>(lockMode ? 'hard' : 'easy');
   const [attempt, setAttempt] = useState<Attempt>(() => makeAttempt(lockMode ? 'hard' : 'easy'));
   const [selected, setSelected] = useState<ResponseId[]>([]);
@@ -319,7 +320,7 @@ export function RuleView({ lockMode = false, onSolved, onClose }: RuleViewProps)
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="grid h-full w-full grid-cols-[0.9fr_1.1fr] gap-4"
+      className={portrait ? "grid h-full w-full min-h-0 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-3" : "grid h-full w-full grid-cols-[0.9fr_1.1fr] gap-4"}
     >
       <section className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-gradient-to-br from-neutral-950/50 to-neutral-950 p-5">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">

@@ -28,6 +28,7 @@ interface AppLauncherProps {
   isSportsLive: boolean;
   appConfig: AppConfig;
   centered?: boolean;
+  portrait?: boolean;
 }
 
 export function AppLauncher({
@@ -50,7 +51,8 @@ export function AppLauncher({
   timerFinished,
   isSportsLive,
   appConfig,
-  centered = false
+  centered = false,
+  portrait = false
 }: AppLauncherProps) {
   const order: AppId[] = appConfig.appOrder || ['calendar', 'gallery', 'pomodoro', 'sports', 'weather', 'fitbit', 'home', 'timer', 'todo', 'rule'];
 
@@ -227,28 +229,30 @@ export function AppLauncher({
   ];
   const totalIcons = launcherItems.length;
   const isMultiRow = totalIcons > 5;
-  const columnCount = isMultiRow ? Math.ceil(totalIcons / 2) : totalIcons;
-  const multiRowTileMaxWidth = '8rem';
-  const rows = isMultiRow
-    ? [launcherItems.slice(0, columnCount), launcherItems.slice(columnCount)]
-    : [launcherItems];
+  const columnCount = portrait ? 4 : isMultiRow ? Math.ceil(totalIcons / 2) : totalIcons;
+  const multiRowTileMaxWidth = portrait ? '8.5rem' : '8rem';
+  const rows = portrait
+    ? Array.from({ length: Math.ceil(totalIcons / columnCount) }, (_, index) => launcherItems.slice(index * columnCount, (index + 1) * columnCount))
+    : isMultiRow
+      ? [launcherItems.slice(0, columnCount), launcherItems.slice(columnCount)]
+      : [launcherItems];
 
   return (
     <div
-      className={`w-full px-4 transition-all duration-500 ease-out ${
-        centered
-          ? 'max-w-5xl'
-          : `border-t border-white/15 ${isMultiRow ? 'max-w-5xl pt-5' : 'max-w-5xl pt-10'}`
+      className={`w-full transition-all duration-500 ease-out ${
+        portrait ? 'max-w-full px-1' : centered
+          ? 'max-w-5xl px-4'
+          : `border-t border-white/15 px-4 ${isMultiRow ? 'max-w-5xl pt-5' : 'max-w-5xl pt-10'}`
       }`}
     >
-      <div className={`flex flex-col w-full mx-auto ${isMultiRow ? 'gap-3' : 'gap-5'}`}>
+      <div className={`flex flex-col w-full mx-auto ${portrait ? 'gap-3' : isMultiRow ? 'gap-3' : 'gap-5'}`}>
         {rows.map((row, index) => (
-          <div key={index} className={`flex justify-center ${isMultiRow ? 'gap-3' : 'gap-5'}`}>
+          <div key={index} className={`flex justify-center ${portrait ? 'gap-3' : isMultiRow ? 'gap-3' : 'gap-5'}`}>
             {row.map(item => (
               <div
                 key={item.id}
                 className="w-full"
-                style={{ maxWidth: isMultiRow ? multiRowTileMaxWidth : undefined }}
+                style={{ maxWidth: isMultiRow || portrait ? multiRowTileMaxWidth : undefined }}
               >
                 {item.content}
               </div>

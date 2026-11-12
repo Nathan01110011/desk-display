@@ -30,7 +30,7 @@ import { PhotoScreensaver } from '@/components/PhotoScreensaver';
 import { AnalogClockScreensaver, SplitFlapScreensaver } from '@/components/ScreensaverExperiences';
 import { GalleryView } from '@/components/GalleryView';
 import { formatPomoTime } from '@/lib/format';
-import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation } from '@/types';
+import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation, DisplayOrientation } from '@/types';
 import dynamic from 'next/dynamic';
 
 const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), {
@@ -73,6 +73,7 @@ function isFullscreenAppView(view: ViewState): boolean {
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
+  const [displayOrientation, setDisplayOrientation] = useState<DisplayOrientation>('landscape');
   const [activeView, setActiveView] = useState<ViewState>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig>(DEFAULT_CONFIG);
   const [ruleLock, setRuleLock] = useState<RuleLockSettings>(DEFAULT_RULE_LOCK);
@@ -130,6 +131,12 @@ export default function Dashboard() {
       try {
         const res = await fetch('/api/system/settings');
         const data = await res.json();
+
+        if (data.displayOrientation === 'portrait-left' || data.displayOrientation === 'portrait-right') {
+          setDisplayOrientation(data.displayOrientation);
+        } else {
+          setDisplayOrientation('landscape');
+        }
 
         if (data.appConfig) {
           const mergedConfig = { ...DEFAULT_CONFIG, ...data.appConfig };
@@ -288,6 +295,11 @@ export default function Dashboard() {
     markActivity();
   };
 
+  const handleDisplayOrientationChange = (orientation: DisplayOrientation) => {
+    setDisplayOrientation(orientation);
+    markActivity();
+  };
+
   const handleRuleUnlock = () => {
     setIsRuleLocked(false);
     markActivity();
@@ -340,9 +352,21 @@ export default function Dashboard() {
   const isReturningFromFullscreen = fullscreenReturnPhase !== 'idle';
   const showSidebar = !isActiveFullscreenView && fullscreenReturnPhase !== 'app-exit';
   const showDashboardHome = activeView === 'dashboard' && !isReturningFromFullscreen;
+  // The OS and Chromium viewport stay landscape; only the application canvas rotates.
+  // The query override is an emergency recovery path if the orientation is inconvenient.
+  const isPortrait = displayOrientation !== 'landscape'
+    && new URLSearchParams(window.location.search).get('layout') !== 'landscape';
+  const canvasStyle: React.CSSProperties | undefined = isPortrait ? {
+    width: '100dvh',
+    height: '100dvw',
+    left: '50%',
+    top: '50%',
+    transform: `translate(-50%, -50%) rotate(${displayOrientation === 'portrait-left' ? '-90deg' : '90deg'})`,
+    transformOrigin: 'center center',
+  } : undefined;
 
   return (
-    <main className="fixed inset-0 bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased">
+    <main data-display-orientation={isPortrait ? displayOrientation : 'landscape'} className={`fixed bg-[#000000] text-white flex overflow-hidden font-sans select-none antialiased ${isPortrait ? '' : 'inset-0'}`} style={canvasStyle}>
       <AnimatePresence mode="wait">
         {hasVisibleMusic && spotify?.albumImageUrl ? (
           <div className="absolute inset-0 z-0">
@@ -369,7 +393,7 @@ export default function Dashboard() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[800] bg-black p-6 sm:p-8"
           >
-            <RuleView lockMode onSolved={handleRuleUnlock} />
+            <RuleView lockMode portrait={isPortrait} onSolved={handleRuleUnlock} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -415,9 +439,9 @@ export default function Dashboard() {
             {screensaverType === 'photos' ? (
               <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} durationSeconds={screensaverPhotoSlideDuration} />
             ) : screensaverType === 'analog' ? (
-              <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} />
+              <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} portrait={isPortrait} />
             ) : screensaverType === 'flapboard' ? (
-              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} />
+              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} portrait={isPortrait} />
             ) : (
               <motion.div
                 initial={{ y: 16, scale: 0.98 }}
@@ -425,17 +449,17 @@ export default function Dashboard() {
                 exit={{ y: 16, scale: 0.98 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className={`grid w-full items-center gap-[5vw] px-[6vw] ${
-                  clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
+                  isPortrait ? 'max-w-[94%] grid-cols-1 text-center' : clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
                 }`}
               >
-                <div className={`${clocks.length > 0 ? 'text-left' : 'text-center'}`}>
+                <div className={`${isPortrait ? 'text-center' : clocks.length > 0 ? 'text-left' : 'text-center'}`}>
                   <p className="text-[clamp(2.25rem,4vw,5rem)] font-black uppercase tracking-[0.35em] text-white/70">{date}</p>
-                  <h1 className={`${clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
+                  <h1 className={`${isPortrait ? 'text-[clamp(6rem,12vw,10rem)]' : clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
                     {time}
                   </h1>
                 </div>
                 {clocks.length > 0 && (
-                  <div className="flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]">
+                  <div className={isPortrait ? 'flex flex-wrap items-center justify-center gap-5' : 'flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]'}>
                     {clocks.map(clock => (
                       <div key={clock.id} className="flex flex-col items-end gap-1">
                         <span className="text-[clamp(1.1rem,1.7vw,2rem)] font-black uppercase tracking-[0.22em] text-white/70">{clock.label}</span>
@@ -450,7 +474,7 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 w-full flex h-full">
+      <div className={`relative z-10 w-full flex h-full ${isPortrait ? 'flex-col' : ''}`}>
         {/* Sidebar (Animated Width) */}
         <AnimatePresence>
           {showSidebar && (
@@ -460,15 +484,15 @@ export default function Dashboard() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ x: -64, opacity: 0 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative"
+              className={isPortrait ? 'w-full h-[29%] shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative' : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
             >
-              <div className="p-8 w-[33.33vw] h-full flex flex-col">
-                <div className="mb-10 flex items-start justify-between w-full">
+              <div className={isPortrait ? 'px-6 pt-6 pb-4 w-full h-full flex flex-col' : 'p-8 w-[33.33vw] h-full flex flex-col'}>
+                <div className={`flex items-start justify-between w-full ${isPortrait ? 'mb-4' : 'mb-10'}`}>
                   <div className="flex-1">
-                    <h1 className="text-7xl font-black tracking-tighter leading-none">{time}</h1>
-                    <p className="text-xl text-white/70 font-bold uppercase tracking-widest mt-2">{date}</p>
+                    <h1 className={`font-black tracking-tighter leading-none ${isPortrait ? 'text-6xl' : 'text-7xl'}`}>{time}</h1>
+                    <p className={`text-white/70 font-bold uppercase tracking-widest mt-2 ${isPortrait ? 'text-sm' : 'text-xl'}`}>{date}</p>
                   </div>
-                  {clocks.length > 0 && (
+                  {!isPortrait && clocks.length > 0 && (
                     <div className="flex flex-col items-end gap-2 pt-1 shrink-0">
                       {clocks.map(c => (
                         <div key={c.id} className="flex items-center gap-2">
@@ -479,6 +503,12 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
+                {isPortrait && weather && (
+                  <div className="mb-3 flex shrink-0 items-center justify-between text-sm font-semibold text-white/75">
+                    <span>{weather.location}</span>
+                    <span className="text-xl font-black text-white">{weather.temp}°{weather.unit ?? 'C'}</span>
+                  </div>
+                )}
                 <CalendarView calendar={calendar} now={rawTime} />
               </div>
             </motion.div>
@@ -486,7 +516,7 @@ export default function Dashboard() {
         </AnimatePresence>
 
         {/* Main Area (Flex-1) */}
-        <div className="flex-1 p-8 flex flex-col h-full overflow-hidden relative">
+        <div className={isPortrait ? 'flex-1 min-h-0 px-5 pt-3 pb-5 flex flex-col overflow-hidden relative' : 'flex-1 p-8 flex flex-col h-full overflow-hidden relative'}>
           <AnimatePresence mode="wait">
             {showDashboardHome ? (
               <motion.div
@@ -494,8 +524,8 @@ export default function Dashboard() {
                 initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 layout
-                className={`w-full h-full flex flex-col items-center py-8 relative transition-[justify-content] duration-500 ease-out ${
-                  hasDashboardHero ? 'justify-between' : 'justify-center'
+                className={`w-full h-full flex flex-col items-center relative transition-[justify-content] duration-500 ease-out ${
+                  isPortrait ? (hasDashboardHero ? 'justify-between py-2' : 'justify-center py-2') : hasDashboardHero ? 'justify-between py-8' : 'justify-center py-8'
                 }`}
               >
                 {/* Active Status Indicators */}
@@ -567,12 +597,12 @@ export default function Dashboard() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -24, scale: 0.98 }}
                       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                      className="w-full flex-1 min-h-0 flex items-center justify-center"
+                      className={isPortrait ? 'w-full flex-1 min-h-0 max-h-[42%] flex items-center justify-center' : 'w-full flex-1 min-h-0 flex items-center justify-center'}
                     >
                       {hasPomodoroHero || hasTimerHero ? (
                         <div
                           className={`grid w-full h-full max-h-[24rem] min-w-0 gap-5 items-stretch overflow-hidden ${
-                            hasVisibleMusic ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)]' : 'max-w-2xl grid-cols-1'
+                            hasVisibleMusic && !isPortrait ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)]' : 'max-w-2xl grid-cols-1'
                           }`}
                         >
                           {hasVisibleMusic && (
@@ -666,6 +696,7 @@ export default function Dashboard() {
                     isSportsLive={isSportsLive}
                     appConfig={appConfig}
                     centered={!hasDashboardHero}
+                    portrait={isPortrait}
                   />
                 </motion.div>
               </motion.div>
@@ -692,6 +723,7 @@ export default function Dashboard() {
                     onToggle={togglePomo} onReset={resetPomo} onSwitchMode={() => switchMode()}
                     onUpdateDurations={handleUpdateDurations}
                     onClose={closeActiveView}
+                    portrait={isPortrait}
                   />
                 )}
                 {activeView === 'calendar' && (
@@ -703,30 +735,35 @@ export default function Dashboard() {
                     onSavePersonalEvent={savePersonalCalendarEvent}
                     onDeletePersonalEvent={deletePersonalCalendarEvent}
                     onClose={closeActiveView}
+                    portrait={isPortrait}
                   />
                 )}
                 {activeView === 'gallery' && <GalleryView onClose={closeActiveView} />}
-                {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
+                {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} portrait={isPortrait} />}
                 {activeView === 'weather' && (
                   <WeatherView
                     weather={weather}
                     onClose={closeActiveView}
                     isExtended={weatherDetail}
                     onToggleExtended={setWeatherDetail}
+                    portrait={isPortrait}
                   />
                 )}
-                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onRefresh={refreshFitbit} onClose={closeActiveView} />}
-                {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={closeActiveView} />}
+                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onRefresh={refreshFitbit} onClose={closeActiveView} portrait={isPortrait} />}
+                {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={closeActiveView} portrait={isPortrait} />}
                 {activeView === 'timer' && (
                   <TimerView
                     timeLeft={timerSeconds} totalTime={timerDuration} isActive={timerRunning} isFinished={timerUp}
                     onStart={startTimer} onPause={pauseTimer} onResume={resumeTimer} onReset={resetTimer}
                     onDismiss={dismissAlert}
                     onClose={closeActiveView}
+                    portrait={isPortrait}
                   />
                 )}
                 {activeView === 'settings' && (
                   <SettingsView
+                    displayOrientation={displayOrientation}
+                    onUpdateDisplayOrientation={handleDisplayOrientationChange}
                     onClose={closeActiveView}
                     onSystemAdminChange={setSystemAdminOpen}
                   appConfig={appConfig} onUpdateAppConfig={updateAppConfig}
@@ -754,7 +791,7 @@ export default function Dashboard() {
                   <TodoView onClose={closeActiveView} />
                 )}
                 {activeView === 'rule' && (
-                  <RuleView onClose={closeActiveView} />
+                  <RuleView onClose={closeActiveView} portrait={isPortrait} />
                 )}
               </motion.div>
             )}

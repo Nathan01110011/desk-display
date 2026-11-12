@@ -5,6 +5,7 @@ import { CalendarEvent, CalendarEventInput } from '@/types';
 
 interface CalendarAppViewProps {
   onClose: () => void;
+  portrait?: boolean;
   now: Date;
   calendar: CalendarEvent[];
   personalCalendar: CalendarEvent[];
@@ -225,6 +226,7 @@ function DateTimeControl({ label, value, isAllDay, onChange }: DateTimeControlPr
 
 export function CalendarAppView({
   onClose,
+  portrait = false,
   now,
   calendar,
   personalCalendar,
@@ -342,7 +344,7 @@ export function CalendarAppView({
   };
 
   return (
-    <div className="relative w-full h-full grid grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)] gap-4 items-stretch">
+    <div data-calendar-orientation={portrait ? "portrait" : "landscape"} className={portrait ? "relative w-full h-full grid grid-cols-1 grid-rows-[minmax(0,1.2fr)_minmax(0,0.85fr)] gap-3 items-stretch" : "relative w-full h-full grid grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)] gap-4 items-stretch"}>
       <section className="min-h-0 flex flex-col rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-neutral-950 border border-rose-200/15 overflow-hidden">
         <div className="shrink-0 flex items-center justify-between gap-4 px-5 py-4 border-b border-white/10">
           <div className="flex min-w-0 items-center gap-4">
@@ -438,7 +440,7 @@ export function CalendarAppView({
         </div>
       </section>
 
-      <aside className="min-h-0 rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-neutral-950 border border-rose-200/15 p-8 flex flex-col">
+      <aside className={portrait ? "min-h-0 rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-neutral-950 border border-rose-200/15 p-4 flex flex-col" : "min-h-0 rounded-[2rem] bg-gradient-to-br from-rose-950/40 to-neutral-950 border border-rose-200/15 p-8 flex flex-col"}>
         <div className="space-y-2">
           <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">Selected date</p>
           <h3 className="text-5xl font-black tracking-tight leading-none">{selectedDate.getDate()}</h3>

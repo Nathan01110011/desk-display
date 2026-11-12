@@ -16,6 +16,7 @@ interface PomodoroViewProps {
   onSwitchMode: () => void;
   onUpdateDurations: (work: number, breakTime: number) => void;
   onClose: () => void;
+  portrait?: boolean;
 }
 
 export function PomodoroView({
@@ -28,7 +29,8 @@ export function PomodoroView({
   onReset,
   onSwitchMode,
   onUpdateDurations,
-  onClose
+  onClose,
+  portrait = false
 }: PomodoroViewProps) {
   const isFinished = pomoTime === 0 && !pomoActive;
   const isBreak = pomoMode === 'break';
@@ -48,7 +50,7 @@ export function PomodoroView({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, y: 14 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"
+      className={portrait ? "w-full h-full min-h-0 grid grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,0.8fr)] gap-3" : "w-full h-full min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)] gap-4"}
     >
       <section className="min-h-0 rounded-[2rem] border border-rose-200/15 bg-gradient-to-br from-rose-950/70 to-neutral-950 p-5 flex flex-col">
         <div className="flex items-center justify-between gap-4 text-white/65 font-bold uppercase tracking-[0.3em] text-sm">
