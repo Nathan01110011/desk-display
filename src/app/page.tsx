@@ -393,7 +393,7 @@ export default function Dashboard() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[800] bg-black p-6 sm:p-8"
           >
-            <RuleView lockMode onSolved={handleRuleUnlock} />
+            <RuleView lockMode portrait={isPortrait} onSolved={handleRuleUnlock} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -439,7 +439,7 @@ export default function Dashboard() {
             {screensaverType === 'photos' ? (
               <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} durationSeconds={screensaverPhotoSlideDuration} />
             ) : screensaverType === 'analog' ? (
-              <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} />
+              <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} portrait={isPortrait} />
             ) : screensaverType === 'flapboard' ? (
               <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} />
             ) : (
@@ -738,17 +738,18 @@ export default function Dashboard() {
                   />
                 )}
                 {activeView === 'gallery' && <GalleryView onClose={closeActiveView} />}
-                {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} />}
+                {activeView === 'sports' && <SportsView matches={matches} loading={sportsLoading} onRefresh={refreshSports} onClose={closeActiveView} portrait={isPortrait} />}
                 {activeView === 'weather' && (
                   <WeatherView
                     weather={weather}
                     onClose={closeActiveView}
                     isExtended={weatherDetail}
                     onToggleExtended={setWeatherDetail}
+                    portrait={isPortrait}
                   />
                 )}
-                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onRefresh={refreshFitbit} onClose={closeActiveView} />}
-                {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={closeActiveView} />}
+                {activeView === 'fitbit' && <FitbitView stats={fitbitStats} loading={fitbitLoading} onRefresh={refreshFitbit} onClose={closeActiveView} portrait={isPortrait} />}
+                {activeView === 'home' && <SmartHomeView devices={smartDevices} loading={smartLoading} onUpdate={updateDevice} onClose={closeActiveView} portrait={isPortrait} />}
                 {activeView === 'timer' && (
                   <TimerView
                     timeLeft={timerSeconds} totalTime={timerDuration} isActive={timerRunning} isFinished={timerUp}
@@ -788,7 +789,7 @@ export default function Dashboard() {
                   <TodoView onClose={closeActiveView} />
                 )}
                 {activeView === 'rule' && (
-                  <RuleView onClose={closeActiveView} />
+                  <RuleView onClose={closeActiveView} portrait={isPortrait} />
                 )}
               </motion.div>
             )}
