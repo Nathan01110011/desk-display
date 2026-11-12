@@ -9,6 +9,7 @@ interface SmartHomeViewProps {
   loading: boolean;
   onUpdate: (id: string, params: Partial<SmartDevice>) => void;
   onClose: () => void;
+  portrait?: boolean;
 }
 
 const EFFECT_SCENES = [
@@ -24,7 +25,7 @@ const EFFECT_SCENES = [
   { id: 36, name: 'Snowy', swatch: '#bfdbfe' },
 ];
 
-export function SmartHomeView({ devices, loading, onUpdate, onClose }: SmartHomeViewProps) {
+export function SmartHomeView({ devices, loading, onUpdate, onClose, portrait = false }: SmartHomeViewProps) {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [draftColor, setDraftColor] = useState({ r: 255, g: 255, b: 255 });
@@ -299,7 +300,7 @@ export function SmartHomeView({ devices, loading, onUpdate, onClose }: SmartHome
               initial={{ scale: 0.96, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.96, y: 20 }}
-              className="w-[90vw] max-w-5xl h-[90vh] rounded-[3rem] border border-white/10 bg-[#101010] shadow-2xl overflow-hidden grid grid-cols-[0.95fr_1.05fr]"
+              className={portrait ? "w-[96%] h-[94%] rounded-[2rem] border border-white/10 bg-[#101010] shadow-2xl overflow-hidden grid grid-cols-1 grid-rows-[minmax(0,0.36fr)_minmax(0,1fr)]" : "w-[90vw] max-w-5xl h-[90vh] rounded-[3rem] border border-white/10 bg-[#101010] shadow-2xl overflow-hidden grid grid-cols-[0.95fr_1.05fr]"}
             >
               <div
                 className="relative min-h-0"
