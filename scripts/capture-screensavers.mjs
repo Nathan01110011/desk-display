@@ -12,7 +12,23 @@ await mkdir('screensaver-screenshots', { recursive: true });
 async function capture(name) {
   await page.getByRole('button', { name: 'Preview selected screensaver' }).click();
   await page.locator('[data-screensaver]').waitFor({ timeout: 20000 });
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1400);
+  if (name.startsWith('analog-')) {
+    const miniClocks = await page.locator('svg[aria-label^="Analog clock for "]').count();
+    if (miniClocks !== 3) throw new Error('Expected 3 smaller analog world clocks, found ' + miniClocks);
+  }
+  if (name.startsWith('flapboard-')) {
+    const names = page.locator('[data-flap-role="location"]');
+    const times = page.locator('[data-flap-role="time"]');
+    if (await names.count() !== 4 || await times.count() !== 4) {
+      throw new Error('Station board must render a flip-tile location and time for every configured clock');
+    }
+    const nameBox = await names.first().boundingBox();
+    const timeBox = await times.first().boundingBox();
+    if (!nameBox || !timeBox || nameBox.x >= timeBox.x) {
+      throw new Error('Location columns must be to the left of time columns');
+    }
+  }
   await page.screenshot({ path: 'screensaver-screenshots/' + name + '.png', animations: 'disabled' });
   await page.locator('[data-screensaver]').click({ position: { x: 15, y: 15 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
@@ -25,8 +41,9 @@ for (const theme of ['Clockwork', 'Orbital', 'Station', 'Chronograph']) {
 }
 
 await page.getByRole('button', { name: 'Split-flap Board' }).click();
-await capture('flapboard-carousel');
-await page.getByRole('button', { name: 'Show all rows' }).click();
+await page.getByRole('button', { name: 'Station board' }).click();
 await capture('flapboard-all-locations');
+await page.getByRole('button', { name: 'Rotate board rows' }).click();
+await capture('flapboard-carousel');
 
 await browser.close();
