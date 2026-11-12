@@ -78,6 +78,7 @@ try {
   await enter('Analog Clock');
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="analog"]').waitFor();
+  await page.waitForTimeout(1000);
   await portraitShot('portrait-analog');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
@@ -85,6 +86,7 @@ try {
   await enter('Split-flap Board');
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="flapboard"]').waitFor();
+  await page.waitForTimeout(1400);
   await portraitShot('portrait-flapboard');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
