@@ -203,6 +203,29 @@ Both commands overwrite the current build in place and restart the kiosk. There 
 
 If you tested the earlier worktree-based script, its leftover `desk-display-dev` folder is not used by the new script. The new dev deployment also stops the old `dashboard-dev` PM2 process to free Pi resources.
 
+### Preview: Portrait mode without rotating Raspberry Pi OS
+
+The portrait UI is currently available only in the unmerged `feat/portrait-mode` branch. It is designed for the **same physical Pi touchscreen**, manually stood on an edge. Raspberry Pi OS, Labwc and the Chromium display resolution remain in landscape.
+
+```bash
+# Temporarily install the portrait branch in the existing kiosk installation:
+./scripts/deploy-dev.sh feat/portrait-mode
+
+# After reviewing, return to the current production branch:
+./scripts/deploy.sh
+```
+
+In Pi Frame, open **Settings → Display → Display orientation** and choose:
+- **Landscape** – unchanged default for normal horizontal placement.
+- **Rotate left** – rotate Pi Frame content 90° counterclockwise.
+- **Rotate right** – rotate Pi Frame content 90° clockwise.
+
+Then physically stand the panel on whichever edge makes the picture upright. The entire application canvas, including overlays and touchscreen input, rotates with the selection. The selection persists in `.dashboard-settings.json`. The OS remains in landscape regardless of the selected Pi Frame mode.
+
+**Recovery:** If the orientation or touch layout is inconvenient, open `http://<pi-ip>:3000/?layout=landscape` to force the app to render horizontally in that browser, then choose **Landscape** in Display settings to persist the reset. That URL override does not modify the saved orientation by itself. You can also change `displayOrientation` to `landscape` in `.dashboard-settings.json` via SSH and restart the kiosk.
+
+Portrait uses its own dashboard arrangement with the day's calendar and upcoming events near the top, weather, and a compact app grid. Individual applications adapt to the taller layout; long content can still scroll. Landscape remains unchanged. Browser screenshots and interactions are checked at a 1280×800 landscape OS viewport and shown upright at 800×1280 in the draft pull request.
+
 ### Manual Kiosk Mode (Wayland/Labwc)
 Add this to `~/.config/labwc/autostart`:
 ```bash
