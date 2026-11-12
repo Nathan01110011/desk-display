@@ -143,7 +143,7 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, po
 }
 
 type BoardClock = { id: string; label: string; timeZone?: string; offset?: number };
-type BoardProps = { now: Date; clocks: AdditionalClock[]; mode: FlapboardMode; animation: FlapboardAnimation; intervalSeconds: number };
+type BoardProps = { now: Date; clocks: AdditionalClock[]; mode: FlapboardMode; animation: FlapboardAnimation; intervalSeconds: number; portrait?: boolean };
 
 function zoneDisplay(clock: BoardClock, now: Date) {
   const zone = normalizeTimeZone(clock.timeZone);
@@ -183,7 +183,7 @@ function FlapText({ value, columns, identity, animation, fontSize, tileKind }: {
   );
 }
 
-export function SplitFlapScreensaver({ now, clocks, mode, animation, intervalSeconds }: BoardProps) {
+export function SplitFlapScreensaver({ now, clocks, mode, animation, intervalSeconds, portrait = false }: BoardProps) {
   const [rotation, setRotation] = useState(0);
   // The configured World Clocks are authoritative. Weather location is not the
   // system timezone, so using its name for the device clock mislabels the time.
@@ -204,8 +204,8 @@ export function SplitFlapScreensaver({ now, clocks, mode, animation, intervalSec
     ? entries.map((_, index) => entries[(index + rotation) % entries.length])
     : entries;
   const nameColumns = Math.max(13, Math.min(21, ...entries.map(entry => entry.label.length)));
-  const nameFont = 'min(6vh,' + (78 / nameColumns).toFixed(2) + 'vw)';
-  const timeFont = 'min(7.5vh,6vw)';
+  const nameFont = portrait ? 'min(5vh,' + (38 / nameColumns).toFixed(2) + 'vw)' : 'min(6vh,' + (78 / nameColumns).toFixed(2) + 'vw)';
+  const timeFont = portrait ? 'min(6vh,4vw)' : 'min(7.5vh,6vw)';
   const rows = Math.max(entries.length, 1);
 
   return (
