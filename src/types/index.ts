@@ -113,6 +113,8 @@ export interface RuleLockSettings {
   timeoutMinutes: number;
 }
 
+export type DisplayOrientation = 'landscape' | 'portrait-left' | 'portrait-right';
+
 export type ScreensaverType = 'clock' | 'photos' | 'analog' | 'flapboard';
 export type AnalogClockTheme = 'clockwork' | 'orbital' | 'station' | 'chronograph';
 export type FlapboardMode = 'carousel' | 'board';
