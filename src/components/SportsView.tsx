@@ -27,6 +27,7 @@ interface SportsViewProps {
   loading?: boolean;
   onRefresh?: () => void;
   onClose: () => void;
+  portrait?: boolean;
 }
 
 function formatMatchDate(dateStr: string) {
@@ -102,6 +103,7 @@ export function SportsView({
   loading = false,
   onRefresh,
   onClose,
+  portrait = false,
 }: SportsViewProps) {
   const [mode, setMode] = useState<"scores" | "teams">("scores");
   const [config, setConfig] = useState<SportsConfig | null>(null);
@@ -392,7 +394,7 @@ export function SportsView({
               </button>
             ))}
           </div>
-          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] gap-4">
+          <div className={portrait ? "grid min-h-0 flex-1 grid-cols-1 grid-rows-2 gap-3" : "grid min-h-0 flex-1 grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] gap-4"}>
             {featured ? (
               <FeaturedMatch match={featured} />
             ) : (
@@ -480,7 +482,7 @@ export function SportsView({
           </div>
         </>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] gap-4">
+        <div className={portrait ? "grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-3" : "grid min-h-0 flex-1 grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] gap-4"}>
           <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-emerald-200/15 bg-gradient-to-br from-emerald-950/70 to-neutral-950">
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 p-4">
               <div className="flex gap-2">
