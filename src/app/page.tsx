@@ -417,7 +417,7 @@ export default function Dashboard() {
             ) : screensaverType === 'analog' ? (
               <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} />
             ) : screensaverType === 'flapboard' ? (
-              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} primaryLabel={weather?.location} />
+              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} />
             ) : (
               <motion.div
                 initial={{ y: 16, scale: 0.98 }}
