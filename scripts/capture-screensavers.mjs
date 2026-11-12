@@ -2,7 +2,7 @@ import { chromium } from '/tmp/pi-preview/node_modules/playwright/index.mjs';
 import { mkdir } from 'node:fs/promises';
 
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
+const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, timezoneId: 'America/Chicago' });
 await page.goto('http://127.0.0.1:3000', { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.getByRole('button', { name: 'Settings', exact: true }).waitFor({ timeout: 120000 });
 await page.getByRole('button', { name: 'Settings', exact: true }).click();
