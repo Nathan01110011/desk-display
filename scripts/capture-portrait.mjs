@@ -70,7 +70,7 @@ try {
   await backHome();
 
   await enter('Sports');
-  await page.getByText('Match centre').waitFor();
+  await page.getByRole('heading', { name: 'Match centre', exact: true }).waitFor();
   await portraitShot('portrait-sports');
   await backHome();
 
