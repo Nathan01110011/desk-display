@@ -723,6 +723,7 @@ export default function Dashboard() {
                     onToggle={togglePomo} onReset={resetPomo} onSwitchMode={() => switchMode()}
                     onUpdateDurations={handleUpdateDurations}
                     onClose={closeActiveView}
+                    portrait={isPortrait}
                   />
                 )}
                 {activeView === 'calendar' && (
@@ -756,6 +757,7 @@ export default function Dashboard() {
                     onStart={startTimer} onPause={pauseTimer} onResume={resumeTimer} onReset={resetTimer}
                     onDismiss={dismissAlert}
                     onClose={closeActiveView}
+                    portrait={isPortrait}
                   />
                 )}
                 {activeView === 'settings' && (
