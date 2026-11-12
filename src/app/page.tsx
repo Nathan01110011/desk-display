@@ -441,7 +441,7 @@ export default function Dashboard() {
             ) : screensaverType === 'analog' ? (
               <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} portrait={isPortrait} />
             ) : screensaverType === 'flapboard' ? (
-              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} />
+              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} portrait={isPortrait} />
             ) : (
               <motion.div
                 initial={{ y: 16, scale: 0.98 }}
@@ -449,17 +449,17 @@ export default function Dashboard() {
                 exit={{ y: 16, scale: 0.98 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className={`grid w-full items-center gap-[5vw] px-[6vw] ${
-                  clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
+                  isPortrait ? 'max-w-[94%] grid-cols-1 text-center' : clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
                 }`}
               >
-                <div className={`${clocks.length > 0 ? 'text-left' : 'text-center'}`}>
+                <div className={`${isPortrait ? 'text-center' : clocks.length > 0 ? 'text-left' : 'text-center'}`}>
                   <p className="text-[clamp(2.25rem,4vw,5rem)] font-black uppercase tracking-[0.35em] text-white/70">{date}</p>
-                  <h1 className={`${clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
+                  <h1 className={`${isPortrait ? 'text-[clamp(6rem,12vw,10rem)]' : clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
                     {time}
                   </h1>
                 </div>
                 {clocks.length > 0 && (
-                  <div className="flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]">
+                  <div className={isPortrait ? 'flex flex-wrap items-center justify-center gap-5' : 'flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]'}>
                     {clocks.map(clock => (
                       <div key={clock.id} className="flex flex-col items-end gap-1">
                         <span className="text-[clamp(1.1rem,1.7vw,2rem)] font-black uppercase tracking-[0.22em] text-white/70">{clock.label}</span>
