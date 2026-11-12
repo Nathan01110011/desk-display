@@ -20,8 +20,12 @@ async function capture(name) {
   if (name.startsWith('flapboard-')) {
     const names = page.locator('[data-flap-role="location"]');
     const times = page.locator('[data-flap-role="time"]');
-    if (await names.count() !== 4 || await times.count() !== 4) {
+    if (await names.count() !== 3 || await times.count() !== 3) {
       throw new Error('Station board must render a flip-tile location and time for every configured clock');
+    }
+    const labels = await names.evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')));
+    if (labels.filter(name => name === 'Belfast').length !== 1 || labels.includes('LOCAL TIME')) {
+      throw new Error('Station board must display configured Belfast once and must not invent a local-time row: ' + labels.join(', '));
     }
     const nameBox = await names.first().boundingBox();
     const timeBox = await times.first().boundingBox();
