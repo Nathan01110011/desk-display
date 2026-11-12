@@ -75,6 +75,24 @@ try {
   await backHome();
 
   await enter('Settings');
+  await enter('Apps & weather');
+  await page.getByText('Auto-locate', { exact: true }).click();
+  await page.locator('.on-screen-keyboard').waitFor();
+  const keyboard = await page.locator('.on-screen-keyboard').evaluate(node => ({
+    clientWidth: node.clientWidth,
+    scrollWidth: node.scrollWidth,
+    buttons: [...node.querySelectorAll('.keyboard-row button')].map(el => {
+      const rect = el.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    }),
+  }));
+  if (keyboard.scrollWidth > keyboard.clientWidth + 1 || keyboard.buttons.some(button => button.width < 30)) {
+    throw new Error('Keyboard overflows or has untouchably small keys: ' + JSON.stringify(keyboard));
+  }
+  await page.waitForTimeout(200);
+  await portraitShot('portrait-keyboard');
+  await page.getByRole('button', { name: 'Back to previous screen' }).click();
+  await enter('Display');
   await enter('Analog Clock');
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="analog"]').waitFor();
