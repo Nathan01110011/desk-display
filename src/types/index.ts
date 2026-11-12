@@ -113,7 +113,10 @@ export interface RuleLockSettings {
   timeoutMinutes: number;
 }
 
-export type ScreensaverType = 'clock' | 'photos';
+export type ScreensaverType = 'clock' | 'photos' | 'analog' | 'flapboard';
+export type AnalogClockTheme = 'clockwork' | 'orbital' | 'station' | 'chronograph';
+export type FlapboardMode = 'carousel' | 'board';
+export type FlapboardAnimation = 'mechanical' | 'cascade';
 export type ScreensaverPhotoSource = 'all' | 'favorites';
 export type ScreensaverPhotoSlideDuration = 15 | 30 | 60 | 120;
 
