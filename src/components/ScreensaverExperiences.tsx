@@ -52,7 +52,7 @@ function MiniAnalogClock({ clock, now, light, accent }: { clock: AdditionalClock
 
   return (
     <div className="flex min-w-0 items-center gap-[clamp(8px,1.1vw,18px)]">
-      <svg viewBox="0 0 100 100" role="img" aria-label={'Analog clock for ' + clock.label} className="h-[clamp(64px,7.5vw,116px)] w-[clamp(64px,7.5vw,116px)] shrink-0 overflow-visible">
+      <svg viewBox="0 0 100 100" role="img" aria-label={'Analog clock for ' + clock.label} className="size-[min(11vw,17vh,150px)] shrink-0 overflow-visible">
         <circle cx="50" cy="50" r="47" fill={light ? '#eee9dc' : '#171d1a'} stroke={light ? '#83827b' : '#968261'} strokeWidth="2.5" />
         {Array.from({ length: 12 }, (_, index) => (
           <line key={index} x1="50" y1="8" x2="50" y2={index % 3 === 0 ? 18 : 14} transform={'rotate(' + index * 30 + ' 50 50)'} stroke={ink} strokeWidth={index % 3 === 0 ? 2.5 : 1.3} />
@@ -82,24 +82,22 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks }: 
   const ink = isLight ? '#252723' : '#f0eadc';
   const rotate = (a: number) => 'rotate(' + a + ' 300 300)';
   const availableClocks = showWorldClocks ? clocks : [];
-  const leftClockCount = availableClocks.length > 2 ? Math.floor((availableClocks.length - 1) / 2) : 0;
-  const leftClocks = availableClocks.slice(0, leftClockCount);
-  const rightClocks = availableClocks.slice(leftClockCount);
+  // Keep every configured world clock together in one right-side stack.
+  // The left column is reserved exclusively for the date.
 
   return (
     <div data-screensaver="analog" data-theme={theme} className={'absolute inset-0 overflow-hidden ' + (isLight ? 'bg-[#ddd9ce] text-[#252723]' : 'bg-[#090b0a] text-[#f0eadc]')}>
       <style>{'@keyframes forward{to{transform:rotate(360deg)}}@keyframes backward{to{transform:rotate(-360deg)}}.mechanism-forward,.mechanism-reverse{transform-box:fill-box;transform-origin:center;animation:forward 38s linear infinite}.mechanism-reverse{animation-name:backward}@media(prefers-reduced-motion:reduce){.mechanism-forward,.mechanism-reverse{animation:none}}'}</style>
       {!isLight && <div className="pointer-events-none absolute inset-0" style={{ background: theme === 'orbital' ? 'radial-gradient(ellipse at center,#163832,#070909 75%)' : 'radial-gradient(ellipse at center,#2a251d,#080a09 75%)' }} />}
-      <div className={'relative z-10 grid h-full min-h-0 w-full items-center gap-[clamp(8px,1.3vw,22px)] px-[clamp(12px,2vw,34px)] ' + (availableClocks.length > 0 ? 'grid-cols-[minmax(0,1fr)_minmax(0,2.55fr)_minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)_minmax(0,3.2fr)]')}>
-        <aside className="flex min-w-0 flex-col justify-center gap-[clamp(24px,6vh,72px)]">
+      <div className={'relative z-10 grid h-full min-h-0 w-full items-center gap-[clamp(8px,1.3vw,22px)] px-[clamp(12px,2vw,34px)] ' + (availableClocks.length > 0 ? 'grid-cols-[minmax(0,1fr)_minmax(0,2.7fr)_minmax(0,1.4fr)]' : 'grid-cols-[minmax(0,1fr)_minmax(0,3.2fr)]')}>
+        <aside className="flex min-w-0 flex-col justify-center">
           <div className="min-w-0">
             <div className="text-[clamp(19px,2.4vw,38px)] font-medium leading-snug opacity-60">{live.toLocaleDateString([], { weekday: 'long' })}</div>
             <div className="text-[clamp(66px,8.1vw,130px)] font-semibold leading-none tracking-[-0.08em] tabular-nums">{live.getDate()}</div>
             <div className="mt-1 text-[clamp(17px,2.3vw,36px)] font-medium leading-snug">{live.toLocaleDateString([], { month: 'long' })}</div>
             <div className="text-[clamp(13px,1.4vw,22px)] font-medium opacity-45">{live.getFullYear()}</div>
           </div>
-          {leftClocks.length > 0 && <div className="flex flex-col gap-[clamp(16px,3vh,34px)]">{leftClocks.map(clock => <MiniAnalogClock key={clock.id} clock={clock} now={live} light={isLight} accent={accent} />)}</div>}
-        </aside>
+         </aside>
 
         <svg viewBox="0 0 600 600" role="img" aria-label={'Analog clock at ' + live.toLocaleTimeString()} className="mx-auto h-auto max-h-[88vh] w-full max-w-[min(88vh,850px)] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
           <defs>
@@ -136,8 +134,8 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks }: 
           <circle cx="300" cy="300" r="11" fill={accent} stroke={ink} strokeWidth="3" />
         </svg>
 
-        {rightClocks.length > 0 && <aside className="flex min-w-0 flex-col justify-center gap-[clamp(20px,5vh,58px)] pl-[clamp(0px,1vw,14px)]">
-          {rightClocks.map(clock => <MiniAnalogClock key={clock.id} clock={clock} now={live} light={isLight} accent={accent} />)}
+        {availableClocks.length > 0 && <aside data-world-clock-stack="right" className="flex h-full min-h-0 min-w-0 flex-col justify-center gap-[clamp(8px,1.5vh,22px)] pl-[clamp(0px,0.5vw,10px)]">
+          {availableClocks.map(clock => <MiniAnalogClock key={clock.id} clock={clock} now={live} light={isLight} accent={accent} />)}
         </aside>}
       </div>
     </div>
