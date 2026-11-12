@@ -1,0 +1,55 @@
+name: Validate and capture portrait mode
+on:
+  push:
+    branches: [feat/portrait-mode]
+    paths-ignore:
+      - 'portrait-screenshots/**'
+permissions:
+  contents: write
+jobs:
+  portrait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_RULE_LOCK_ROWS: '{"orbit":["anchor","aperture","bolt","brain","diamond","flame","flower","gem"],"ember":["key","landmark","leaf","moon","mountain","palette","puzzle","satellite"],"tide":["snow","spark","target","waves","anchor","bolt","diamond","gem"],"signal":["aperture","brain","flower","key","leaf","mountain","puzzle","spark"]}'
+      NEXT_PUBLIC_RULE_LOCK_LENS_OFFSETS: '{"sun":0,"moon":1,"compass":2,"mirror":3}'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --global pnpm@12.18.0
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck and production build
+        run: pnpm build
+      - name: Seed isolated test configuration and install browser
+        run: |
+          cat > .dashboard-settings.json <<'JSON'
+          {"ruleLockOnOpen":false,"ruleLockOnInactivity":false,"displayOrientation":"landscape","worldClocks":[{"id":"sample-1","label":"Belfast","city":"Belfast","offset":0,"timeZone":"Europe/London"},{"id":"sample-2","label":"Austin","city":"Austin","offset":-21600,"timeZone":"America/Chicago"},{"id":"sample-3","label":"Tokyo","city":"Tokyo","offset":32400,"timeZone":"Asia/Tokyo"}]}
+          JSON
+          npm --prefix /tmp/pi-portrait-preview install playwright
+          /tmp/pi-portrait-preview/node_modules/.bin/playwright install chromium
+      - name: Start Pi Frame in landscape OS viewport
+        run: |
+          pnpm start > /tmp/pi-portrait-next.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:3000/ >/dev/null && break
+            sleep 2
+          done
+      - name: Test portrait mode and capture real app
+        run: node scripts/capture-portrait.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: portrait-previews
+          path: portrait-screenshots/*.png
+      - name: Commit portrait screenshots for review
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add portrait-screenshots
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: capture rendered portrait mode previews"
+            git push origin HEAD:feat/portrait-mode
+          fi
