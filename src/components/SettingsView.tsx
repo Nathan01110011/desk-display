@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3 } from 'lucide-react';
-import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType } from '@/types';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 import { ConsoleLogViewer } from './ConsoleLogs';
 import BackButton from './BackButton';
@@ -26,6 +26,17 @@ interface SettingsViewProps {
   onUpdateIdleClockTimeout: (timeoutMinutes: number) => void;
   screensaverType: ScreensaverType;
   onUpdateScreensaverType: (type: ScreensaverType) => void;
+  analogClockTheme: AnalogClockTheme;
+  onUpdateAnalogClockTheme: (theme: AnalogClockTheme) => void;
+  analogShowWorldClocks: boolean;
+  onUpdateAnalogShowWorldClocks: (show: boolean) => void;
+  flapboardMode: FlapboardMode;
+  onUpdateFlapboardMode: (mode: FlapboardMode) => void;
+  flapboardAnimation: FlapboardAnimation;
+  onUpdateFlapboardAnimation: (animation: FlapboardAnimation) => void;
+  flapboardInterval: number;
+  onUpdateFlapboardInterval: (interval: number) => void;
+  onPreviewScreensaver: () => void;
   screensaverPhotoSource: ScreensaverPhotoSource;
   onUpdateScreensaverPhotoSource: (source: ScreensaverPhotoSource) => void;
   screensaverPhotoSlideDuration: ScreensaverPhotoSlideDuration;
@@ -47,6 +58,17 @@ export function SettingsView({
   onUpdateIdleClockTimeout,
   screensaverType,
   onUpdateScreensaverType,
+  analogClockTheme,
+  onUpdateAnalogClockTheme,
+  analogShowWorldClocks,
+  onUpdateAnalogShowWorldClocks,
+  flapboardMode,
+  onUpdateFlapboardMode,
+  flapboardAnimation,
+  onUpdateFlapboardAnimation,
+  flapboardInterval,
+  onUpdateFlapboardInterval,
+  onPreviewScreensaver,
   screensaverPhotoSource,
   onUpdateScreensaverPhotoSource,
   screensaverPhotoSlideDuration,
@@ -181,6 +203,14 @@ export function SettingsView({
     });
   };
 
+  const updateScreensaverPresentation = async (payload: Record<string, string | number | boolean>) => {
+    await fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  };
+
   const updateScreensaverPhotoSource = async (source: ScreensaverPhotoSource) => {
     onUpdateScreensaverPhotoSource(source);
     await fetch('/api/system/settings', {
@@ -303,6 +333,8 @@ export function SettingsView({
             <div className="grid grid-cols-2 gap-3">
               {([
                 { type: 'clock' as const, label: 'Big Clock', icon: Clock3 },
+                { type: 'analog' as const, label: 'Analog Clock', icon: Clock3 },
+                { type: 'flapboard' as const, label: 'Split-flap Board', icon: Globe },
                 { type: 'photos' as const, label: 'Photos', icon: Images },
               ]).map(option => {
                 const Icon = option.icon;
@@ -322,6 +354,70 @@ export function SettingsView({
                 );
               })}
             </div>
+
+            {screensaverType === 'analog' && (
+              <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs font-black uppercase tracking-widest text-white/70">Analog clock theme</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { id: 'clockwork' as const, label: 'Clockwork', detail: 'Moving brass gears' },
+                    { id: 'orbital' as const, label: 'Orbital', detail: 'Glowing rotating rings' },
+                    { id: 'station' as const, label: 'Station', detail: 'Classic light face' },
+                    { id: 'chronograph' as const, label: 'Chronograph', detail: 'Instrument subdials' },
+                  ]).map(theme => (
+                    <button type="button" key={theme.id}
+                      onPointerDown={() => { onUpdateAnalogClockTheme(theme.id); void updateScreensaverPresentation({ analogClockTheme: theme.id }); }}
+                      className={`rounded-xl border p-3 text-left transition-colors ${analogClockTheme === theme.id ? 'border-white/60 bg-white/15' : 'border-white/10 bg-black/20'}`}
+                    >
+                      <span className="block text-sm font-black">{theme.label}</span>
+                      <span className="mt-1 block text-xs text-white/60">{theme.detail}</span>
+                    </button>
+                  ))}
+                </div>
+                <button type="button" onPointerDown={() => { onUpdateAnalogShowWorldClocks(!analogShowWorldClocks); void updateScreensaverPresentation({ analogShowWorldClocks: !analogShowWorldClocks }); }}
+                  className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 text-left">
+                  <span className="text-sm font-semibold">Show configured world clocks beneath the dial</span>
+                  <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg border ${analogShowWorldClocks ? 'border-white bg-white text-black' : 'border-white/20 text-transparent'}`}><Check size={17} /></span>
+                </button>
+              </div>
+            )}
+
+            {screensaverType === 'flapboard' && (
+              <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs font-black uppercase tracking-widest text-white/70">World clock display</p>
+                <p className="text-xs text-white/60">Automatically uses your system time and the locations in World Clocks, in their saved order.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([{ id: 'carousel' as const, label: 'Cycle locations' }, { id: 'board' as const, label: 'Show all rows' }]).map(option => (
+                    <button key={option.id} type="button" onPointerDown={() => { onUpdateFlapboardMode(option.id); void updateScreensaverPresentation({ flapboardMode: option.id }); }}
+                      className={`rounded-xl border px-3 py-3 text-sm font-black ${flapboardMode === option.id ? 'border-white/50 bg-white/15' : 'border-white/10 bg-black/20'}`}>{option.label}</button>
+                  ))}
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-white/70">Flipping animation</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([{ id: 'mechanical' as const, label: 'Mechanical' }, { id: 'cascade' as const, label: 'Cinematic cascade' }]).map(option => (
+                    <button key={option.id} type="button" onPointerDown={() => { onUpdateFlapboardAnimation(option.id); void updateScreensaverPresentation({ flapboardAnimation: option.id }); }}
+                      className={`rounded-xl border px-3 py-3 text-sm font-black ${flapboardAnimation === option.id ? 'border-white/50 bg-white/15' : 'border-white/10 bg-black/20'}`}>{option.label}</button>
+                  ))}
+                </div>
+                {flapboardMode === 'carousel' && (
+                  <>
+                    <p className="text-xs font-black uppercase tracking-widest text-white/70">Time per location</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[10, 20, 30, 60].map(value => (
+                        <button key={value} type="button" onPointerDown={() => { onUpdateFlapboardInterval(value); void updateScreensaverPresentation({ flapboardInterval: value }); }}
+                          className={`rounded-xl border px-2 py-3 text-sm font-black ${flapboardInterval === value ? 'border-white/50 bg-white/15' : 'border-white/10 bg-black/20'}`}>{value}s</button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <p className="text-xs text-white/50">Change or reorder cities in World Clocks. No separate location list is maintained here.</p>
+              </div>
+            )}
+
+            <button type="button" onClick={onPreviewScreensaver}
+              className="w-full rounded-2xl border border-white/20 bg-white/10 p-4 text-sm font-black transition-colors hover:bg-white/15">
+              Preview selected screensaver
+            </button>
 
             {screensaverType === 'photos' && (
               <div className="space-y-2 rounded-2xl border border-white/5 bg-white/[0.03] p-4">
