@@ -10,6 +10,7 @@ interface FitbitViewProps {
   loading: boolean;
   onRefresh: () => void;
   onClose: () => void;
+  portrait?: boolean;
 }
 
 const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
