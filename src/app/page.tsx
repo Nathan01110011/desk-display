@@ -484,8 +484,10 @@ export default function Dashboard() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ x: -64, opacity: 0 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              data-portrait-agenda={isPortrait ? 'expanded' : undefined}
-              className={isPortrait ? 'w-full h-[54%] shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative' : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
+              data-portrait-agenda={isPortrait ? (hasDashboardHero ? 'with-hero' : 'expanded') : undefined}
+              className={isPortrait
+                ? `w-full ${hasDashboardHero ? 'h-[42%]' : 'h-[54%]'} shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative`
+                : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
             >
               <div className={isPortrait ? 'px-6 pt-6 pb-4 w-full h-full flex flex-col' : 'p-8 w-[33.33vw] h-full flex flex-col'}>
                 <div className={`flex items-start justify-between w-full ${isPortrait ? 'mb-4' : 'mb-10'}`}>
@@ -517,7 +519,8 @@ export default function Dashboard() {
         </AnimatePresence>
 
         {/* Main Area (Flex-1) */}
-        <div className={isPortrait ? 'flex-1 min-h-0 px-5 pt-3 pb-5 flex flex-col overflow-hidden relative' : 'flex-1 p-8 flex flex-col h-full overflow-hidden relative'}>
+        <div data-portrait-dashboard={isPortrait && showDashboardHome ? 'home' : undefined}
+          className={isPortrait ? 'flex-1 min-h-0 px-5 pt-3 pb-5 flex flex-col overflow-hidden relative' : 'flex-1 p-8 flex flex-col h-full overflow-hidden relative'}>
           <AnimatePresence mode="wait">
             {showDashboardHome ? (
               <motion.div
@@ -598,17 +601,20 @@ export default function Dashboard() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -24, scale: 0.98 }}
                       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                      className={isPortrait ? 'w-full flex-1 min-h-0 max-h-[42%] flex items-center justify-center' : 'w-full flex-1 min-h-0 flex items-center justify-center'}
+                      data-dashboard-hero={isPortrait ? 'portrait' : undefined}
+                      className={isPortrait
+                        ? `w-full shrink-0 min-h-0 ${hasPomodoroHero || hasTimerHero ? 'h-[min(30vh,240px)]' : 'h-44'} flex items-center justify-center`
+                        : 'w-full flex-1 min-h-0 flex items-center justify-center'}
                     >
                       {hasPomodoroHero || hasTimerHero ? (
                         <div
                           className={`grid w-full h-full max-h-[24rem] min-w-0 gap-5 items-stretch overflow-hidden ${
-                            hasVisibleMusic && !isPortrait ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)]' : 'max-w-2xl grid-cols-1'
+                            hasVisibleMusic ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)]' : 'max-w-2xl grid-cols-1'
                           }`}
                         >
                           {hasVisibleMusic && (
-                            <div className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-5 flex items-center">
-                              <SpotifyPlayer spotify={spotify} onAction={handleAction} compact />
+                            <div className={isPortrait ? 'min-w-0 min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-2 flex items-center' : 'min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-5 flex items-center'}>
+                              <SpotifyPlayer spotify={spotify} onAction={handleAction} compact portrait={isPortrait} />
                             </div>
                           )}
                           {hasBothTimerHeroes ? (
@@ -666,13 +672,13 @@ export default function Dashboard() {
                           )}
                         </div>
                       ) : (
-                        <SpotifyPlayer spotify={spotify} onAction={handleAction} />
+                        <SpotifyPlayer spotify={spotify} onAction={handleAction} portrait={isPortrait} />
                       )}
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                <motion.div layout transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="w-full flex justify-center">
+                <motion.div data-app-launcher={isPortrait ? 'portrait' : undefined} layout transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className={isPortrait ? 'w-full shrink-0 flex justify-center' : 'w-full flex justify-center'}>
                   <AppLauncher
                     onOpenCalendar={() => openView('calendar')}
                     onOpenGallery={() => openView('gallery')}
