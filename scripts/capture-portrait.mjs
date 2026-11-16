@@ -5,7 +5,12 @@ import { mkdir } from 'node:fs/promises';
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, timezoneId: 'America/Chicago' });
 const now = Date.now();
-const event = { summary: 'Portrait layout calendar review', start: new Date(now + 3600000).toISOString(), end: new Date(now + 7200000).toISOString(), isAllDay: false };
+const events = [
+  { summary: 'Portrait layout calendar review', start: new Date(now + 3600000).toISOString(), end: new Date(now + 5400000).toISOString(), isAllDay: false },
+  { summary: 'Security engineering standup', start: new Date(now + 7200000).toISOString(), end: new Date(now + 9000000).toISOString(), isAllDay: false },
+  { summary: 'Threat hunting sync', start: new Date(now + 10800000).toISOString(), end: new Date(now + 12600000).toISOString(), isAllDay: false },
+  { summary: 'Afternoon review', start: new Date(now + 14400000).toISOString(), end: new Date(now + 16200000).toISOString(), isAllDay: false },
+];
 const forecast = Array.from({ length: 40 }, (_, i) => {
   const day = new Date(now + i * 3 * 3600000);
   return {
@@ -17,7 +22,7 @@ const forecast = Array.from({ length: 40 }, (_, i) => {
   };
 });
 const weather = { temp: 74, condition: 'Clear', location: 'Austin', icon: '01d', timezone: -21600, unit: 'F', forecast };
-await page.route('**/api/calendar?range=all', route => route.fulfill({ json: [event] }));
+await page.route('**/api/calendar?range=all', route => route.fulfill({ json: events }));
 await page.route('**/api/personal-calendar?*', route => route.fulfill({ json: [] }));
 await page.route('**/api/weather*', route => route.fulfill({ json: weather }));
 await page.route('**/api/sports', route => route.fulfill({ json: [] }));
@@ -57,6 +62,20 @@ try {
   await portraitShot('portrait-settings');
   await backHome();
   await page.getByText('Portrait layout calendar review').waitFor({ timeout: 15000 });
+  const agenda = await page.locator('[data-portrait-agenda="expanded"]').evaluate(element => {
+    const scroll = element.querySelector('.overflow-y-auto');
+    if (!scroll) return null;
+    const viewport = scroll.getBoundingClientRect();
+    const visibleCards = [...scroll.children].filter(child => {
+      const rect = child.getBoundingClientRect();
+      return rect.left >= viewport.left - 2 && rect.right <= viewport.right + 2
+        && rect.top >= viewport.top - 2 && rect.bottom <= viewport.bottom + 2;
+    }).length;
+    return { usedHeight: element.offsetHeight, screenHeight: element.closest('main').offsetHeight, visibleCards };
+  });
+  if (!agenda || agenda.usedHeight < agenda.screenHeight * 0.5 || agenda.visibleCards < 3) {
+    throw new Error('Portrait agenda must use spare screen height and show at least three events without scrolling: ' + JSON.stringify(agenda));
+  }
   await portraitShot('portrait-home');
 
   await enter('Calendar');
