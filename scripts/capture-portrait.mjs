@@ -22,6 +22,19 @@ const forecast = Array.from({ length: 40 }, (_, i) => {
   };
 });
 const weather = { temp: 74, condition: 'Clear', location: 'Austin', icon: '01d', timezone: -21600, unit: 'F', forecast };
+let musicEnabled = false;
+const music = {
+  isPlaying: true,
+  title: 'NostalgicRedux',
+  artist: 'Portrait layout regression',
+  album: 'Test album',
+  albumImageUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="160"%3E%3Crect width="160" height="160" fill="%23345b7e"/%3E%3C/svg%3E',
+  progressMs: 86000,
+  durationMs: 156000,
+};
+await page.route('**/api/spotify/now-playing', route => route.fulfill({
+  json: musicEnabled ? music : { ...music, isPlaying: false, title: '' },
+}));
 await page.route('**/api/calendar?range=all', route => route.fulfill({ json: events }));
 await page.route('**/api/personal-calendar?*', route => route.fulfill({ json: [] }));
 await page.route('**/api/weather*', route => route.fulfill({ json: weather }));
@@ -77,6 +90,46 @@ try {
     throw new Error('Portrait agenda must use spare screen height and show at least three events without scrolling: ' + JSON.stringify(agenda));
   }
   await portraitShot('portrait-home');
+
+  // The home agenda expands when nothing is active, then gives back space
+  // when music appears. Verify the player, launcher and dashboard never overlap.
+  musicEnabled = true;
+  await page.getByText('NostalgicRedux', { exact: true }).waitFor({ timeout: 15000 });
+  await page.locator('[data-portrait-agenda="with-hero"]').waitFor();
+  await page.waitForTimeout(600);
+  const layout = await page.evaluate(() => {
+    const get = selector => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const r = element.getBoundingClientRect();
+      return { x: r.x, y: r.y, left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+    };
+    const area = (a, b) => !a || !b ? Infinity :
+      Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+      Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    const calendar = document.querySelector('[data-portrait-agenda="with-hero"]');
+    const frame = get('main');
+    const player = get('[data-spotify-layout="portrait"]');
+    const launcher = get('[data-app-launcher="portrait"]');
+    const controls = get('[data-spotify-layout="portrait"] button');
+    const buttons = [...document.querySelectorAll('[data-app-launcher="portrait"] button')].map(e => e.getBoundingClientRect());
+    const inFrame = item => item && frame && item.left >= frame.left - 2 && item.right <= frame.right + 2
+      && item.top >= frame.top - 2 && item.bottom <= frame.bottom + 2;
+    return {
+      calendarHeight: calendar?.offsetHeight ?? 0,
+      logicalHeight: document.querySelector('main')?.offsetHeight ?? 0,
+      player, launcher, controls,
+      intersects: area(player, launcher),
+      fitsFrame: inFrame(player) && inFrame(launcher) && inFrame(controls),
+      buttonsFit: buttons.every(b => frame && b.left >= frame.left - 2 && b.right <= frame.right + 2 && b.top >= frame.top - 2 && b.bottom <= frame.bottom + 2),
+    };
+  });
+  if (layout.calendarHeight < layout.logicalHeight * 0.35
+      || layout.calendarHeight > layout.logicalHeight * 0.5
+      || layout.intersects > 1 || !layout.fitsFrame || !layout.buttonsFit) {
+    throw new Error('Music player overlaps launcher or clips off-screen in portrait: ' + JSON.stringify(layout));
+  }
+  await portraitShot('portrait-home-music');
 
   await enter('Calendar');
   await page.locator('[data-calendar-orientation="portrait"]').waitFor();
