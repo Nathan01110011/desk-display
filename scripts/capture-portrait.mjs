@@ -150,12 +150,12 @@ try {
   await enter('Apps & weather');
   await page.getByText('Auto-locate', { exact: true }).click();
   await page.locator('.on-screen-keyboard').waitFor();
+  await page.waitForTimeout(400); // Wait for the keyboard's zoom-in animation to finish before measuring keys.
   const keyboard = await page.locator('.on-screen-keyboard').evaluate(node => ({
     clientWidth: node.clientWidth,
     scrollWidth: node.scrollWidth,
     buttons: [...node.querySelectorAll('.keyboard-row button')].map(el => {
-      const rect = el.getBoundingClientRect();
-      return { width: rect.width, height: rect.height };
+      return { width: el.offsetWidth, height: el.offsetHeight };
     }),
   }));
   if (keyboard.scrollWidth > keyboard.clientWidth + 1 || keyboard.buttons.some(button => button.width < 30)) {
