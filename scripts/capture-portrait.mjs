@@ -25,8 +25,8 @@ const weather = { temp: 74, condition: 'Clear', location: 'Austin', icon: '01d',
 let musicEnabled = false;
 const music = {
   isPlaying: true,
-  title: 'NostalgicRedux',
-  artist: 'Portrait layout regression',
+  title: "It's All Coming Back to Me Now",
+  artist: 'Meat Loaf, Marion Raven',
   album: 'Test album',
   albumImageUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="160"%3E%3Crect width="160" height="160" fill="%23345b7e"/%3E%3C/svg%3E',
   progressMs: 86000,
@@ -94,7 +94,7 @@ try {
   // The home agenda expands when nothing is active, then gives back space
   // when music appears. Verify the player, launcher and dashboard never overlap.
   musicEnabled = true;
-  await page.getByText('NostalgicRedux', { exact: true }).waitFor({ timeout: 15000 });
+  await page.getByText("It's All Coming Back to Me Now", { exact: true }).waitFor({ timeout: 15000 });
   await page.locator('[data-portrait-agenda="with-hero"]').waitFor();
   await page.waitForTimeout(600);
   const layout = await page.evaluate(() => {
@@ -112,6 +112,16 @@ try {
     const player = get('[data-spotify-layout="portrait"]');
     const launcher = get('[data-app-launcher="portrait"]');
     const controls = get('[data-spotify-layout="portrait"] button');
+    const title = document.querySelector('[data-spotify-layout="portrait"] h3');
+    const artist = document.querySelector('[data-spotify-layout="portrait"] p');
+    const timestamps = document.querySelector('[data-spotify-layout="portrait"] .font-mono');
+    const font = node => node ? Number.parseFloat(getComputedStyle(node).fontSize) : 0;
+    const within = child => {
+      const rect = child?.getBoundingClientRect();
+      const box = document.querySelector('[data-spotify-layout="portrait"]')?.getBoundingClientRect();
+      return !!rect && !!box && rect.left >= box.left - 2 && rect.right <= box.right + 2
+        && rect.top >= box.top - 2 && rect.bottom <= box.bottom + 2;
+    };
     const buttons = [...document.querySelectorAll('[data-app-launcher="portrait"] button')].map(e => e.getBoundingClientRect());
     const inFrame = item => item && frame && item.left >= frame.left - 2 && item.right <= frame.right + 2
       && item.top >= frame.top - 2 && item.bottom <= frame.bottom + 2;
@@ -119,6 +129,8 @@ try {
       calendarHeight: calendar?.offsetHeight ?? 0,
       logicalHeight: document.querySelector('main')?.offsetHeight ?? 0,
       player, launcher, controls,
+      titleSize: font(title), artistSize: font(artist), timestampSize: font(timestamps),
+      titleFits: within(title), artistFits: within(artist),
       intersects: area(player, launcher),
       fitsFrame: inFrame(player) && inFrame(launcher) && inFrame(controls),
       buttonsFit: buttons.every(b => frame && b.left >= frame.left - 2 && b.right <= frame.right + 2 && b.top >= frame.top - 2 && b.bottom <= frame.bottom + 2),
@@ -126,7 +138,9 @@ try {
   });
   if (layout.calendarHeight < layout.logicalHeight * 0.35
       || layout.calendarHeight > layout.logicalHeight * 0.5
-      || layout.intersects > 1 || !layout.fitsFrame || !layout.buttonsFit) {
+      || layout.intersects > 1 || !layout.fitsFrame || !layout.buttonsFit
+      || layout.titleSize < 25 || layout.artistSize < 16 || layout.timestampSize < 14
+      || !layout.titleFits || !layout.artistFits) {
     throw new Error('Music player overlaps launcher or clips off-screen in portrait: ' + JSON.stringify(layout));
   }
   await portraitShot('portrait-home-music');

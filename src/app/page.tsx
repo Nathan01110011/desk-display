@@ -486,7 +486,7 @@ export default function Dashboard() {
               transition={{ duration: 0.22, ease: "easeOut" }}
               data-portrait-agenda={isPortrait ? (hasDashboardHero ? 'with-hero' : 'expanded') : undefined}
               className={isPortrait
-                ? `w-full ${hasDashboardHero ? 'h-[42%]' : 'h-[54%]'} shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative`
+                ? `w-full ${hasVisibleMusic ? 'h-[39%]' : hasDashboardHero ? 'h-[42%]' : 'h-[54%]'} shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative`
                 : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
             >
               <div className={isPortrait ? 'px-6 pt-6 pb-4 w-full h-full flex flex-col' : 'p-8 w-[33.33vw] h-full flex flex-col'}>
@@ -603,7 +603,7 @@ export default function Dashboard() {
                       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                       data-dashboard-hero={isPortrait ? 'portrait' : undefined}
                       className={isPortrait
-                        ? `w-full shrink-0 min-h-0 ${hasPomodoroHero || hasTimerHero ? 'h-[min(30vh,240px)]' : 'h-44'} flex items-center justify-center`
+                        ? `w-full shrink-0 min-h-0 ${hasPomodoroHero || hasTimerHero ? 'h-[min(30vh,240px)]' : 'h-52'} flex items-center justify-center`
                         : 'w-full flex-1 min-h-0 flex items-center justify-center'}
                     >
                       {hasPomodoroHero || hasTimerHero ? (
