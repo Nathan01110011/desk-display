@@ -1,0 +1,44 @@
+name: Portrait layout regression
+on:
+  push:
+    branches: [fix/portrait-music-overlap]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  portrait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_RULE_LOCK_ROWS: '{"orbit":["anchor","aperture","bolt","brain","diamond","flame","flower","gem"],"ember":["key","landmark","leaf","moon","mountain","palette","puzzle","satellite"],"tide":["snow","spark","target","waves","anchor","bolt","diamond","gem"],"signal":["aperture","brain","flower","key","leaf","mountain","puzzle","spark"]}'
+      NEXT_PUBLIC_RULE_LOCK_LENS_OFFSETS: '{"sun":0,"moon":1,"compass":2,"mirror":3}'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --global pnpm@12.18.0
+      - run: pnpm install --frozen-lockfile
+      - name: Build production app with lint and typechecking
+        run: pnpm build
+      - name: Seed safe test settings and install Chromium
+        run: |
+          cat > .dashboard-settings.json <<'JSON'
+          {"ruleLockOnOpen":false,"ruleLockOnInactivity":false,"displayOrientation":"landscape","worldClocks":[{"id":"sample-1","label":"Belfast","city":"Belfast","offset":0,"timeZone":"Europe/London"},{"id":"sample-2","label":"Austin","city":"Austin","offset":-21600,"timeZone":"America/Chicago"}]}
+          JSON
+          npm --prefix /tmp/pi-portrait-preview install playwright
+          /tmp/pi-portrait-preview/node_modules/.bin/playwright install chromium
+      - name: Start app in a landscape OS viewport
+        run: |
+          pnpm start > /tmp/pi-next-portrait.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:3000/ >/dev/null && break
+            sleep 2
+          done
+      - name: Test idle and Spotify portrait layout
+        run: node scripts/capture-portrait.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: portrait-layout-regression
+          path: portrait-screenshots/*.png
