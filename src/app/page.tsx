@@ -484,7 +484,8 @@ export default function Dashboard() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ x: -64, opacity: 0 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className={isPortrait ? 'w-full h-[29%] shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative' : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
+              data-portrait-agenda={isPortrait ? 'expanded' : undefined}
+              className={isPortrait ? 'w-full h-[54%] shrink-0 border-b border-white/10 flex flex-col bg-black/70 overflow-hidden relative' : 'w-1/3 border-r border-white/10 flex flex-col bg-black/70 overflow-hidden shrink-0 relative'}
             >
               <div className={isPortrait ? 'px-6 pt-6 pb-4 w-full h-full flex flex-col' : 'p-8 w-[33.33vw] h-full flex flex-col'}>
                 <div className={`flex items-start justify-between w-full ${isPortrait ? 'mb-4' : 'mb-10'}`}>
