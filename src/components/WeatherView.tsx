@@ -8,6 +8,7 @@ interface WeatherViewProps {
   weather: WeatherData | null;
   onClose: () => void;
   isExtended: boolean;
+  portrait?: boolean;
   onToggleExtended: (val: boolean) => void;
 }
 
@@ -43,7 +44,7 @@ function TemperatureTimeline({ hours }: { hours: Forecast }) {
   );
 }
 
-export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: WeatherViewProps) {
+export function WeatherView({ weather, onClose, isExtended, onToggleExtended, portrait = false }: WeatherViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   if (!weather) return <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 text-sky-100"><div className="absolute left-0 top-0"><BackButton onPointerDown={onClose} aria-label="Back to dashboard" /></div><div role="status" className="flex flex-col items-center gap-4"><CloudSun className="size-16 animate-pulse" /><p className="text-xl font-bold">Loading weather…</p></div></div>;
 
@@ -75,7 +76,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
           <p className="shrink-0 text-xs text-sky-100/65">Highs and lows reflect the forecast intervals shown.</p>
         </section>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_minmax(0,0.85fr)] gap-4">
+        <div data-weather-layout={portrait ? "portrait" : "landscape"} className={portrait ? "grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-3" : "grid min-h-0 flex-1 grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_minmax(0,0.85fr)] gap-4"}>
           <section className={`relative flex min-h-0 flex-col justify-between overflow-hidden rounded-3xl border border-sky-200/20 p-5 ${night ? 'bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950' : 'bg-gradient-to-br from-neutral-800 via-neutral-950 to-neutral-950'}`}>
             <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full bg-sky-200/10 blur-3xl" />
             <div className="flex min-h-0 flex-1 items-center justify-between gap-3"><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-100/75">At a glance</p><p className="mt-2 text-[clamp(3rem,8vw,7rem)] font-black leading-none tracking-tighter tabular-nums">{weather.temp}<span className="text-sky-100/70">°</span></p><p className="mt-2 text-xl font-bold text-sky-50">{weather.condition}</p></div><WeatherIcon code={weather.icon} className="size-24 shrink-0 text-sky-100 drop-shadow-lg" /></div>
@@ -84,7 +85,7 @@ export function WeatherView({ weather, onClose, isExtended, onToggleExtended }: 
 
           <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/70 p-4"><h3 className="mb-2 shrink-0 text-xs font-black uppercase tracking-[0.2em] text-sky-200">Coming days</h3><div className="grid min-h-0 flex-1 auto-rows-fr gap-1">{days.slice(0, 6).map(([date, hours]) => { const representative = hours[Math.floor(hours.length / 2)]; return <button key={date} type="button" onClick={() => openDay(date)} aria-label={`Explore ${date} forecast`} className="flex min-h-0 items-center gap-3 rounded-xl px-3 text-left hover:bg-white/5 active:bg-white/10"><span className="w-20 shrink-0 text-sm font-bold">{date}</span><WeatherIcon code={representative.icon} className="size-6 shrink-0 text-sky-200" /><span className="min-w-0 flex-1 truncate text-xs text-sky-100/75">{representative.condition}</span><span className="shrink-0 text-lg font-black tabular-nums">{Math.max(...hours.map(hour => hour.temp))}° <span className="ml-2 text-white/60">{Math.min(...hours.map(hour => hour.temp))}°</span></span><ArrowUpRight size={16} className="shrink-0 text-sky-200/70" /></button>; })}{!days.length && <p className="text-white/70">Forecast unavailable.</p>}</div></section>
 
-          <section className="col-span-2 flex min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/80 p-4"><div className="flex shrink-0 items-center justify-between"><h3 className="text-xs font-black uppercase tracking-[0.2em] text-sky-200">Next 24 hours</h3><span className="text-xs text-sky-100/65">Three-hour forecast</span></div><TemperatureTimeline hours={upcoming} /></section>
+          <section className={portrait ? "flex min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/80 p-4" : "col-span-2 flex min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/80 p-4"}><div className="flex shrink-0 items-center justify-between"><h3 className="text-xs font-black uppercase tracking-[0.2em] text-sky-200">Next 24 hours</h3><span className="text-xs text-sky-100/65">Three-hour forecast</span></div><TemperatureTimeline hours={upcoming} /></section>
         </div>
       )}
     </motion.div>

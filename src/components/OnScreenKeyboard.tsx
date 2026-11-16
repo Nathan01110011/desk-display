@@ -64,8 +64,8 @@ export function OnScreenKeyboard({ value, onChange, onClose, onSubmit }: OnScree
   };
 
   return (
-    <div className="fixed inset-0 w-screen h-screen z-[300] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
-      <div className="w-full max-w-5xl space-y-5">
+    <div className="on-screen-keyboard fixed inset-0 z-[300] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in zoom-in duration-200">
+      <div className="on-screen-keyboard-panel w-full max-w-5xl space-y-5">
         {/* Input Bar */}
         <div className="flex items-center justify-between gap-6">
           <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-3xl font-bold min-h-[1.8em] flex items-center shadow-inner overflow-hidden whitespace-nowrap">
@@ -77,7 +77,7 @@ export function OnScreenKeyboard({ value, onChange, onClose, onSubmit }: OnScree
         {/* Keyboard Grid */}
         <div className="space-y-4">
           {rows.map((row, i) => (
-            <div key={i} className="flex justify-center gap-3">
+            <div key={i} className="keyboard-row flex justify-center gap-3">
               {row.map((key) => {
                 const isBackspace = key === 'backspace';
                 const isSubmit = key === 'submit';
@@ -108,7 +108,7 @@ export function OnScreenKeyboard({ value, onChange, onClose, onSubmit }: OnScree
                       handleKey(key);
                     }}
                     className={`
-                      ${widthClass} ${bgClass}
+                      keyboard-key ${isSpace ? "keyboard-space" : ""} ${widthClass} ${bgClass}
                       h-24 rounded-2xl flex items-center justify-center text-3xl font-black active:scale-95 transition-all border border-white/5 shadow-lg
                     `}
                   >

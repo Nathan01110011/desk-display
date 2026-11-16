@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3 } from 'lucide-react';
-import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation } from '@/types';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3, RotateCcw, RotateCw, Monitor } from 'lucide-react';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation, DisplayOrientation } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 import { ConsoleLogViewer } from './ConsoleLogs';
 import BackButton from './BackButton';
@@ -16,6 +16,8 @@ const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; labe
 interface SettingsViewProps {
   onClose: () => void;
   onSystemAdminChange?: (open: boolean) => void;
+  displayOrientation: DisplayOrientation;
+  onUpdateDisplayOrientation: (orientation: DisplayOrientation) => void;
   appConfig: AppConfig;
   onUpdateAppConfig: (config: AppConfig) => void;
   worldClocks: AdditionalClock[];
@@ -48,6 +50,8 @@ interface SettingsViewProps {
 export function SettingsView({
   onClose,
   onSystemAdminChange,
+  displayOrientation,
+  onUpdateDisplayOrientation,
   appConfig,
   onUpdateAppConfig,
   worldClocks,
@@ -194,6 +198,17 @@ export function SettingsView({
     });
   };
 
+  const changeOrientation = (orientation: DisplayOrientation) => {
+    // Update the browser display immediately and persist it for kiosk restarts.
+    // Never touch the Raspberry Pi OS display orientation.
+    onUpdateDisplayOrientation(orientation);
+    void fetch('/api/system/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayOrientation: orientation }),
+    }).catch(error => console.error('Could not save display orientation', error));
+  };
+
   const updateScreensaverType = async (type: ScreensaverType) => {
     onUpdateScreensaverType(type);
     await fetch('/api/system/settings', {
@@ -320,6 +335,26 @@ export function SettingsView({
           </div>
 
           <div hidden={category !== 'display'} className="p-4 space-y-4">
+            <section className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white/85">Display orientation</h3>
+                <p className="text-xs text-white/65">Rotates Pi Frame inside Chromium. Raspberry Pi OS stays in landscape.</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: 'landscape' as const, label: 'Landscape', Icon: Monitor },
+                  { id: 'portrait-left' as const, label: 'Rotate left', Icon: RotateCcw },
+                  { id: 'portrait-right' as const, label: 'Rotate right', Icon: RotateCw },
+                ]).map(({ id, label, Icon }) => (
+                  <button key={id} type="button" aria-pressed={displayOrientation === id}
+                    onPointerDown={() => changeOrientation(id)}
+                    className={`flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border p-2 text-center text-xs font-bold transition-colors ${displayOrientation === id ? 'border-white/60 bg-white text-black' : 'border-white/10 bg-white/5 text-white/85'}`}>
+                    <Icon size={22} aria-hidden="true" />{label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-white/55">Choose the direction that makes the interface upright when you stand the display on its edge. Touch controls rotate with the interface. Recovery: open <code>?layout=landscape</code> in the Pi browser.</p>
+            </section>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-white/80">Screensaver</h3>
