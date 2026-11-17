@@ -6,6 +6,7 @@ const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] }
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, timezoneId: 'America/Chicago' });
 const now = Date.now();
 const events = [
+  { summary: 'Current security sync', start: new Date(now - 600000).toISOString(), end: new Date(now + 1800000).toISOString(), isAllDay: false },
   { summary: 'Portrait layout calendar review', start: new Date(now + 3600000).toISOString(), end: new Date(now + 5400000).toISOString(), isAllDay: false },
   { summary: 'Security engineering standup', start: new Date(now + 7200000).toISOString(), end: new Date(now + 9000000).toISOString(), isAllDay: false },
   { summary: 'Threat hunting sync', start: new Date(now + 10800000).toISOString(), end: new Date(now + 12600000).toISOString(), isAllDay: false },
@@ -40,6 +41,32 @@ await page.route('**/api/personal-calendar?*', route => route.fulfill({ json: []
 await page.route('**/api/weather*', route => route.fulfill({ json: weather }));
 await page.route('**/api/sports', route => route.fulfill({ json: [] }));
 await mkdir('portrait-screenshots', { recursive: true });
+
+async function assertScreensaverNowAndLater() {
+  const bar = page.locator('[data-screensaver-meeting-reminders]');
+  await bar.waitFor();
+  const states = await bar.locator('[data-meeting-state]').evaluateAll(nodes =>
+    nodes.map(node => node.getAttribute('data-meeting-state')));
+  if (states.join(',') !== 'now,later') {
+    throw new Error('Screensaver must show both NOW and LATER when both exist: ' + JSON.stringify(states));
+  }
+  await bar.getByText('Current security sync', { exact: true }).waitFor();
+  await bar.getByText('Portrait layout calendar review', { exact: true }).waitFor();
+  const bounds = await bar.evaluate(element => {
+    const outer = element.getBoundingClientRect();
+    const inner = [...element.querySelectorAll('[data-meeting-state]')]
+      .map(el => el.getBoundingClientRect());
+    return {
+      bar: { top: outer.top, bottom: outer.bottom, left: outer.left, right: outer.right },
+      items: inner.map(r => ({ top: r.top, bottom: r.bottom, left: r.left, right: r.right })),
+    };
+  });
+  if (bounds.items.some(r =>
+    r.top < bounds.bar.top - 2 || r.bottom > bounds.bar.bottom + 2 ||
+    r.left < bounds.bar.left - 2 || r.right > bounds.bar.right + 2)) {
+    throw new Error('Screensaver meeting reminders must fit within their strip: ' + JSON.stringify(bounds));
+  }
+}
 
 async function portraitShot(name) {
   const image = await page.screenshot({ animations: 'disabled' });
@@ -182,6 +209,7 @@ try {
   await enter('Analog Clock');
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="analog"]').waitFor();
+  await assertScreensaverNowAndLater();
   await page.waitForTimeout(1000);
   await portraitShot('portrait-analog');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
@@ -190,6 +218,7 @@ try {
   await enter('Split-flap Board');
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="flapboard"]').waitFor();
+  await assertScreensaverNowAndLater();
   await page.waitForTimeout(1400);
   await portraitShot('portrait-flapboard');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
