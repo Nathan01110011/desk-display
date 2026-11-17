@@ -4,7 +4,6 @@ import path from 'path';
 
 interface KeyboardCandidate {
   name: string;
-  path: string;
   args: string[];
   display: 'wayland' | 'x11' | 'either';
 }
@@ -22,11 +21,11 @@ export interface KeyboardControlResult {
 }
 
 const KEYBOARD_CANDIDATES: KeyboardCandidate[] = [
-  { name: 'wvkbd-mobintl', path: '/usr/bin/wvkbd-mobintl', args: [], display: 'wayland' },
-  { name: 'wvkbd', path: '/usr/bin/wvkbd', args: [], display: 'wayland' },
-  { name: 'squeekboard', path: '/usr/bin/squeekboard', args: [], display: 'wayland' },
-  { name: 'onboard', path: '/usr/bin/onboard', args: [], display: 'either' },
-  { name: 'matchbox-keyboard', path: '/usr/bin/matchbox-keyboard', args: [], display: 'x11' },
+  { name: 'wvkbd-mobintl', args: [], display: 'wayland' },
+  { name: 'wvkbd', args: [], display: 'wayland' },
+  { name: 'squeekboard', args: [], display: 'wayland' },
+  { name: 'onboard', args: [], display: 'either' },
+  { name: 'matchbox-keyboard', args: [], display: 'x11' },
 ];
 
 function findWaylandSession(): DesktopSession | null {
@@ -34,11 +33,11 @@ function findWaylandSession(): DesktopSession | null {
     for (const uidDir of readdirSync('/run/user')) {
       if (!/^\d+$/.test(uidDir)) continue;
       const runtimeDir = path.join('/run/user', uidDir);
-      const sockets = readdirSync(runtimeDir).filter((entry) => /^wayland-\d+$/.test(entry));
+      const sockets = readdirSync(/* turbopackIgnore: true */ runtimeDir).filter((entry) => /^wayland-\d+$/.test(entry));
       for (const socket of sockets) {
         const socketPath = path.join(runtimeDir, socket);
         try {
-          if (!statSync(socketPath).isSocket()) continue;
+          if (!statSync(/* turbopackIgnore: true */ socketPath).isSocket()) continue;
         } catch {
           continue;
         }
@@ -95,6 +94,19 @@ export function disableOnScreenKeyboard(): KeyboardControlResult {
 // Turbopack's output-file tracer treats variable child_process executable paths as
 // dynamic dependencies and can end up tracing the entire project. These are fixed
 // system binaries, so keep the executable literal at each spawn call site.
+// These paths are fixed Linux binaries, not project dependencies. Keep each
+// filesystem check literal to avoid unnecessarily tracing the project root.
+function isKeyboardInstalled(candidate: KeyboardCandidate) {
+  switch (candidate.name) {
+    case 'wvkbd-mobintl': return existsSync('/usr/bin/wvkbd-mobintl');
+    case 'wvkbd': return existsSync('/usr/bin/wvkbd');
+    case 'squeekboard': return existsSync('/usr/bin/squeekboard');
+    case 'onboard': return existsSync('/usr/bin/onboard');
+    case 'matchbox-keyboard': return existsSync('/usr/bin/matchbox-keyboard');
+    default: return false;
+  }
+}
+
 function spawnKeyboard(candidate: KeyboardCandidate, session: DesktopSession) {
   const options = { detached: true, stdio: 'ignore' as const, env: session.env };
   switch (candidate.name) {
@@ -136,7 +148,7 @@ export async function enableOnScreenKeyboard(): Promise<KeyboardControlResult> {
     return { success: false, error: 'System keyboard control is only available on Linux.' };
   }
 
-  const installed = KEYBOARD_CANDIDATES.filter((candidate) => existsSync(candidate.path));
+  const installed = KEYBOARD_CANDIDATES.filter(isKeyboardInstalled);
   if (installed.length === 0) {
     return {
       success: false,
