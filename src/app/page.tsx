@@ -28,6 +28,7 @@ import { DashboardPomodoroPanel } from '@/components/DashboardPomodoroPanel';
 import { DashboardTimerPanel } from '@/components/DashboardTimerPanel';
 import { PhotoScreensaver } from '@/components/PhotoScreensaver';
 import { AnalogClockScreensaver, SplitFlapScreensaver } from '@/components/ScreensaverExperiences';
+import { findNextMeetingToday, ScreensaverNextMeeting } from '@/components/ScreensaverNextMeeting';
 import { GalleryView } from '@/components/GalleryView';
 import { formatPomoTime } from '@/lib/format';
 import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation, DisplayOrientation } from '@/types';
@@ -118,6 +119,7 @@ export default function Dashboard() {
   } = usePomodoro();
 
   const { time, date, clocks, updateClocks, rawTime } = useTime(weather?.timezone);
+  const nextScreensaverMeeting = findNextMeetingToday(calendar, rawTime);
 
   const isSportsLive = matches.some(m => m.status === 'IN');
   const hasPomodoroHero = pomoActive;
@@ -434,8 +436,9 @@ export default function Dashboard() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             onPointerDown={markActivity}
-            className="fixed inset-0 z-[400] bg-black flex items-center justify-center"
+            className="fixed inset-0 z-[400] bg-black flex flex-col items-center justify-center"
           >
+            <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
             {screensaverType === 'photos' ? (
               <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} durationSeconds={screensaverPhotoSlideDuration} />
             ) : screensaverType === 'analog' ? (
@@ -469,6 +472,14 @@ export default function Dashboard() {
                   </div>
                 )}
               </motion.div>
+            )}
+            </div>
+            {nextScreensaverMeeting && (
+              <ScreensaverNextMeeting
+                meeting={nextScreensaverMeeting}
+                now={rawTime}
+                light={screensaverType === 'analog' && analogClockTheme === 'station'}
+              />
             )}
           </motion.div>
         )}
