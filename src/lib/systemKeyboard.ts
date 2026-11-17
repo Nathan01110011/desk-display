@@ -92,13 +92,24 @@ export function disableOnScreenKeyboard(): KeyboardControlResult {
   return { success: true };
 }
 
+// Turbopack's output-file tracer treats variable child_process executable paths as
+// dynamic dependencies and can end up tracing the entire project. These are fixed
+// system binaries, so keep the executable literal at each spawn call site.
+function spawnKeyboard(candidate: KeyboardCandidate, session: DesktopSession) {
+  const options = { detached: true, stdio: 'ignore' as const, env: session.env };
+  switch (candidate.name) {
+    case 'wvkbd-mobintl': return spawn('/usr/bin/wvkbd-mobintl', candidate.args, options);
+    case 'wvkbd': return spawn('/usr/bin/wvkbd', candidate.args, options);
+    case 'squeekboard': return spawn('/usr/bin/squeekboard', candidate.args, options);
+    case 'onboard': return spawn('/usr/bin/onboard', candidate.args, options);
+    case 'matchbox-keyboard': return spawn('/usr/bin/matchbox-keyboard', candidate.args, options);
+    default: throw new Error('Unsupported on-screen keyboard: ' + candidate.name);
+  }
+}
+
 async function tryStart(candidate: KeyboardCandidate, session: DesktopSession): Promise<KeyboardControlResult> {
   try {
-    const child = spawn(candidate.path, candidate.args, {
-      detached: true,
-      stdio: 'ignore',
-      env: session.env,
-    });
+    const child = spawnKeyboard(candidate, session);
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
