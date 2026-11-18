@@ -285,7 +285,7 @@ try {
   await portraitShot('portrait-lava');
   await page.locator('[data-screensaver="lava"]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver="lava"]').waitFor({ state: 'detached' });
-  await enter('Clean art');
+  await page.getByRole('button', { name: /^Clean art / }).click();
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="lava"][data-ambient-overlay="none"]').waitFor();
   if (await page.locator('[data-screensaver="lava"] [data-screensaver-now-playing]').count() ||
