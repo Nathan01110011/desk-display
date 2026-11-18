@@ -251,6 +251,51 @@ try {
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
 
+  // The animation must fill the *physically rotated* screen, with usable
+  // meeting/music overlays in the taller logical layout.
+  await enter('Lava Lamp');
+  await enter('Preview selected screensaver');
+  await page.locator('[data-screensaver="lava"][data-ambient-overlay="full"]').waitFor();
+  await page.locator('[data-screensaver-now-playing]').getByText("It's All Coming Back to Me Now").waitFor();
+  const ambient = await page.locator('[data-screensaver="lava"]').evaluate(root => {
+    const canvas = root.querySelector('canvas');
+    const canvasBox = canvas?.getBoundingClientRect();
+    const rootBox = root.getBoundingClientRect();
+    const musicBox = root.querySelector('[data-screensaver-now-playing]')?.getBoundingClientRect();
+    const meetingBox = root.querySelector('[data-ambient-meetings]')?.getBoundingClientRect();
+    const clockBox = root.querySelector('time')?.getBoundingClientRect();
+    const intersects = (a, b) => a && b &&
+      Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+      Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    return {
+      fillsScreen: !!canvasBox && Math.abs(canvasBox.width - rootBox.width) < 2 &&
+        Math.abs(canvasBox.height - rootBox.height) < 2,
+      canvasWidth: canvas?.width ?? 0,
+      canvasHeight: canvas?.height ?? 0,
+      hasMeeting: !!meetingBox && !!root.textContent?.includes('Current security sync') &&
+        !!root.textContent?.includes('Portrait layout calendar review'),
+      musicOverlap: intersects(musicBox, meetingBox),
+      clockOverlap: intersects(clockBox, musicBox),
+    };
+  });
+  if (!ambient.fillsScreen || ambient.canvasWidth < 200 || ambient.canvasHeight < 200 ||
+      !ambient.hasMeeting || (ambient.musicOverlap ?? 0) > 1 || (ambient.clockOverlap ?? 0) > 1) {
+    throw new Error('Portrait ambient screensaver fails full-bleed or overlay layout: ' + JSON.stringify(ambient));
+  }
+  await portraitShot('portrait-lava');
+  await page.locator('[data-screensaver="lava"]').click({ position: { x: 20, y: 20 } });
+  await page.locator('[data-screensaver="lava"]').waitFor({ state: 'detached' });
+  await enter('Clean art');
+  await enter('Preview selected screensaver');
+  await page.locator('[data-screensaver="lava"][data-ambient-overlay="none"]').waitFor();
+  if (await page.locator('[data-screensaver="lava"] [data-screensaver-now-playing]').count() ||
+      await page.locator('[data-screensaver="lava"] time').count()) {
+    throw new Error('Clean ambient mode must not render overlay data');
+  }
+  await portraitShot('portrait-lava-clean');
+  await page.locator('[data-screensaver="lava"]').click({ position: { x: 20, y: 20 } });
+  await page.locator('[data-screensaver="lava"]').waitFor({ state: 'detached' });
+
   await enter('Rotate right');
   await page.locator('main[data-display-orientation="portrait-right"]').waitFor();
   await enter('Landscape');
