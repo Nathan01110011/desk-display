@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { normalizeTimeZone } from '@/lib/timeZones';
-import type { AdditionalClock, AnalogClockTheme, FlapboardAnimation, FlapboardMode } from '@/types';
+import type { AdditionalClock, AnalogClockTheme, SpotifyNowPlaying } from '@/types';
+import { ScreensaverNowPlaying } from './ScreensaverNowPlaying';
 
-type ClockProps = { now: Date; clocks: AdditionalClock[]; theme: AnalogClockTheme; showWorldClocks: boolean; portrait?: boolean };
+type ClockProps = { now: Date; clocks: AdditionalClock[]; theme: AnalogClockTheme; showWorldClocks: boolean; spotify: SpotifyNowPlaying | null; portrait?: boolean };
 const ticks = Array.from({ length: 60 }, (_, i) => i);
 
 function gearPoints(teeth: number, outer: number) {
@@ -67,7 +67,7 @@ function MiniAnalogClock({ clock, now, light, accent, portrait = false }: { cloc
   );
 }
 
-export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, portrait = false }: ClockProps) {
+export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, spotify, portrait = false }: ClockProps) {
   const [live, setLive] = useState(now);
   useEffect(() => {
     const id = window.setInterval(() => setLive(new Date()), 80);
@@ -97,6 +97,7 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, po
             <div className="mt-1 text-[clamp(17px,2.3vw,36px)] font-medium leading-snug">{live.toLocaleDateString([], { month: 'long' })}</div>
             <div className="text-[clamp(13px,1.4vw,22px)] font-medium opacity-45">{live.getFullYear()}</div>
           </div>
+          <ScreensaverNowPlaying spotify={spotify} light={isLight} className={portrait ? 'mx-auto mt-3 max-w-[420px]' : 'mt-[clamp(16px,4vh,48px)]'} />
          </aside>
 
         <svg viewBox="0 0 600 600" role="img" aria-label={'Analog clock at ' + live.toLocaleTimeString()} className={portrait ? "mx-auto h-auto max-h-full w-[min(86%,75vh)] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)]" : "mx-auto h-auto max-h-[88vh] w-full max-w-[min(88vh,850px)] overflow-visible drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)]"}>
@@ -142,86 +143,3 @@ export function AnalogClockScreensaver({ now, clocks, theme, showWorldClocks, po
   );
 }
 
-type BoardClock = { id: string; label: string; timeZone?: string; offset?: number };
-type BoardProps = { now: Date; clocks: AdditionalClock[]; mode: FlapboardMode; animation: FlapboardAnimation; intervalSeconds: number; portrait?: boolean };
-
-function zoneDisplay(clock: BoardClock, now: Date) {
-  const zone = normalizeTimeZone(clock.timeZone);
-  const localDate = !zone && clock.offset !== undefined ? new Date(now.getTime() + now.getTimezoneOffset() * 60000 + clock.offset * 1000) : now;
-  return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, ...(zone ? { timeZone: zone } : {}) }).format(localDate);
-}
-
-function FlapGlyph({ char, index, identity, animation, fontSize }: { char: string; index: number; identity: string; animation: FlapboardAnimation; fontSize: string }) {
-  const glyph = char === ' ' ? '\u00a0' : char;
-  const delay = (animation === 'cascade' ? 0.025 : 0.009) * index;
-  return (
-    <div className="relative h-full min-h-0 min-w-0 overflow-hidden rounded-[3px] border border-[#4c4d47]/70 bg-[#212422] shadow-[0_5px_8px_rgba(0,0,0,0.3)]" style={{ perspective: 700 }}>
-      <div className="absolute inset-0 flex items-center justify-center font-mono font-semibold leading-none text-[#efeddf]" style={{ fontSize }}>{glyph}</div>
-      <motion.div
-        key={identity + ':' + char}
-        initial={{ rotateX: -89, opacity: 0.3 }}
-        animate={{ rotateX: 0, opacity: 1 }}
-        transition={{ duration: animation === 'cascade' ? 0.45 : 0.25, delay, ease: [0.25, 0.64, 0.35, 1] }}
-        style={{ backfaceVisibility: 'hidden', transformOrigin: '50% 50%', fontSize }}
-        className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#414640] via-[#343833] to-[#242724] font-mono font-semibold leading-none text-[#f1eee0]"
-      >{glyph}</motion.div>
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-[2px] bg-black/80 shadow-[0_-1px_1px_rgba(255,255,255,0.25),0_2px_3px_rgba(0,0,0,0.85)]" />
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-[2px] bg-black/45" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-[2px] bg-black/45" />
-    </div>
-  );
-}
-
-function FlapText({ value, columns, identity, animation, fontSize, tileKind }: {
-  value: string; columns: number; identity: string; animation: FlapboardAnimation; fontSize: string; tileKind: 'location' | 'time';
-}) {
-  const chars = Array.from(value.toUpperCase().slice(0, columns).padEnd(columns, ' '));
-  return (
-    <div data-flap-role={tileKind} data-flap-value={value} className="grid h-full min-h-0 min-w-0 gap-[clamp(2px,0.25vw,6px)]" style={{ gridTemplateColumns: 'repeat(' + columns + ',minmax(0,1fr))' }}>
-      {chars.map((char, index) => <FlapGlyph key={index} char={char} identity={identity + ':' + index} index={index} animation={animation} fontSize={fontSize} />)}
-    </div>
-  );
-}
-
-export function SplitFlapScreensaver({ now, clocks, mode, animation, intervalSeconds, portrait = false }: BoardProps) {
-  const [rotation, setRotation] = useState(0);
-  // The configured World Clocks are authoritative. Weather location is not the
-  // system timezone, so using its name for the device clock mislabels the time.
-  // Show one truthful local-time fallback only when no world clocks are set.
-  const entries = useMemo<BoardClock[]>(() => clocks.length > 0
-    ? clocks.map(clock => ({ id: clock.id, label: clock.label, timeZone: clock.timeZone, offset: clock.offset }))
-    : [{ id: 'system-local', label: 'LOCAL TIME' }], [clocks]);
-
-  useEffect(() => {
-    if (mode !== 'carousel' || entries.length < 2) return;
-    const timer = window.setInterval(() => setRotation(value => value + 1), Math.max(5, intervalSeconds) * 1000);
-    return () => clearInterval(timer);
-  }, [mode, intervalSeconds, entries.length]);
-
-  // In cycling mode the entire board turns over by one row, so neither side
-  // ever becomes a bare text label or leaves an otherwise empty screen.
-  const ordered = mode === 'carousel'
-    ? entries.map((_, index) => entries[(index + rotation) % entries.length])
-    : entries;
-  const nameColumns = Math.max(13, Math.min(21, ...entries.map(entry => entry.label.length)));
-  const nameFont = portrait ? 'min(5vh,' + (38 / nameColumns).toFixed(2) + 'vw)' : 'min(6vh,' + (78 / nameColumns).toFixed(2) + 'vw)';
-  const timeFont = portrait ? 'min(6vh,4vw)' : 'min(7.5vh,6vw)';
-  const rows = Math.max(entries.length, 1);
-
-  return (
-    <div data-screensaver="flapboard" className="absolute inset-0 overflow-hidden bg-[#0b0e0d] p-[clamp(8px,1.4vw,26px)] text-[#efeddf]">
-      <div className="flex h-full w-full flex-col gap-[clamp(5px,0.65vw,12px)]">
-        {ordered.map((entry, row) => (
-          <div
-            key={'row-' + row}
-            className="grid min-h-0 flex-1 grid-cols-[minmax(0,67fr)_minmax(0,33fr)] gap-[clamp(10px,1.5vw,26px)] border-b-[clamp(3px,0.35vw,7px)] border-[#343834] bg-[#171a18] p-[clamp(5px,0.65vw,12px)] shadow-[inset_0_3px_10px_rgba(0,0,0,0.6)] last:border-b-0"
-            style={{ height: 'calc(100% / ' + rows + ')' }}
-          >
-            <FlapText tileKind="location" value={entry.label} columns={nameColumns} identity={'row-' + row + '-location'} animation={animation} fontSize={nameFont} />
-            <FlapText tileKind="time" value={zoneDisplay(entry, now)} columns={5} identity={'row-' + row + '-time'} animation={animation} fontSize={timeFont} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
