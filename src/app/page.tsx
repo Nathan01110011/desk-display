@@ -29,10 +29,11 @@ import { DashboardTimerPanel } from '@/components/DashboardTimerPanel';
 import { PhotoScreensaver } from '@/components/PhotoScreensaver';
 import { AnalogClockScreensaver } from '@/components/ScreensaverExperiences';
 import { ScreensaverNowPlaying } from '@/components/ScreensaverNowPlaying';
+import { AmbientScreensaver } from '@/components/AmbientScreensaver';
 import { findScreensaverMeetingsToday, ScreensaverMeetingReminders } from '@/components/ScreensaverNextMeeting';
 import { GalleryView } from '@/components/GalleryView';
 import { formatPomoTime } from '@/lib/format';
-import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, DisplayOrientation } from '@/types';
+import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, AmbientScreensaverType, AmbientPalette, AmbientOverlayMode, DisplayOrientation } from '@/types';
 import dynamic from 'next/dynamic';
 
 const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), {
@@ -63,6 +64,7 @@ const DEFAULT_RULE_LOCK: RuleLockSettings = {
 const DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES = 15;
 const DEFAULT_PHOTO_SLIDE_DURATION_SECONDS: ScreensaverPhotoSlideDuration = 30;
 const PHOTO_SLIDE_DURATIONS: ScreensaverPhotoSlideDuration[] = [15, 30, 60, 120];
+const AMBIENT_TYPES: AmbientScreensaverType[] = ['lava', 'aurora', 'koi', 'oscilloscope', 'space'];
 
 const FULLSCREEN_APP_EXIT_MS = 240;
 const FULLSCREEN_SIDEBAR_RETURN_MS = 280;
@@ -83,6 +85,8 @@ export default function Dashboard() {
   const [screensaverType, setScreensaverType] = useState<ScreensaverType>('clock');
   const [analogClockTheme, setAnalogClockTheme] = useState<AnalogClockTheme>('clockwork');
   const [analogShowWorldClocks, setAnalogShowWorldClocks] = useState(true);
+  const [ambientPalette, setAmbientPalette] = useState<AmbientPalette>('ember');
+  const [ambientOverlay, setAmbientOverlay] = useState<AmbientOverlayMode>('full');
   const [screensaverPhotoSource, setScreensaverPhotoSource] = useState<ScreensaverPhotoSource>('all');
   const [screensaverPhotoSlideDuration, setScreensaverPhotoSlideDuration] = useState<ScreensaverPhotoSlideDuration>(DEFAULT_PHOTO_SLIDE_DURATION_SECONDS);
   const [disableScreensaverWhileSpotifyPlaying, setDisableScreensaverWhileSpotifyPlaying] = useState(false);
@@ -118,6 +122,7 @@ export default function Dashboard() {
 
   const { time, date, clocks, updateClocks, rawTime } = useTime(weather?.timezone);
   const screensaverMeetings = findScreensaverMeetingsToday(calendar, rawTime);
+  const isAmbientScreensaver = AMBIENT_TYPES.includes(screensaverType as AmbientScreensaverType);
 
   const isSportsLive = matches.some(m => m.status === 'IN');
   const hasPomodoroHero = pomoActive;
@@ -161,7 +166,7 @@ export default function Dashboard() {
         setIdleClockTimeoutMinutes(
           data.idleClockTimeoutMinutes ?? data.screenClockTimeoutMinutes ?? DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES
         );
-        setScreensaverType(['clock', 'photos', 'analog'].includes(data.screensaverType) ? data.screensaverType : 'clock');
+        setScreensaverType(['clock', 'photos', 'analog', ...AMBIENT_TYPES].includes(data.screensaverType) ? data.screensaverType : 'clock');
         // Migrate displays that still have the removed split-flap screensaver selected.
         if (data.screensaverType === 'flapboard') {
           void fetch('/api/system/settings', {
@@ -172,6 +177,8 @@ export default function Dashboard() {
         }
         setAnalogClockTheme(['clockwork', 'orbital', 'station', 'chronograph'].includes(data.analogClockTheme) ? data.analogClockTheme : 'clockwork');
         setAnalogShowWorldClocks(data.analogShowWorldClocks !== false);
+        setAmbientPalette(['ember', 'ultraviolet', 'tidal'].includes(data.ambientPalette) ? data.ambientPalette : 'ember');
+        setAmbientOverlay(['none', 'minimal', 'full'].includes(data.ambientOverlay) ? data.ambientOverlay : 'full');
         setScreensaverPhotoSource(data.screensaverPhotoSource === 'favorites' ? 'favorites' : 'all');
         setScreensaverPhotoSlideDuration(
           PHOTO_SLIDE_DURATIONS.includes(data.screensaverPhotoSlideDurationSeconds)
@@ -444,6 +451,16 @@ export default function Dashboard() {
             <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
             {screensaverType === 'photos' ? (
               <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} durationSeconds={screensaverPhotoSlideDuration} />
+            ) : isAmbientScreensaver ? (
+              <AmbientScreensaver
+                kind={screensaverType as AmbientScreensaverType}
+                palette={ambientPalette}
+                overlay={ambientOverlay}
+                now={rawTime}
+                spotify={spotify}
+                meetings={screensaverMeetings}
+                portrait={isPortrait}
+              />
             ) : screensaverType === 'analog' ? (
               <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} spotify={spotify} portrait={isPortrait} />
             ) : (
@@ -477,7 +494,7 @@ export default function Dashboard() {
               </motion.div>
             )}
             </div>
-            {(screensaverMeetings.now || screensaverMeetings.later) && (
+            {!isAmbientScreensaver && (screensaverMeetings.now || screensaverMeetings.later) && (
               <ScreensaverMeetingReminders
                 meetings={screensaverMeetings}
                 now={rawTime}
@@ -796,6 +813,8 @@ export default function Dashboard() {
                   onUpdateScreensaverType={handleUpdateScreensaverType}
                    analogClockTheme={analogClockTheme} onUpdateAnalogClockTheme={setAnalogClockTheme}
                    analogShowWorldClocks={analogShowWorldClocks} onUpdateAnalogShowWorldClocks={setAnalogShowWorldClocks}
+                   ambientPalette={ambientPalette} onUpdateAmbientPalette={setAmbientPalette}
+                   ambientOverlay={ambientOverlay} onUpdateAmbientOverlay={setAmbientOverlay}
                    onPreviewScreensaver={() => setShowIdleClock(true)}
                   screensaverPhotoSource={screensaverPhotoSource}
                   onUpdateScreensaverPhotoSource={handleUpdateScreensaverPhotoSource}
