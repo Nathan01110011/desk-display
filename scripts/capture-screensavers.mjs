@@ -107,6 +107,6 @@ for (const [label, slug] of [
 await page.getByRole('button', { name: 'Lava Lamp', exact: true }).click();
 await page.getByRole('button', { name: 'Clean art', exact: false }).click();
 await capture('ambient-lava-clean');
-await page.getByRole('button', { name: 'Dashboard', exact: false }).click();
+await page.getByRole('button', { name: /^Dashboard Time, song, meetings$/ }).click();
 
 await browser.close();
