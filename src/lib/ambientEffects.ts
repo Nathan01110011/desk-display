@@ -114,7 +114,7 @@ function lava(ctx: CanvasRenderingContext2D, s: AmbientScene) {
       }
       const opacity = clamp((field - 0.75) * 6.0);
       const heat = clamp((field - 1.1) * 0.11 + 0.25 + (1 - yn) * 0.23);
-      const shine = clamp(Math.pow(clamp((field - 1.8) * 0.12), 1.1) * 0.28);
+      const shine = clamp((clamp((field - 1.8) * 0.12) ** 1.1) * 0.28);
       data[index++] = mix(c1[0], c2[0], heat);
       data[index++] = mix(c1[1], c2[1], heat + shine);
       data[index++] = mix(c1[2], c2[2], heat);
