@@ -1,5 +1,25 @@
 import { chromium } from '/tmp/pi-preview/node_modules/playwright/index.mjs';
 import { mkdir } from 'node:fs/promises';
+import { portraitAuroraX, scopePoint } from '../src/lib/ambientGeometry.ts';
+
+// Check real renderer geometry across full animation cycles, not just a screenshot.
+for (let t = 0; t <= 240; t += 0.5) {
+  for (const portrait of [true, false]) {
+    const a = scopePoint(0, t, portrait);
+    const b = scopePoint(1, t, portrait);
+    if (Math.hypot(a.x - b.x, a.y - b.y) > 1e-9) {
+      throw new Error('Open oscilloscope trace at ' + t);
+    }
+  }
+  for (let f = 0; f <= 1; f += 0.05) {
+    const lanes = Array.from({ length: 4 }, (_, layer) => portraitAuroraX(layer, f, t));
+    const mean = lanes.reduce((sum, x) => sum + x, 0) / lanes.length;
+    if (mean < 0.25 || mean > 0.75 || Math.min(...lanes) > 0.5 || Math.max(...lanes) < 0.5) {
+      throw new Error('Portrait aurora curtains drifted to one side at ' + t + ': ' + lanes.join(','));
+    }
+  }
+}
+
 
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, timezoneId: 'America/Chicago' });

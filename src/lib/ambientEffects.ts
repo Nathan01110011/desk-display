@@ -2,6 +2,7 @@
 // Canvas 2D only: no downloaded media, WebGL dependency, or network requests.
 import type { AmbientScreensaverType, AmbientPalette } from '@/types';
 import { AMBIENT_PRESETS } from './ambientPresets';
+import { portraitAuroraX, scopePoint } from './ambientGeometry';
 
 export type AmbientScene = {
   kind: AmbientScreensaverType;
@@ -175,26 +176,29 @@ function aurora(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   // than becoming a stack of oversized horizontal bands.
   if (tall) {
     for (let layer = 0; layer < 4; layer++) {
-      for (let strand = 0; strand < 9; strand++) {
-        const center = w * (0.10 + layer * 0.19 + strand * 0.012);
-        const alpha = 0.105 - strand * 0.007;
-        const gradient = ctx.createLinearGradient(0, h * 0.04, 0, h * 0.94);
+      // Layer a soft halo and a narrow luminous fold along the same curtain.
+      // The width and opacity taper gradually instead of forming hard stripes.
+      for (let strand = 0; strand < 10; strand++) {
+        const f = strand / 9;
+        const alpha = 0.055 + f * 0.035;
+        const gradient = ctx.createLinearGradient(0, h * 0.015, 0, h * 0.97);
         gradient.addColorStop(0, rgba(hues[layer], 0));
-        gradient.addColorStop(0.25, rgba(hues[layer], alpha * 0.65));
-        gradient.addColorStop(0.54, rgba(hues[layer], alpha));
-        gradient.addColorStop(0.85, rgba(hues[layer], alpha * 0.45));
+        gradient.addColorStop(0.16, rgba(hues[layer], alpha * 0.55));
+        gradient.addColorStop(0.48, rgba(hues[layer], alpha));
+        gradient.addColorStop(0.76, rgba(hues[layer], alpha * 0.7));
         gradient.addColorStop(1, rgba(hues[layer], 0));
         ctx.beginPath();
-        for (let n = 0; n <= 64; n++) {
-          const f = n / 64;
-          const y = h * (-0.12 + f * 1.24);
-          const x = center + w * (0.13 + 0.25 * f +
-            Math.sin(f * 6.5 + t * 0.18 + layer * 1.4) * 0.18 +
-            Math.sin(f * 13 - t * 0.13 + strand * 0.18) * 0.035);
+        for (let n = 0; n <= 72; n++) {
+          const progress = n / 72;
+          const y = h * (-0.08 + progress * 1.16);
+          const x = w * (portraitAuroraX(layer, progress, t) +
+            (f - 0.5) * 0.055 * Math.cos(progress * 5 + t * 0.2 + layer));
           if (n === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.strokeStyle = gradient;
-        ctx.lineWidth = w * (0.13 + strand * 0.014);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = w * (0.26 - f * 0.225);
         ctx.stroke();
       }
     }
@@ -377,45 +381,49 @@ function oscilloscope(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   ctx.stroke();
 
   const shape = new Path2D();
-  const a = 3.0 + Math.sin(t * 0.06) * 0.65;
-  const b = 2.0 + Math.cos(t * 0.045) * 0.45;
-  const shift = t * 0.11;
   const tall = h > w;
-  const radiusX = w * (tall ? 0.39 : 0.42);
-  const radiusY = h * (tall ? 0.38 : 0.36);
-  // Rotate the waveform composition by exchanging the frequency axes in
-  // portrait, then generate it directly at its intended proportions.
+  const radiusX = w * (tall ? 0.37 : 0.40);
+  const radiusY = h * (tall ? 0.32 : 0.36);
+  const unit = Math.min(w, h);
   for (let i = 0; i <= 750; i++) {
-    const progress = i / 750 * TAU;
-    const x = w / 2 + Math.sin((tall ? b : a) * progress + shift) * radiusX;
-    const y = h / 2 + Math.sin((tall ? a : b) * progress) * radiusY;
+    const point = scopePoint(i / 750, t, tall);
+    const x = w / 2 + point.x * radiusX;
+    const y = h / 2 + point.y * radiusY;
     if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
   }
+  shape.closePath();
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   ctx.strokeStyle = rgba(p.cool, 0.15);
-  ctx.lineWidth = Math.max(10, h * 0.024);
-  ctx.shadowBlur = 35;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(6, unit * 0.013);
+  ctx.shadowBlur = unit * 0.025;
   ctx.shadowColor = p.cool;
   ctx.stroke(shape);
   ctx.shadowBlur = 14;
   ctx.strokeStyle = rgba(p.warm, 0.68);
-  ctx.lineWidth = Math.max(2.5, h * 0.005);
+  ctx.lineWidth = Math.max(1.8, unit * 0.004);
   ctx.stroke(shape);
   ctx.shadowBlur = 5;
   ctx.strokeStyle = rgba(p.bright, 0.94);
-  ctx.lineWidth = Math.max(1.1, h * 0.0023);
+  ctx.lineWidth = Math.max(0.9, unit * 0.0016);
   ctx.stroke(shape);
+  // A travelling bright spot evokes a CRT beam tracing the closed pattern.
+  const beam = scopePoint((t * 0.3) % 1, t, tall);
+  const bx = w / 2 + beam.x * radiusX;
+  const by = h / 2 + beam.y * radiusY;
+  glow(ctx, bx, by, unit * 0.022, p.bright, 0.46);
   ctx.restore();
 
-  ctx.fillStyle = rgba(p.warm, 0.14);
+  ctx.fillStyle = rgba(p.warm, 0.035);
   for (let y = 1; y < h; y += 5) ctx.fillRect(0, y, w, 1);
   // Tiny telemetry labels evoke an instrument without enclosing it in a bezel.
   ctx.font = '600 ' + Math.round(Math.max(10, Math.min(14, h * 0.019))) + 'px monospace';
   ctx.fillStyle = rgba(p.bright, 0.35);
   ctx.fillText('CH 01  /  WAVEFORM LAB', 22, 32);
   ctx.textAlign = 'right';
-  ctx.fillText('SIGNAL LOCKED  •  ' + (2.3 + Math.sin(t * 0.13) * 0.2).toFixed(2) + ' Hz', w - 22, h - 23);
+  ctx.fillText('XY MODE  /  SYNTHETIC SIGNAL', w - 22, h - 23);
   ctx.textAlign = 'left';
 }
 
