@@ -73,6 +73,23 @@ async function assertScreensaverNowAndLater() {
   }
 }
 
+async function assertClockMusic() {
+  const card = page.locator('[data-screensaver-now-playing]');
+  await card.waitFor();
+  await card.getByText("It's All Coming Back to Me Now", { exact: true }).waitFor();
+  if (await card.locator('button').count() !== 0) {
+    throw new Error('Clock music card must be view-only');
+  }
+  const overlap = await page.evaluate(() => {
+    const card = document.querySelector('[data-screensaver-now-playing]')?.getBoundingClientRect();
+    const reminder = document.querySelector('[data-screensaver-meeting-reminders]')?.getBoundingClientRect();
+    if (!card || !reminder) return -1;
+    return Math.max(0, Math.min(card.right, reminder.right) - Math.max(card.left, reminder.left)) *
+      Math.max(0, Math.min(card.bottom, reminder.bottom) - Math.max(card.top, reminder.top));
+  });
+  if (overlap > 1) throw new Error('Clock music card overlaps meeting reminder: ' + overlap);
+}
+
 async function portraitShot(name) {
   const image = await page.screenshot({ animations: 'disabled' });
   // Chromium and the OS are LANDSCAPE. Rotate the screenshot for human review,
@@ -219,17 +236,18 @@ try {
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="analog"]').waitFor();
   await assertScreensaverNowAndLater();
+  await assertClockMusic();
   await page.waitForTimeout(1000);
   await portraitShot('portrait-analog');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
 
-  await enter('Split-flap Board');
+  await enter('Big Clock');
   await enter('Preview selected screensaver');
-  await page.locator('[data-screensaver="flapboard"]').waitFor();
+  await page.locator('[data-screensaver="clock"]').waitFor();
   await assertScreensaverNowAndLater();
-  await page.waitForTimeout(1400);
-  await portraitShot('portrait-flapboard');
+  await assertClockMusic();
+  await portraitShot('portrait-big-clock');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
 
