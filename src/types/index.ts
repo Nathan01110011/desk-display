@@ -115,10 +115,8 @@ export interface RuleLockSettings {
 
 export type DisplayOrientation = 'landscape' | 'portrait-left' | 'portrait-right';
 
-export type ScreensaverType = 'clock' | 'photos' | 'analog' | 'flapboard';
+export type ScreensaverType = 'clock' | 'photos' | 'analog';
 export type AnalogClockTheme = 'clockwork' | 'orbital' | 'station' | 'chronograph';
-export type FlapboardMode = 'carousel' | 'board';
-export type FlapboardAnimation = 'mechanical' | 'cascade';
 export type ScreensaverPhotoSource = 'all' | 'favorites';
 export type ScreensaverPhotoSlideDuration = 15 | 30 | 60 | 120;
 

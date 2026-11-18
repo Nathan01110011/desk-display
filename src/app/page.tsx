@@ -27,11 +27,12 @@ import { RuleView } from '@/components/RuleView';
 import { DashboardPomodoroPanel } from '@/components/DashboardPomodoroPanel';
 import { DashboardTimerPanel } from '@/components/DashboardTimerPanel';
 import { PhotoScreensaver } from '@/components/PhotoScreensaver';
-import { AnalogClockScreensaver, SplitFlapScreensaver } from '@/components/ScreensaverExperiences';
+import { AnalogClockScreensaver } from '@/components/ScreensaverExperiences';
+import { ScreensaverNowPlaying } from '@/components/ScreensaverNowPlaying';
 import { findScreensaverMeetingsToday, ScreensaverMeetingReminders } from '@/components/ScreensaverNextMeeting';
 import { GalleryView } from '@/components/GalleryView';
 import { formatPomoTime } from '@/lib/format';
-import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation, DisplayOrientation } from '@/types';
+import { ViewState, AppConfig, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, DisplayOrientation } from '@/types';
 import dynamic from 'next/dynamic';
 
 const TodoView = dynamic(() => import('@/components/TodoView').then(mod => mod.TodoView), {
@@ -82,9 +83,6 @@ export default function Dashboard() {
   const [screensaverType, setScreensaverType] = useState<ScreensaverType>('clock');
   const [analogClockTheme, setAnalogClockTheme] = useState<AnalogClockTheme>('clockwork');
   const [analogShowWorldClocks, setAnalogShowWorldClocks] = useState(true);
-  const [flapboardMode, setFlapboardMode] = useState<FlapboardMode>('board');
-  const [flapboardAnimation, setFlapboardAnimation] = useState<FlapboardAnimation>('cascade');
-  const [flapboardInterval, setFlapboardInterval] = useState(20);
   const [screensaverPhotoSource, setScreensaverPhotoSource] = useState<ScreensaverPhotoSource>('all');
   const [screensaverPhotoSlideDuration, setScreensaverPhotoSlideDuration] = useState<ScreensaverPhotoSlideDuration>(DEFAULT_PHOTO_SLIDE_DURATION_SECONDS);
   const [disableScreensaverWhileSpotifyPlaying, setDisableScreensaverWhileSpotifyPlaying] = useState(false);
@@ -163,12 +161,17 @@ export default function Dashboard() {
         setIdleClockTimeoutMinutes(
           data.idleClockTimeoutMinutes ?? data.screenClockTimeoutMinutes ?? DEFAULT_IDLE_CLOCK_TIMEOUT_MINUTES
         );
-        setScreensaverType(['clock', 'photos', 'analog', 'flapboard'].includes(data.screensaverType) ? data.screensaverType : 'clock');
+        setScreensaverType(['clock', 'photos', 'analog'].includes(data.screensaverType) ? data.screensaverType : 'clock');
+        // Migrate displays that still have the removed split-flap screensaver selected.
+        if (data.screensaverType === 'flapboard') {
+          void fetch('/api/system/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ screensaverType: 'clock' }),
+          }).catch(error => console.error('Could not migrate retired screensaver setting', error));
+        }
         setAnalogClockTheme(['clockwork', 'orbital', 'station', 'chronograph'].includes(data.analogClockTheme) ? data.analogClockTheme : 'clockwork');
         setAnalogShowWorldClocks(data.analogShowWorldClocks !== false);
-        setFlapboardMode(data.flapboardMode === 'carousel' ? 'carousel' : 'board');
-        setFlapboardAnimation(data.flapboardAnimation === 'mechanical' ? 'mechanical' : 'cascade');
-        setFlapboardInterval([10, 20, 30, 60].includes(data.flapboardInterval) ? data.flapboardInterval : 20);
         setScreensaverPhotoSource(data.screensaverPhotoSource === 'favorites' ? 'favorites' : 'all');
         setScreensaverPhotoSlideDuration(
           PHOTO_SLIDE_DURATIONS.includes(data.screensaverPhotoSlideDurationSeconds)
@@ -442,15 +445,14 @@ export default function Dashboard() {
             {screensaverType === 'photos' ? (
               <PhotoScreensaver time={time} date={date} source={screensaverPhotoSource} durationSeconds={screensaverPhotoSlideDuration} />
             ) : screensaverType === 'analog' ? (
-              <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} portrait={isPortrait} />
-            ) : screensaverType === 'flapboard' ? (
-              <SplitFlapScreensaver now={rawTime} clocks={clocks} mode={flapboardMode} animation={flapboardAnimation} intervalSeconds={flapboardInterval} portrait={isPortrait} />
+              <AnalogClockScreensaver now={rawTime} clocks={clocks} theme={analogClockTheme} showWorldClocks={analogShowWorldClocks} spotify={spotify} portrait={isPortrait} />
             ) : (
               <motion.div
                 initial={{ y: 16, scale: 0.98 }}
                 animate={{ y: 0, scale: 1 }}
                 exit={{ y: 16, scale: 0.98 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                data-screensaver="clock"
                 className={`grid w-full items-center gap-[5vw] px-[6vw] ${
                   isPortrait ? 'max-w-[94%] grid-cols-1 text-center' : clocks.length > 0 ? 'max-w-[92vw] grid-cols-[minmax(0,1fr)_minmax(16rem,22vw)]' : 'max-w-[90vw] grid-cols-1'
                 }`}
@@ -460,6 +462,7 @@ export default function Dashboard() {
                   <h1 className={`${isPortrait ? 'text-[clamp(6rem,12vw,10rem)]' : clocks.length > 0 ? 'text-[clamp(11rem,20vw,24rem)]' : 'text-[clamp(12rem,23vw,28rem)]'} mt-8 font-black tracking-tighter leading-none tabular-nums text-white`}>
                     {time}
                   </h1>
+                  <ScreensaverNowPlaying spotify={spotify} className={isPortrait || clocks.length === 0 ? 'mx-auto mt-8' : 'mt-8'} />
                 </div>
                 {clocks.length > 0 && (
                   <div className={isPortrait ? 'flex flex-wrap items-center justify-center gap-5' : 'flex flex-col items-end gap-[clamp(1.25rem,3vh,2.5rem)]'}>
@@ -793,9 +796,6 @@ export default function Dashboard() {
                   onUpdateScreensaverType={handleUpdateScreensaverType}
                    analogClockTheme={analogClockTheme} onUpdateAnalogClockTheme={setAnalogClockTheme}
                    analogShowWorldClocks={analogShowWorldClocks} onUpdateAnalogShowWorldClocks={setAnalogShowWorldClocks}
-                   flapboardMode={flapboardMode} onUpdateFlapboardMode={setFlapboardMode}
-                   flapboardAnimation={flapboardAnimation} onUpdateFlapboardAnimation={setFlapboardAnimation}
-                   flapboardInterval={flapboardInterval} onUpdateFlapboardInterval={setFlapboardInterval}
                    onPreviewScreensaver={() => setShowIdleClock(true)}
                   screensaverPhotoSource={screensaverPhotoSource}
                   onUpdateScreensaverPhotoSource={handleUpdateScreensaverPhotoSource}
