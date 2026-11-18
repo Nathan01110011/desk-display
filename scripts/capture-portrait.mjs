@@ -272,13 +272,18 @@ try {
         Math.abs(canvasBox.height - rootBox.height) < 2,
       canvasWidth: canvas?.width ?? 0,
       canvasHeight: canvas?.height ?? 0,
+      layoutWidth: canvas?.clientWidth ?? 0,
+      layoutHeight: canvas?.clientHeight ?? 0,
+      layout: root.getAttribute('data-ambient-layout'),
       hasMeeting: !!meetingBox && !!root.textContent?.includes('Current security sync') &&
         !!root.textContent?.includes('Portrait layout calendar review'),
       musicOverlap: intersects(musicBox, meetingBox),
       clockOverlap: intersects(clockBox, musicBox),
     };
   });
-  if (!ambient.fillsScreen || ambient.canvasWidth < 200 || ambient.canvasHeight < 200 ||
+  if (!ambient.fillsScreen || ambient.layout !== 'portrait' ||
+      ambient.layoutWidth !== 800 || ambient.layoutHeight !== 1280 ||
+      ambient.canvasWidth !== ambient.layoutWidth || ambient.canvasHeight !== ambient.layoutHeight ||
       !ambient.hasMeeting || (ambient.musicOverlap ?? 0) > 1 || (ambient.clockOverlap ?? 0) > 1) {
     throw new Error('Portrait ambient screensaver fails full-bleed or overlay layout: ' + JSON.stringify(ambient));
   }
@@ -295,6 +300,32 @@ try {
   await portraitShot('portrait-lava-clean');
   await page.locator('[data-screensaver="lava"]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver="lava"]').waitFor({ state: 'detached' });
+
+  // Capture each tall composition and assert its backing store matches the
+  // logical size, not the rotated DOM bounding rectangle.
+  for (const [label, slug] of [
+    ['Aurora', 'aurora'],
+    ['Koi Pond', 'koi'],
+    ['Oscilloscope', 'oscilloscope'],
+    ['Deep Space', 'space'],
+  ]) {
+    await enter(label);
+    await enter('Preview selected screensaver');
+    const root = page.locator('[data-screensaver="' + slug + '"][data-ambient-layout="portrait"]');
+    await root.waitFor();
+    const canvas = root.locator('canvas');
+    await page.waitForFunction(() => {
+      const active = document.querySelector('[data-ambient-layout="portrait"] canvas');
+      return active && active.width === 800 && active.height === 1280;
+    });
+    const dims = await canvas.evaluate(el => [el.width, el.height, el.clientWidth, el.clientHeight]);
+    if (dims.join(',') !== '800,1280,800,1280') {
+      throw new Error('Incorrect portrait canvas aspect for ' + slug + ': ' + dims.join(','));
+    }
+    await portraitShot('portrait-' + slug + '-clean');
+    await root.click({ position: { x: 20, y: 20 } });
+    await root.waitFor({ state: 'detached' });
+  }
 
   await enter('Rotate right');
   await page.locator('main[data-display-orientation="portrait-right"]').waitFor();

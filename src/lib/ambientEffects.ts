@@ -62,8 +62,9 @@ let lavaCache: LavaCache | null = null;
 function prepareLava(w: number, h: number): LavaCache | null {
   // Sample at low resolution and let canvas linear filtering soften the edges.
   // This is much cheaper than a full-resolution per-pixel metaball shader on a Pi.
-  const width = Math.min(220, Math.max(96, Math.ceil(w / 6)));
-  const height = Math.min(165, Math.max(84, Math.ceil(h / 6)));
+  const scale = Math.min(1 / 6, 220 / Math.max(w, h));
+  const width = Math.max(2, Math.round(w * scale));
+  const height = Math.max(2, Math.round(h * scale));
   if (lavaCache?.width === width && lavaCache.height === height) return lavaCache;
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -83,17 +84,26 @@ function lava(ctx: CanvasRenderingContext2D, s: AmbientScene) {
 
   const cache = prepareLava(w, h);
   if (!cache) return;
-  const blobs = Array.from({ length: 9 }, (_, i) => {
+  const tall = h > w;
+  const unit = Math.min(w, h);
+  const blobs = Array.from({ length: tall ? 8 : 11 }, (_, i) => {
     const phase = i * 2.399;
     const drift = t * (0.12 + hash(i + 8) * 0.13);
     return {
-      x: 0.5 + Math.sin(drift * 1.2 + phase) * (0.22 + hash(i + 14) * 0.07),
-      y: 0.52 + Math.sin(drift + phase * 1.5) * 0.4,
-      r: 0.078 + hash(i + 20) * 0.072,
+      // A tall lamp has a vertical convection column; a wide lamp spreads
+      // across several lanes. Sizes are measured in physical logical pixels.
+      x: tall
+        ? 0.5 + Math.sin(drift * 1.2 + phase) * (0.23 + hash(i + 14) * 0.11)
+        : 0.5 + Math.sin(drift * 0.8 + phase) * (0.30 + hash(i + 14) * 0.11),
+      y: 0.5 + Math.sin(drift + phase * 1.5) * (tall ? 0.48 : 0.39),
+      r: (tall ? 0.09 : 0.078) + hash(i + 20) * 0.072,
     };
   });
-  // A broad, warm pool at the bottom continuously feeds the rising wax.
-  blobs.push({ x: 0.5 + Math.sin(t * 0.1) * 0.06, y: 1.05, r: 0.31 });
+  // The bottom pool remains full-bleed, not a silhouette of a lamp.
+  for (let i = 0; i < (tall ? 2 : 4); i++) {
+    const x = tall ? 0.34 + i * 0.32 : 0.13 + i * 0.245;
+    blobs.push({ x: x + Math.sin(t * 0.1 + i) * 0.035, y: 1.04, r: tall ? 0.27 : 0.23 });
+  }
   const data = cache.image.data;
   const cw = cache.width;
   const ch = cache.height;
@@ -108,8 +118,8 @@ function lava(ctx: CanvasRenderingContext2D, s: AmbientScene) {
       const xn = x / cw;
       let field = 0;
       for (const blob of blobs) {
-        const dx = (xn - blob.x) * (w / h) * 0.82;
-        const dy = (yn - blob.y);
+        const dx = (xn - blob.x) * w / unit;
+        const dy = (yn - blob.y) * h / unit * (tall ? 0.85 : 1);
         field += (blob.r * blob.r) / (dx * dx + dy * dy + 0.00012);
       }
       const opacity = clamp((field - 0.75) * 6.0);
@@ -163,7 +173,35 @@ function aurora(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   const hues = [p.warm, p.cool, p.bright, p.warm];
-  for (let layer = 0; layer < 4; layer++) {
+  const tall = h > w;
+  // In portrait the curtains arc diagonally through the tall sky, rather
+  // than becoming a stack of oversized horizontal bands.
+  if (tall) {
+    for (let layer = 0; layer < 4; layer++) {
+      for (let strand = 0; strand < 9; strand++) {
+        const center = w * (0.10 + layer * 0.19 + strand * 0.012);
+        const alpha = 0.105 - strand * 0.007;
+        const gradient = ctx.createLinearGradient(0, h * 0.04, 0, h * 0.94);
+        gradient.addColorStop(0, rgba(hues[layer], 0));
+        gradient.addColorStop(0.25, rgba(hues[layer], alpha * 0.65));
+        gradient.addColorStop(0.54, rgba(hues[layer], alpha));
+        gradient.addColorStop(0.85, rgba(hues[layer], alpha * 0.45));
+        gradient.addColorStop(1, rgba(hues[layer], 0));
+        ctx.beginPath();
+        for (let n = 0; n <= 64; n++) {
+          const f = n / 64;
+          const y = h * (-0.12 + f * 1.24);
+          const x = center + w * (0.13 + 0.25 * f +
+            Math.sin(f * 6.5 + t * 0.18 + layer * 1.4) * 0.18 +
+            Math.sin(f * 13 - t * 0.13 + strand * 0.18) * 0.035);
+          if (n === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = w * (0.13 + strand * 0.014);
+        ctx.stroke();
+      }
+    }
+  } else for (let layer = 0; layer < 4; layer++) {
     for (let strand = 0; strand < 9; strand++) {
       const height = h * (0.12 + layer * 0.08 + strand * 0.036);
       const sweep = Math.sin(t * 0.16 + layer * 1.9 + strand * 0.16) * h * 0.09;
@@ -282,12 +320,24 @@ function koiPond(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   }
   ctx.restore();
 
-  for (let i = 0; i < 6; i++) {
-    const phase = i * TAU / 6;
-    const x = w * (0.5 + 0.33 * Math.sin(t * (0.13 + i * 0.008) + phase) + 0.09 * Math.sin(t * 0.22 + i * 1.8));
-    const y = h * (0.5 + 0.33 * Math.cos(t * (0.105 + i * 0.012) + phase) + 0.04 * Math.sin(t * 0.18 + i));
-    const vx = w * (0.33 * Math.cos(t * (0.13 + i * 0.008) + phase) * (0.13 + i * 0.008) + 0.09 * Math.cos(t * 0.22 + i * 1.8) * 0.22);
-    const vy = h * (-0.33 * Math.sin(t * (0.105 + i * 0.012) + phase) * (0.105 + i * 0.012) + 0.04 * Math.cos(t * 0.18 + i) * 0.18);
+  const tall = h > w;
+  const fishCount = tall ? 5 : 6;
+  for (let i = 0; i < fishCount; i++) {
+    const phase = i * TAU / fishCount;
+    // Tall ponds use long, staggered figure-eight swimming lanes. Wide
+    // ponds keep the original looping paths. Tangent sets the fish heading.
+    const position = (time: number) => {
+      const a = time * (0.13 + i * 0.008) + phase;
+      const b = time * (0.105 + i * 0.012) + phase;
+      return tall
+        ? { x: w * (0.5 + 0.28 * Math.sin(2 * a) + 0.07 * Math.sin(b)), y: h * (0.5 + 0.38 * Math.cos(b)) }
+        : { x: w * (0.5 + 0.33 * Math.sin(a) + 0.09 * Math.sin(time * 0.22 + i * 1.8)),
+            y: h * (0.5 + 0.33 * Math.cos(b) + 0.04 * Math.sin(time * 0.18 + i)) };
+    };
+    const { x, y } = position(t);
+    const next = position(t + 0.01);
+    const vx = next.x - x;
+    const vy = next.y - y;
     // Wake rings stay subtle, so the koi remain the focal point.
     for (let ring = 0; ring < 2; ring++) {
       const radius = ((t * 16 + ring * 28 + i * 11) % 80) + 8;
@@ -297,7 +347,7 @@ function koiPond(ctx: CanvasRenderingContext2D, s: AmbientScene) {
       ctx.ellipse(x, y, radius, radius * 0.47, 0, 0, TAU);
       ctx.stroke();
     }
-    const size = Math.min(w, h) * (0.054 + hash(i + 40) * 0.02);
+    const size = Math.min(w, h) * ((tall ? 0.075 : 0.054) + hash(i + 40) * 0.02);
     koiFish(ctx, x, y, Math.atan2(vy, vx), size, phase, i % 2 === 0, t);
   }
   // Drifted highlight trails along the surface.
@@ -332,11 +382,15 @@ function oscilloscope(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   const a = 3.0 + Math.sin(t * 0.06) * 0.65;
   const b = 2.0 + Math.cos(t * 0.045) * 0.45;
   const shift = t * 0.11;
-  const radius = Math.min(w * 0.42, h * 0.43);
+  const tall = h > w;
+  const radiusX = w * (tall ? 0.39 : 0.42);
+  const radiusY = h * (tall ? 0.38 : 0.36);
+  // Rotate the waveform composition by exchanging the frequency axes in
+  // portrait, then generate it directly at its intended proportions.
   for (let i = 0; i <= 750; i++) {
     const progress = i / 750 * TAU;
-    const x = w / 2 + Math.sin(a * progress + shift) * radius * (w / h > 1.7 ? 1.65 : 1.05);
-    const y = h / 2 + Math.sin(b * progress) * radius * 0.86;
+    const x = w / 2 + Math.sin((tall ? b : a) * progress + shift) * radiusX;
+    const y = h / 2 + Math.sin((tall ? a : b) * progress) * radiusY;
     if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
   }
   ctx.save();
@@ -385,12 +439,15 @@ function deepSpace(ctx: CanvasRenderingContext2D, s: AmbientScene) {
     ctx.arc(x, y, 0.35 + depth * (i % 7 === 0 ? 1.9 : 1.0), 0, TAU);
     ctx.fill();
   }
-  const px = w * (0.77 + Math.sin(t * 0.045) * 0.06);
+  const tall = h > w;
+  // A central planet and tall nebula column in portrait; the landscape
+  // retains the off-centre wide-space composition.
+  const px = w * ((tall ? 0.50 : 0.77) + Math.sin(t * 0.045) * (tall ? 0.035 : 0.06));
   const py = h * (0.55 + Math.cos(t * 0.037) * 0.05);
-  const rad = Math.min(w * 0.22, h * 0.31);
+  const rad = Math.min(w * (tall ? 0.26 : 0.22), h * 0.31);
   ctx.save();
   ctx.translate(px, py);
-  ctx.rotate(-0.3);
+  ctx.rotate(tall ? -0.68 : -0.3);
   // Rear half of the ring sits behind the planet.
   ctx.strokeStyle = rgba(p.bright, 0.32);
   ctx.lineWidth = rad * 0.15;

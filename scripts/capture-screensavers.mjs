@@ -58,11 +58,14 @@ async function capture(name) {
       const sample = context?.getImageData(Math.floor(canvas.width * 0.43), Math.floor(canvas.height * 0.57), 1, 1).data;
       return {
         dimensions: [canvas.width, canvas.height],
+        layoutDimensions: [canvas.clientWidth, canvas.clientHeight],
+        layout: canvas.parentElement.getAttribute('data-ambient-layout'),
         fillsScreen: Math.abs(bounds.width - parent.width) < 2 && Math.abs(bounds.height - parent.height) < 2,
         sample: sample ? [...sample] : null,
       };
     });
-    if (!result.fillsScreen || result.dimensions.some(value => value < 100) || !result.sample ||
+    if (!result.fillsScreen || result.layout !== 'landscape' ||
+        result.dimensions.join(',') !== '1280,800' || result.layoutDimensions.join(',') !== '1280,800' || !result.sample ||
         result.sample.slice(0, 3).every(value => value === 0)) {
       throw new Error('Ambient artwork must render coloured pixels across the full display: ' + JSON.stringify(result));
     }

@@ -39,14 +39,15 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
     let height = 1;
 
     const resize = () => {
-      const bounds = canvas.getBoundingClientRect();
-      width = Math.max(1, Math.round(bounds.width));
-      height = Math.max(1, Math.round(bounds.height));
+      // Pi Frame rotates the parent with CSS, so its visual bounding rectangle
+      // swaps axes. Canvas pixels must be sized to the untransformed layout.
+      width = Math.max(1, canvas.clientWidth);
+      height = Math.max(1, canvas.clientHeight);
       // Do not allocate a 4K/Retina canvas on resource-constrained Pi hardware.
       const ratio = Math.min(1.5, window.devicePixelRatio || 1);
       canvas.width = Math.round(width * ratio);
       canvas.height = Math.round(height * ratio);
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
       paintAmbient(ctx, { kind, palette, width, height, time: performance.now() / 1000 * 0.55, frame });
     };
 
@@ -83,6 +84,7 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
     <div
       data-screensaver={kind}
       data-ambient-overlay={overlay}
+      data-ambient-layout={portrait ? 'portrait' : 'landscape'}
       className="absolute inset-0 h-full w-full overflow-hidden bg-[#020710] text-white"
     >
       {/* Entire screen is the artwork: no lamp silhouette, frame, or border. */}
