@@ -35,6 +35,7 @@ interface SettingsViewProps {
   analogShowWorldClocks: boolean;
   onUpdateAnalogShowWorldClocks: (show: boolean) => void;
   ambientPalette: AmbientPalette;
+  ambientPreviewsPaused: boolean;
   onUpdateAmbientPalette: (palette: AmbientPalette) => void;
   ambientOverlay: AmbientOverlayMode;
   onUpdateAmbientOverlay: (overlay: AmbientOverlayMode) => void;
@@ -67,6 +68,7 @@ export function SettingsView({
   analogShowWorldClocks,
   onUpdateAnalogShowWorldClocks,
   ambientPalette,
+  ambientPreviewsPaused,
   onUpdateAmbientPalette,
   ambientOverlay,
   onUpdateAmbientOverlay,
@@ -446,7 +448,7 @@ export function SettingsView({
                           (ambientPalette === id ? 'border-white/70 bg-white/15' : 'border-white/10 bg-black/20')}
                       >
                         <span className={'relative block w-full overflow-hidden ' + (displayOrientation === 'landscape' ? 'aspect-[8/5]' : 'aspect-[5/8]')}>
-                          <AmbientCanvas kind={ambientKind} palette={id} preview />
+                          <AmbientCanvas kind={ambientKind} palette={id} preview paused={ambientPreviewsPaused} />
                           {ambientPalette === id && <span className="absolute right-2 top-2 rounded-full bg-black/70 p-1"><Check size={14} /></span>}
                         </span>
                         <span className="block p-2">

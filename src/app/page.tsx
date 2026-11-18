@@ -822,6 +822,7 @@ export default function Dashboard() {
                   onUpdateScreensaverType={handleUpdateScreensaverType}
                    analogClockTheme={analogClockTheme} onUpdateAnalogClockTheme={setAnalogClockTheme}
                    analogShowWorldClocks={analogShowWorldClocks} onUpdateAnalogShowWorldClocks={setAnalogShowWorldClocks}
+                   ambientPreviewsPaused={showIdleClock || isRuleLocked}
                    ambientPalette={ambientPalette} onUpdateAmbientPalette={(palette) => {
                      if (isAmbientScreensaver) setAmbientPalettes(previous => ({ ...previous, [screensaverType]: palette }));
                    }}

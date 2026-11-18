@@ -21,7 +21,7 @@ function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-export function AmbientCanvas({ kind, palette, preview = false }: { kind: AmbientScreensaverType; palette: AmbientPalette; preview?: boolean }) {
+export function AmbientCanvas({ kind, palette, preview = false, paused = false }: { kind: AmbientScreensaverType; palette: AmbientPalette; preview?: boolean; paused?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function AmbientCanvas({ kind, palette, preview = false }: { kind: Ambien
     const intersection = preview ? new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }) : null;
     intersection?.observe(canvas);
     resize();
-    if (!reducedMotion.matches) animationFrame = window.requestAnimationFrame(draw);
+    if (!paused && !reducedMotion.matches) animationFrame = window.requestAnimationFrame(draw);
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
@@ -82,7 +82,7 @@ export function AmbientCanvas({ kind, palette, preview = false }: { kind: Ambien
       document.removeEventListener('visibilitychange', handleVisibility);
       window.cancelAnimationFrame(animationFrame);
     };
-  }, [kind, palette, preview]);
+  }, [kind, palette, preview, paused]);
 
   return <canvas ref={canvasRef} data-ambient-preview={preview ? palette : undefined} className="absolute inset-0 block size-full" />;
 }
