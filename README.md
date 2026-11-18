@@ -228,7 +228,7 @@ Portrait uses its own dashboard arrangement with the day's calendar and upcoming
 
 ### Experimental ambient screensaver gallery
 
-The \`dev/ambient-screensaver-lab\` branch contains **five live, procedural full-screen scenes**:
+The `dev/ambient-screensaver-lab` branch contains **five live, procedural full-screen scenes**:
 
 - **Lava Lamp** — luminous merging metaballs filling the **entire screen** (no lamp outline or vessel).
 - **Aurora** — drifting light curtains, stars and a faint horizon.
@@ -242,11 +242,11 @@ Animations use 2D Canvas, a 30 FPS throttle, a 1.5× device-pixel-ratio cap, and
 
 To try the experiment **on your existing kiosk**:
 
-\`\`\`bash
+```bash
 ./scripts/deploy-dev.sh dev/ambient-screensaver-lab
-\`\`\`
+```
 
-This deploys on the usual port 3000 using your existing environment. It is **not** a separate dev instance. Restore the main branch with \`./scripts/deploy.sh\`. The branch includes the previous split-flap removal and read-only clock music change, which is not yet part of \`main\`.
+This deploys on the usual port 3000 using your existing environment. It is **not** a separate dev instance. Restore the main branch with `./scripts/deploy.sh`. The branch includes the previous split-flap removal and read-only clock music change, which is not yet part of `main`.
 
 ### Manual Kiosk Mode (Wayland/Labwc)
 Add this to `~/.config/labwc/autostart`:
