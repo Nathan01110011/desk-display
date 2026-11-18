@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3, RotateCcw, RotateCw, Monitor } from 'lucide-react';
-import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, DisplayOrientation } from '@/types';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3, RotateCcw, RotateCw, Monitor, Flame, Waves, Fish, Activity, Orbit } from 'lucide-react';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, AmbientPalette, AmbientOverlayMode, DisplayOrientation } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 import { ConsoleLogViewer } from './ConsoleLogs';
 import BackButton from './BackButton';
@@ -32,6 +32,10 @@ interface SettingsViewProps {
   onUpdateAnalogClockTheme: (theme: AnalogClockTheme) => void;
   analogShowWorldClocks: boolean;
   onUpdateAnalogShowWorldClocks: (show: boolean) => void;
+  ambientPalette: AmbientPalette;
+  onUpdateAmbientPalette: (palette: AmbientPalette) => void;
+  ambientOverlay: AmbientOverlayMode;
+  onUpdateAmbientOverlay: (overlay: AmbientOverlayMode) => void;
   onPreviewScreensaver: () => void;
   screensaverPhotoSource: ScreensaverPhotoSource;
   onUpdateScreensaverPhotoSource: (source: ScreensaverPhotoSource) => void;
@@ -60,6 +64,10 @@ export function SettingsView({
   onUpdateAnalogClockTheme,
   analogShowWorldClocks,
   onUpdateAnalogShowWorldClocks,
+  ambientPalette,
+  onUpdateAmbientPalette,
+  ambientOverlay,
+  onUpdateAmbientOverlay,
   onPreviewScreensaver,
   screensaverPhotoSource,
   onUpdateScreensaverPhotoSource,
@@ -358,6 +366,11 @@ export function SettingsView({
                 { type: 'clock' as const, label: 'Big Clock', icon: Clock3 },
                 { type: 'analog' as const, label: 'Analog Clock', icon: Clock3 },
                 { type: 'photos' as const, label: 'Photos', icon: Images },
+                { type: 'lava' as const, label: 'Lava Lamp', icon: Flame },
+                { type: 'aurora' as const, label: 'Aurora', icon: Waves },
+                { type: 'koi' as const, label: 'Koi Pond', icon: Fish },
+                { type: 'oscilloscope' as const, label: 'Oscilloscope', icon: Activity },
+                { type: 'space' as const, label: 'Deep Space', icon: Orbit },
               ]).map(option => {
                 const Icon = option.icon;
                 const selected = screensaverType === option.type;
@@ -401,6 +414,67 @@ export function SettingsView({
                   <span className="text-sm font-semibold">Show configured world clocks as smaller analog dials</span>
                   <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg border ${analogShowWorldClocks ? 'border-white bg-white text-black' : 'border-white/20 text-transparent'}`}><Check size={17} /></span>
                 </button>
+              </div>
+            )}
+
+            {(['lava', 'aurora', 'koi', 'oscilloscope', 'space'] as const).includes(screensaverType as 'lava') && (
+              <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-white/80">Ambient art studio</p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">
+                    Full-screen procedural animation with no frame or bezel. Built for the Pi with capped rendering and reduced-motion support.
+                  </p>
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-white/65">Colour atmosphere</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { id: 'ember' as const, name: 'Ember', colour: 'bg-[#fa8352]' },
+                    { id: 'ultraviolet' as const, name: 'Violet', colour: 'bg-[#a774ed]' },
+                    { id: 'tidal' as const, name: 'Tidal', colour: 'bg-[#53d7ca]' },
+                  ]).map(option => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={ambientPalette === option.id}
+                      onPointerDown={() => {
+                        onUpdateAmbientPalette(option.id);
+                        void updateScreensaverPresentation({ ambientPalette: option.id });
+                      }}
+                      className={'flex min-w-0 flex-col items-center gap-2 rounded-xl border px-2 py-3 text-xs font-bold ' +
+                        (ambientPalette === option.id ? 'border-white/60 bg-white/15' : 'border-white/10 bg-black/20')}
+                    >
+                      <span className={'size-7 rounded-full shadow-[0_0_14px_rgba(255,255,255,0.12)] ' + option.colour} />
+                      {option.name}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-white/65">Information overlay</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { id: 'none' as const, name: 'Clean art', detail: 'Nothing on top' },
+                    { id: 'minimal' as const, name: 'Clock', detail: 'Time only' },
+                    { id: 'full' as const, name: 'Dashboard', detail: 'Time, song, meetings' },
+                  ]).map(option => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={ambientOverlay === option.id}
+                      onPointerDown={() => {
+                        onUpdateAmbientOverlay(option.id);
+                        void updateScreensaverPresentation({ ambientOverlay: option.id });
+                      }}
+                      className={'min-w-0 rounded-xl border p-2.5 text-left ' +
+                        (ambientOverlay === option.id ? 'border-white/60 bg-white/15' : 'border-white/10 bg-black/20')}
+                    >
+                      <span className="block text-xs font-bold">{option.name}</span>
+                      <span className="mt-1 block text-[10px] leading-tight text-white/60">{option.detail}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-white/50">
+                  The artwork always fills the display, including portrait mode. Touching the screen still dismisses the screensaver.
+                  Playback controls are intentionally omitted.
+                </p>
               </div>
             )}
 
