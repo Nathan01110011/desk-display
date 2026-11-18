@@ -226,6 +226,28 @@ Then physically stand the panel on whichever edge makes the picture upright. The
 
 Portrait uses its own dashboard arrangement with the day's calendar and upcoming events near the top, weather, and a compact app grid. Individual applications adapt to the taller layout; long content can still scroll. Landscape remains unchanged. Browser screenshots and interactions are checked at a 1280×800 landscape OS viewport and shown upright at 800×1280 in the draft pull request.
 
+### Experimental ambient screensaver gallery
+
+The \`dev/ambient-screensaver-lab\` branch contains **five live, procedural full-screen scenes**:
+
+- **Lava Lamp** — luminous merging metaballs filling the **entire screen** (no lamp outline or vessel).
+- **Aurora** — drifting light curtains, stars and a faint horizon.
+- **Koi Pond** — animated painted koi, ripples and underwater light.
+- **Oscilloscope** — glowing evolving Lissajous traces on a retro instrument grid, without a physical monitor bezel.
+- **Deep Space** — parallax starfield, colourful nebula light and a rotating ringed planet.
+
+Open **Settings → Display → Screensaver** to select one. All five support the Ember, Violet, and Tidal palettes. The **Information overlay** selector offers Clean art (visual only), Clock (time only), or Dashboard (time, date, view-only Spotify now playing, and ongoing/next meeting if available). Dashboard is the default to retain meeting visibility. Overlays never have playback controls.
+
+Animations use 2D Canvas, a 30 FPS throttle, a 1.5× device-pixel-ratio cap, and respect OS reduced-motion preferences. They stop when not displayed. Scenes work with Pi Frame's portrait rotation without rotating Raspberry Pi OS. Colours and animation speed are aesthetic choices and may still require tuning on the real Pi display.
+
+To try the experiment **on your existing kiosk**:
+
+\`\`\`bash
+./scripts/deploy-dev.sh dev/ambient-screensaver-lab
+\`\`\`
+
+This deploys on the usual port 3000 using your existing environment. It is **not** a separate dev instance. Restore the main branch with \`./scripts/deploy.sh\`. The branch includes the previous split-flap removal and read-only clock music change, which is not yet part of \`main\`.
+
 ### Manual Kiosk Mode (Wayland/Labwc)
 Add this to `~/.config/labwc/autostart`:
 ```bash
