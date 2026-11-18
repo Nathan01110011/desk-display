@@ -86,7 +86,7 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
       className="absolute inset-0 h-full w-full overflow-hidden bg-[#020710] text-white"
     >
       {/* Entire screen is the artwork: no lamp silhouette, frame, or border. */}
-      <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 block size-full" />
+      <canvas ref={canvasRef} className="absolute inset-0 block size-full" />
       {overlay !== 'none' && (
         <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-[clamp(14px,2.8vw,42px)]">
           <div className={'flex min-w-0 gap-4 ' + (portrait ? 'flex-col items-start' : 'flex-row items-start justify-between')}>
