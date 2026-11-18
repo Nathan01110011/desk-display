@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3, RotateCcw, RotateCw, Monitor } from 'lucide-react';
-import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, FlapboardMode, FlapboardAnimation, DisplayOrientation } from '@/types';
+import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3, RotateCcw, RotateCw, Monitor, Flame, Waves, Fish, Activity, Orbit } from 'lucide-react';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, AmbientScreensaverType, AmbientPalette, AmbientOverlayMode, DisplayOrientation } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 import { ConsoleLogViewer } from './ConsoleLogs';
 import BackButton from './BackButton';
+import { AmbientCanvas } from './AmbientScreensaver';
+import { AMBIENT_PALETTE_IDS, AMBIENT_PRESETS } from '@/lib/ambientPresets';
 
 const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; label: string }[] = [
   { value: 15, label: '15s' },
@@ -32,12 +34,11 @@ interface SettingsViewProps {
   onUpdateAnalogClockTheme: (theme: AnalogClockTheme) => void;
   analogShowWorldClocks: boolean;
   onUpdateAnalogShowWorldClocks: (show: boolean) => void;
-  flapboardMode: FlapboardMode;
-  onUpdateFlapboardMode: (mode: FlapboardMode) => void;
-  flapboardAnimation: FlapboardAnimation;
-  onUpdateFlapboardAnimation: (animation: FlapboardAnimation) => void;
-  flapboardInterval: number;
-  onUpdateFlapboardInterval: (interval: number) => void;
+  ambientPalette: AmbientPalette;
+  ambientPreviewsPaused: boolean;
+  onUpdateAmbientPalette: (palette: AmbientPalette) => void;
+  ambientOverlay: AmbientOverlayMode;
+  onUpdateAmbientOverlay: (overlay: AmbientOverlayMode) => void;
   onPreviewScreensaver: () => void;
   screensaverPhotoSource: ScreensaverPhotoSource;
   onUpdateScreensaverPhotoSource: (source: ScreensaverPhotoSource) => void;
@@ -66,12 +67,11 @@ export function SettingsView({
   onUpdateAnalogClockTheme,
   analogShowWorldClocks,
   onUpdateAnalogShowWorldClocks,
-  flapboardMode,
-  onUpdateFlapboardMode,
-  flapboardAnimation,
-  onUpdateFlapboardAnimation,
-  flapboardInterval,
-  onUpdateFlapboardInterval,
+  ambientPalette,
+  ambientPreviewsPaused,
+  onUpdateAmbientPalette,
+  ambientOverlay,
+  onUpdateAmbientOverlay,
   onPreviewScreensaver,
   screensaverPhotoSource,
   onUpdateScreensaverPhotoSource,
@@ -80,6 +80,7 @@ export function SettingsView({
   disableScreensaverWhileSpotifyPlaying,
   onDisableScreensaverWhileSpotifyPlaying,
 }: SettingsViewProps) {
+  const ambientKind = Object.hasOwn(AMBIENT_PRESETS, screensaverType) ? screensaverType as AmbientScreensaverType : null;
   const [category, setCategory] = useState('display');
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showConsoleLogs, setShowConsoleLogs] = useState(false);
@@ -369,8 +370,12 @@ export function SettingsView({
               {([
                 { type: 'clock' as const, label: 'Big Clock', icon: Clock3 },
                 { type: 'analog' as const, label: 'Analog Clock', icon: Clock3 },
-                { type: 'flapboard' as const, label: 'Split-flap Board', icon: Globe },
                 { type: 'photos' as const, label: 'Photos', icon: Images },
+                { type: 'lava' as const, label: 'Lava Lamp', icon: Flame },
+                { type: 'aurora' as const, label: 'Aurora', icon: Waves },
+                { type: 'koi' as const, label: 'Koi Pond', icon: Fish },
+                { type: 'oscilloscope' as const, label: 'Oscilloscope', icon: Activity },
+                { type: 'space' as const, label: 'Deep Space', icon: Orbit },
               ]).map(option => {
                 const Icon = option.icon;
                 const selected = screensaverType === option.type;
@@ -417,35 +422,70 @@ export function SettingsView({
               </div>
             )}
 
-            {screensaverType === 'flapboard' && (
+            {ambientKind && (
               <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs font-black uppercase tracking-widest text-white/70">World clock display</p>
-                <p className="text-xs text-white/60">Every row is a split-flap display, showing a configured location on the left and its time on the right.</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {([{ id: 'carousel' as const, label: 'Rotate board rows' }, { id: 'board' as const, label: 'Station board' }]).map(option => (
-                    <button key={option.id} type="button" onPointerDown={() => { onUpdateFlapboardMode(option.id); void updateScreensaverPresentation({ flapboardMode: option.id }); }}
-                      className={`rounded-xl border px-3 py-3 text-sm font-black ${flapboardMode === option.id ? 'border-white/50 bg-white/15' : 'border-white/10 bg-black/20'}`}>{option.label}</button>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-white/80">Ambient art studio</p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">
+                    Full-screen procedural animation with no frame or bezel. Built for the Pi with capped rendering and reduced-motion support.
+                  </p>
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-white/65">Scene presets</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {AMBIENT_PALETTE_IDS.map(id => {
+                    const option = AMBIENT_PRESETS[ambientKind][id];
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        data-ambient-preset={id}
+                        aria-pressed={ambientPalette === id}
+                        onClick={() => {
+                          onUpdateAmbientPalette(id);
+                          void updateScreensaverPresentation({ ['ambientPalette_' + ambientKind]: id });
+                        }}
+                        className={'flex min-w-0 flex-col overflow-hidden rounded-xl border text-left ' +
+                          (ambientPalette === id ? 'border-white/70 bg-white/15' : 'border-white/10 bg-black/20')}
+                      >
+                        <span className={'relative block w-full overflow-hidden ' + (displayOrientation === 'landscape' ? 'aspect-[8/5]' : 'aspect-[5/8]')}>
+                          <AmbientCanvas kind={ambientKind} palette={id} preview paused={ambientPreviewsPaused} />
+                          {ambientPalette === id && <span className="absolute right-2 top-2 rounded-full bg-black/70 p-1"><Check size={14} /></span>}
+                        </span>
+                        <span className="block p-2">
+                          <span className="block text-xs font-bold">{option.name}</span>
+                          <span className="mt-1 block text-[10px] leading-snug text-white/60">{option.detail}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-white/65">Information overlay</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { id: 'none' as const, name: 'Clean art', detail: 'Nothing on top' },
+                    { id: 'minimal' as const, name: 'Clock', detail: 'Time only' },
+                    { id: 'full' as const, name: 'Dashboard', detail: 'Time, song, meetings' },
+                  ]).map(option => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={ambientOverlay === option.id}
+                      onPointerDown={() => {
+                        onUpdateAmbientOverlay(option.id);
+                        void updateScreensaverPresentation({ ambientOverlay: option.id });
+                      }}
+                      className={'min-w-0 rounded-xl border p-2.5 text-left ' +
+                        (ambientOverlay === option.id ? 'border-white/60 bg-white/15' : 'border-white/10 bg-black/20')}
+                    >
+                      <span className="block text-xs font-bold">{option.name}</span>
+                      <span className="mt-1 block text-[10px] leading-tight text-white/60">{option.detail}</span>
+                    </button>
                   ))}
                 </div>
-                <p className="text-xs font-black uppercase tracking-widest text-white/70">Flipping animation</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {([{ id: 'mechanical' as const, label: 'Mechanical' }, { id: 'cascade' as const, label: 'Cinematic cascade' }]).map(option => (
-                    <button key={option.id} type="button" onPointerDown={() => { onUpdateFlapboardAnimation(option.id); void updateScreensaverPresentation({ flapboardAnimation: option.id }); }}
-                      className={`rounded-xl border px-3 py-3 text-sm font-black ${flapboardAnimation === option.id ? 'border-white/50 bg-white/15' : 'border-white/10 bg-black/20'}`}>{option.label}</button>
-                  ))}
-                </div>
-                {flapboardMode === 'carousel' && (
-                  <>
-                    <p className="text-xs font-black uppercase tracking-widest text-white/70">Rotate every</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[10, 20, 30, 60].map(value => (
-                        <button key={value} type="button" onPointerDown={() => { onUpdateFlapboardInterval(value); void updateScreensaverPresentation({ flapboardInterval: value }); }}
-                          className={`rounded-xl border px-2 py-3 text-sm font-black ${flapboardInterval === value ? 'border-white/50 bg-white/15' : 'border-white/10 bg-black/20'}`}>{value}s</button>
-                      ))}
-                    </div>
-                  </>
-                )}
-                <p className="text-xs text-white/50">Location names and timezones come directly from World Clocks. Reorder locations there to change the board.</p>
+                <p className="text-xs text-white/50">
+                  The artwork always fills the display, including portrait mode. Touching the screen still dismisses the screensaver.
+                  Playback controls are intentionally omitted.
+                </p>
               </div>
             )}
 

@@ -73,6 +73,23 @@ async function assertScreensaverNowAndLater() {
   }
 }
 
+async function assertClockMusic() {
+  const card = page.locator('[data-screensaver-now-playing]');
+  await card.waitFor();
+  await card.getByText("It's All Coming Back to Me Now", { exact: true }).waitFor();
+  if (await card.locator('button').count() !== 0) {
+    throw new Error('Clock music card must be view-only');
+  }
+  const overlap = await page.evaluate(() => {
+    const card = document.querySelector('[data-screensaver-now-playing]')?.getBoundingClientRect();
+    const reminder = document.querySelector('[data-screensaver-meeting-reminders]')?.getBoundingClientRect();
+    if (!card || !reminder) return -1;
+    return Math.max(0, Math.min(card.right, reminder.right) - Math.max(card.left, reminder.left)) *
+      Math.max(0, Math.min(card.bottom, reminder.bottom) - Math.max(card.top, reminder.top));
+  });
+  if (overlap > 1) throw new Error('Clock music card overlaps meeting reminder: ' + overlap);
+}
+
 async function portraitShot(name) {
   const image = await page.screenshot({ animations: 'disabled' });
   // Chromium and the OS are LANDSCAPE. Rotate the screenshot for human review,
@@ -219,19 +236,96 @@ try {
   await enter('Preview selected screensaver');
   await page.locator('[data-screensaver="analog"]').waitFor();
   await assertScreensaverNowAndLater();
+  await assertClockMusic();
   await page.waitForTimeout(1000);
   await portraitShot('portrait-analog');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
 
-  await enter('Split-flap Board');
+  await enter('Big Clock');
   await enter('Preview selected screensaver');
-  await page.locator('[data-screensaver="flapboard"]').waitFor();
+  await page.locator('[data-screensaver="clock"]').waitFor();
   await assertScreensaverNowAndLater();
-  await page.waitForTimeout(1400);
-  await portraitShot('portrait-flapboard');
+  await assertClockMusic();
+  await portraitShot('portrait-big-clock');
   await page.locator('[data-screensaver]').click({ position: { x: 20, y: 20 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
+
+  // The animation must fill the *physically rotated* screen, with usable
+  // meeting/music overlays in the taller logical layout.
+  await enter('Lava Lamp');
+  await enter('Preview selected screensaver');
+  await page.locator('[data-screensaver="lava"][data-ambient-overlay="full"]').waitFor();
+  await page.locator('[data-screensaver-now-playing]').getByText("It's All Coming Back to Me Now").waitFor();
+  const ambient = await page.locator('[data-screensaver="lava"]').evaluate(root => {
+    const canvas = root.querySelector('canvas');
+    const canvasBox = canvas?.getBoundingClientRect();
+    const rootBox = root.getBoundingClientRect();
+    const musicBox = root.querySelector('[data-screensaver-now-playing]')?.getBoundingClientRect();
+    const meetingBox = root.querySelector('[data-ambient-meetings]')?.getBoundingClientRect();
+    const clockBox = root.querySelector('time')?.getBoundingClientRect();
+    const intersects = (a, b) => a && b &&
+      Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+      Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+    return {
+      fillsScreen: !!canvasBox && Math.abs(canvasBox.width - rootBox.width) < 2 &&
+        Math.abs(canvasBox.height - rootBox.height) < 2,
+      canvasWidth: canvas?.width ?? 0,
+      canvasHeight: canvas?.height ?? 0,
+      layoutWidth: canvas?.clientWidth ?? 0,
+      layoutHeight: canvas?.clientHeight ?? 0,
+      layout: root.getAttribute('data-ambient-layout'),
+      hasMeeting: !!meetingBox && !!root.textContent?.includes('Current security sync') &&
+        !!root.textContent?.includes('Portrait layout calendar review'),
+      musicOverlap: intersects(musicBox, meetingBox),
+      clockOverlap: intersects(clockBox, musicBox),
+    };
+  });
+  if (!ambient.fillsScreen || ambient.layout !== 'portrait' ||
+      ambient.layoutWidth !== 800 || ambient.layoutHeight !== 1280 ||
+      ambient.canvasWidth !== ambient.layoutWidth || ambient.canvasHeight !== ambient.layoutHeight ||
+      !ambient.hasMeeting || (ambient.musicOverlap ?? 0) > 1 || (ambient.clockOverlap ?? 0) > 1) {
+    throw new Error('Portrait ambient screensaver fails full-bleed or overlay layout: ' + JSON.stringify(ambient));
+  }
+  await portraitShot('portrait-lava');
+  await page.locator('[data-screensaver="lava"]').click({ position: { x: 20, y: 20 } });
+  await page.locator('[data-screensaver="lava"]').waitFor({ state: 'detached' });
+  await page.getByRole('button', { name: /^Clean art / }).click();
+  await enter('Preview selected screensaver');
+  await page.locator('[data-screensaver="lava"][data-ambient-overlay="none"]').waitFor();
+  if (await page.locator('[data-screensaver="lava"] [data-screensaver-now-playing]').count() ||
+      await page.locator('[data-screensaver="lava"] time').count()) {
+    throw new Error('Clean ambient mode must not render overlay data');
+  }
+  await portraitShot('portrait-lava-clean');
+  await page.locator('[data-screensaver="lava"]').click({ position: { x: 20, y: 20 } });
+  await page.locator('[data-screensaver="lava"]').waitFor({ state: 'detached' });
+
+  // Capture each tall composition and assert its backing store matches the
+  // logical size, not the rotated DOM bounding rectangle.
+  for (const [label, slug] of [
+    ['Aurora', 'aurora'],
+    ['Koi Pond', 'koi'],
+    ['Oscilloscope', 'oscilloscope'],
+    ['Deep Space', 'space'],
+  ]) {
+    await enter(label);
+    await enter('Preview selected screensaver');
+    const root = page.locator('[data-screensaver="' + slug + '"][data-ambient-layout="portrait"]');
+    await root.waitFor();
+    const canvas = root.locator('canvas');
+    await page.waitForFunction(() => {
+      const active = document.querySelector('[data-ambient-layout="portrait"] canvas');
+      return active && active.width === 800 && active.height === 1280;
+    });
+    const dims = await canvas.evaluate(el => [el.width, el.height, el.clientWidth, el.clientHeight]);
+    if (dims.join(',') !== '800,1280,800,1280') {
+      throw new Error('Incorrect portrait canvas aspect for ' + slug + ': ' + dims.join(','));
+    }
+    await portraitShot('portrait-' + slug + '-clean');
+    await root.click({ position: { x: 20, y: 20 } });
+    await root.waitFor({ state: 'detached' });
+  }
 
   await enter('Rotate right');
   await page.locator('main[data-display-orientation="portrait-right"]').waitFor();

@@ -1,8 +1,39 @@
 import { chromium } from '/tmp/pi-preview/node_modules/playwright/index.mjs';
 import { mkdir } from 'node:fs/promises';
+import { portraitAuroraX, scopePoint } from '../src/lib/ambientGeometry.ts';
+
+// Check real renderer geometry across full animation cycles, not just a screenshot.
+for (let t = 0; t <= 240; t += 0.5) {
+  for (const portrait of [true, false]) {
+    const a = scopePoint(0, t, portrait);
+    const b = scopePoint(1, t, portrait);
+    if (Math.hypot(a.x - b.x, a.y - b.y) > 1e-9) {
+      throw new Error('Open oscilloscope trace at ' + t);
+    }
+  }
+  for (let f = 0; f <= 1; f += 0.05) {
+    const lanes = Array.from({ length: 4 }, (_, layer) => portraitAuroraX(layer, f, t));
+    const mean = lanes.reduce((sum, x) => sum + x, 0) / lanes.length;
+    if (mean < 0.25 || mean > 0.75 || Math.min(...lanes) > 0.5 || Math.max(...lanes) < 0.5) {
+      throw new Error('Portrait aurora curtains drifted to one side at ' + t + ': ' + lanes.join(','));
+    }
+  }
+}
+
 
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, timezoneId: 'America/Chicago' });
+await page.route('**/api/spotify/now-playing', route => route.fulfill({
+  json: {
+    isPlaying: true,
+    title: 'Screensaver test track',
+    artist: 'Test artist',
+    album: 'Test album',
+    albumImageUrl: '',
+    progressMs: 62000,
+    durationMs: 200000,
+  },
+}));
 await page.goto('http://127.0.0.1:3000', { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.getByRole('button', { name: 'Settings', exact: true }).waitFor({ timeout: 120000 });
 await page.getByRole('button', { name: 'Settings', exact: true }).click();
@@ -32,20 +63,47 @@ async function capture(name) {
       throw new Error('Mini analog clocks must be larger, vertically stacked and right of main dial: ' + JSON.stringify({ main, secondary }));
     }
   }
-  if (name.startsWith('flapboard-')) {
-    const names = page.locator('[data-flap-role="location"]');
-    const times = page.locator('[data-flap-role="time"]');
-    if (await names.count() !== 3 || await times.count() !== 3) {
-      throw new Error('Station board must render a flip-tile location and time for every configured clock');
+  if (name.startsWith('analog-') || name === 'big-clock') {
+    const music = page.locator('[data-screensaver-now-playing]');
+    await music.waitFor();
+    await music.getByText('Screensaver test track', { exact: true }).waitFor();
+    if (await music.locator('button').count()) throw new Error('Clock music preview must not include controls');
+  }
+  if (name.startsWith('ambient-')) {
+    const scene = page.locator('[data-screensaver] canvas');
+    if (name === 'ambient-koi-gold' || name === 'ambient-koi-showa') {
+      const expected = name.endsWith('gold') ? 'tidal' : 'ultraviolet';
+      if (await page.locator('[data-screensaver="koi"]').getAttribute('data-ambient-palette') !== expected) throw new Error('Koi variant not applied');
     }
-    const labels = await names.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-flap-value')));
-    if (labels.filter(name => name === 'Belfast').length !== 1 || labels.includes('LOCAL TIME')) {
-      throw new Error('Station board must display configured Belfast once and must not invent a local-time row: ' + labels.join(', '));
+    const result = await scene.evaluate(canvas => {
+      const bounds = canvas.getBoundingClientRect();
+      const parent = canvas.parentElement.getBoundingClientRect();
+      const context = canvas.getContext('2d');
+      const sample = context?.getImageData(Math.floor(canvas.width * 0.43), Math.floor(canvas.height * 0.57), 1, 1).data;
+      return {
+        dimensions: [canvas.width, canvas.height],
+        layoutDimensions: [canvas.clientWidth, canvas.clientHeight],
+        layout: canvas.parentElement.getAttribute('data-ambient-layout'),
+        fillsScreen: Math.abs(bounds.width - parent.width) < 2 && Math.abs(bounds.height - parent.height) < 2,
+        sample: sample ? [...sample] : null,
+      };
+    });
+    if (!result.fillsScreen || result.layout !== 'landscape' ||
+        result.dimensions.join(',') !== '1280,800' || result.layoutDimensions.join(',') !== '1280,800' || !result.sample ||
+        result.sample.slice(0, 3).every(value => value === 0)) {
+      throw new Error('Ambient artwork must render coloured pixels across the full display: ' + JSON.stringify(result));
     }
-    const nameBox = await names.first().boundingBox();
-    const timeBox = await times.first().boundingBox();
-    if (!nameBox || !timeBox || nameBox.x >= timeBox.x) {
-      throw new Error('Location columns must be to the left of time columns');
+    if (name.endsWith('clean')) {
+      if (await page.locator('[data-ambient-overlay="none"] [data-screensaver-now-playing]').count() ||
+          await page.locator('[data-ambient-overlay="none"] time').count()) {
+        throw new Error('Clean art mode should hide all information overlays');
+      }
+    } else {
+      await page.locator('[data-ambient-overlay="full"] time').first().waitFor();
+      await page.locator('[data-screensaver-now-playing]').getByText('Screensaver test track').waitFor();
+      if (await page.locator('[data-screensaver-now-playing] button').count()) {
+        throw new Error('Ambient music card must be view-only');
+      }
     }
   }
   await page.screenshot({ path: 'screensaver-screenshots/' + name + '.png', animations: 'disabled' });
@@ -59,10 +117,42 @@ for (const theme of ['Clockwork', 'Orbital', 'Station', 'Chronograph']) {
   await capture('analog-' + theme.toLowerCase());
 }
 
-await page.getByRole('button', { name: 'Split-flap Board' }).click();
-await page.getByRole('button', { name: 'Station board' }).click();
-await capture('flapboard-all-locations');
-await page.getByRole('button', { name: 'Rotate board rows' }).click();
-await capture('flapboard-carousel');
+await page.getByRole('button', { name: 'Big Clock' }).click();
+await capture('big-clock');
+
+// Each ambient animation must run in a production browser, not just typecheck.
+for (const [label, slug] of [
+  ['Lava Lamp', 'lava'],
+  ['Aurora', 'aurora'],
+  ['Koi Pond', 'koi'],
+  ['Oscilloscope', 'oscilloscope'],
+  ['Deep Space', 'space'],
+]) {
+  await page.getByRole('button', { name: label, exact: true }).click();
+  const thumbnails = page.locator('[data-ambient-preview]');
+  if (await thumbnails.count() !== 3) throw new Error('Expected three animated scene previews for ' + slug);
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-ambient-preview]')].every(canvas => canvas.width > 10 && canvas.height > 10));
+  const samples = await thumbnails.evaluateAll(canvases => canvases.map(canvas => {
+    const ctx = canvas.getContext('2d');
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const totals = [0, 0, 0];
+    for (let i = 0; i < img.length; i += 4) for (let c = 0; c < 3; c++) totals[c] += img[i + c];
+    return totals.map(total => Math.round(total / (img.length / 4))).join(',');
+  }));
+  if (new Set(samples).size !== 3) throw new Error('Distinct preview palettes expected for ' + slug + ': ' + samples);
+  if (slug === 'koi') {
+    await page.locator('[data-ambient-preset="tidal"]').click();
+    if (await page.locator('[data-ambient-preset="tidal"]').getAttribute('aria-pressed') !== 'true') throw new Error('Golden koi selection not applied');
+    await capture('ambient-koi-gold');
+    await page.locator('[data-ambient-preset="ultraviolet"]').click();
+    await capture('ambient-koi-showa');
+    await page.locator('[data-ambient-preset="ember"]').click();
+  }
+  await capture('ambient-' + slug);
+}
+await page.getByRole('button', { name: 'Lava Lamp', exact: true }).click();
+await page.getByRole('button', { name: 'Clean art', exact: false }).click();
+await capture('ambient-lava-clean');
+await page.getByRole('button', { name: /^Dashboard Time, song, meetings$/ }).click();
 
 await browser.close();
