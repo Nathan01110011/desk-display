@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { Settings, Minus, Plus, Check, Keyboard, Globe, Trash2, GripVertical, Images, Clock3, RotateCcw, RotateCw, Monitor, Flame, Waves, Fish, Activity, Orbit } from 'lucide-react';
-import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, AmbientPalette, AmbientOverlayMode, DisplayOrientation } from '@/types';
+import { AppConfig, AdditionalClock, RuleLockSettings, ScreensaverPhotoSlideDuration, ScreensaverPhotoSource, ScreensaverType, AnalogClockTheme, AmbientScreensaverType, AmbientPalette, AmbientOverlayMode, DisplayOrientation } from '@/types';
 import { OnScreenKeyboard } from './OnScreenKeyboard';
 import { ConsoleLogViewer } from './ConsoleLogs';
 import BackButton from './BackButton';
+import { AmbientCanvas } from './AmbientScreensaver';
+import { AMBIENT_PALETTE_IDS, AMBIENT_PRESETS } from '@/lib/ambientPresets';
 
 const PHOTO_SLIDE_DURATION_OPTIONS: { value: ScreensaverPhotoSlideDuration; label: string }[] = [
   { value: 15, label: '15s' },
@@ -76,6 +78,7 @@ export function SettingsView({
   disableScreensaverWhileSpotifyPlaying,
   onDisableScreensaverWhileSpotifyPlaying,
 }: SettingsViewProps) {
+  const ambientKind = Object.hasOwn(AMBIENT_PRESETS, screensaverType) ? screensaverType as AmbientScreensaverType : null;
   const [category, setCategory] = useState('display');
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showConsoleLogs, setShowConsoleLogs] = useState(false);
@@ -417,7 +420,7 @@ export function SettingsView({
               </div>
             )}
 
-            {(['lava', 'aurora', 'koi', 'oscilloscope', 'space'] as const).includes(screensaverType as 'lava') && (
+            {ambientKind && (
               <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <div>
                   <p className="text-xs font-black uppercase tracking-widest text-white/80">Ambient art studio</p>
@@ -425,28 +428,34 @@ export function SettingsView({
                     Full-screen procedural animation with no frame or bezel. Built for the Pi with capped rendering and reduced-motion support.
                   </p>
                 </div>
-                <p className="text-xs font-black uppercase tracking-widest text-white/65">Colour atmosphere</p>
+                <p className="text-xs font-black uppercase tracking-widest text-white/65">Scene presets</p>
                 <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { id: 'ember' as const, name: 'Ember', colour: 'bg-[#fa8352]' },
-                    { id: 'ultraviolet' as const, name: 'Violet', colour: 'bg-[#a774ed]' },
-                    { id: 'tidal' as const, name: 'Tidal', colour: 'bg-[#53d7ca]' },
-                  ]).map(option => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      aria-pressed={ambientPalette === option.id}
-                      onPointerDown={() => {
-                        onUpdateAmbientPalette(option.id);
-                        void updateScreensaverPresentation({ ambientPalette: option.id });
-                      }}
-                      className={'flex min-w-0 flex-col items-center gap-2 rounded-xl border px-2 py-3 text-xs font-bold ' +
-                        (ambientPalette === option.id ? 'border-white/60 bg-white/15' : 'border-white/10 bg-black/20')}
-                    >
-                      <span className={'size-7 rounded-full shadow-[0_0_14px_rgba(255,255,255,0.12)] ' + option.colour} />
-                      {option.name}
-                    </button>
-                  ))}
+                  {AMBIENT_PALETTE_IDS.map(id => {
+                    const option = AMBIENT_PRESETS[ambientKind][id];
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        data-ambient-preset={id}
+                        aria-pressed={ambientPalette === id}
+                        onClick={() => {
+                          onUpdateAmbientPalette(id);
+                          void updateScreensaverPresentation({ ['ambientPalette_' + ambientKind]: id });
+                        }}
+                        className={'flex min-w-0 flex-col overflow-hidden rounded-xl border text-left ' +
+                          (ambientPalette === id ? 'border-white/70 bg-white/15' : 'border-white/10 bg-black/20')}
+                      >
+                        <span className={'relative block w-full overflow-hidden ' + (displayOrientation === 'landscape' ? 'aspect-[8/5]' : 'aspect-[5/8]')}>
+                          <AmbientCanvas kind={ambientKind} palette={id} preview />
+                          {ambientPalette === id && <span className="absolute right-2 top-2 rounded-full bg-black/70 p-1"><Check size={14} /></span>}
+                        </span>
+                        <span className="block p-2">
+                          <span className="block text-xs font-bold">{option.name}</span>
+                          <span className="mt-1 block text-[10px] leading-snug text-white/60">{option.detail}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
                 <p className="text-xs font-black uppercase tracking-widest text-white/65">Information overlay</p>
                 <div className="grid grid-cols-3 gap-2">

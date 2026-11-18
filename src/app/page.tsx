@@ -30,6 +30,7 @@ import { PhotoScreensaver } from '@/components/PhotoScreensaver';
 import { AnalogClockScreensaver } from '@/components/ScreensaverExperiences';
 import { ScreensaverNowPlaying } from '@/components/ScreensaverNowPlaying';
 import { AmbientScreensaver } from '@/components/AmbientScreensaver';
+import { isAmbientPalette } from '@/lib/ambientPresets';
 import { findScreensaverMeetingsToday, ScreensaverMeetingReminders } from '@/components/ScreensaverNextMeeting';
 import { GalleryView } from '@/components/GalleryView';
 import { formatPomoTime } from '@/lib/format';
@@ -85,7 +86,7 @@ export default function Dashboard() {
   const [screensaverType, setScreensaverType] = useState<ScreensaverType>('clock');
   const [analogClockTheme, setAnalogClockTheme] = useState<AnalogClockTheme>('clockwork');
   const [analogShowWorldClocks, setAnalogShowWorldClocks] = useState(true);
-  const [ambientPalette, setAmbientPalette] = useState<AmbientPalette>('ember');
+  const [ambientPalettes, setAmbientPalettes] = useState<Partial<Record<AmbientScreensaverType, AmbientPalette>>>({});
   const [ambientOverlay, setAmbientOverlay] = useState<AmbientOverlayMode>('full');
   const [screensaverPhotoSource, setScreensaverPhotoSource] = useState<ScreensaverPhotoSource>('all');
   const [screensaverPhotoSlideDuration, setScreensaverPhotoSlideDuration] = useState<ScreensaverPhotoSlideDuration>(DEFAULT_PHOTO_SLIDE_DURATION_SECONDS);
@@ -123,6 +124,7 @@ export default function Dashboard() {
   const { time, date, clocks, updateClocks, rawTime } = useTime(weather?.timezone);
   const screensaverMeetings = findScreensaverMeetingsToday(calendar, rawTime);
   const isAmbientScreensaver = AMBIENT_TYPES.includes(screensaverType as AmbientScreensaverType);
+  const ambientPalette = ambientPalettes[screensaverType as AmbientScreensaverType] ?? 'ember';
 
   const isSportsLive = matches.some(m => m.status === 'IN');
   const hasPomodoroHero = pomoActive;
@@ -177,7 +179,14 @@ export default function Dashboard() {
         }
         setAnalogClockTheme(['clockwork', 'orbital', 'station', 'chronograph'].includes(data.analogClockTheme) ? data.analogClockTheme : 'clockwork');
         setAnalogShowWorldClocks(data.analogShowWorldClocks !== false);
-        setAmbientPalette(['ember', 'ultraviolet', 'tidal'].includes(data.ambientPalette) ? data.ambientPalette : 'ember');
+        const savedPalettes: Partial<Record<AmbientScreensaverType, AmbientPalette>> = {};
+        for (const kind of AMBIENT_TYPES) {
+          const stored = data['ambientPalette_' + kind];
+          if (isAmbientPalette(stored)) savedPalettes[kind] = stored;
+        }
+        // Retain the legacy lava choice; other scenes have new, independent defaults.
+        if (!savedPalettes.lava && isAmbientPalette(data.ambientPalette)) savedPalettes.lava = data.ambientPalette;
+        setAmbientPalettes(savedPalettes);
         setAmbientOverlay(['none', 'minimal', 'full'].includes(data.ambientOverlay) ? data.ambientOverlay : 'full');
         setScreensaverPhotoSource(data.screensaverPhotoSource === 'favorites' ? 'favorites' : 'all');
         setScreensaverPhotoSlideDuration(
@@ -813,7 +822,9 @@ export default function Dashboard() {
                   onUpdateScreensaverType={handleUpdateScreensaverType}
                    analogClockTheme={analogClockTheme} onUpdateAnalogClockTheme={setAnalogClockTheme}
                    analogShowWorldClocks={analogShowWorldClocks} onUpdateAnalogShowWorldClocks={setAnalogShowWorldClocks}
-                   ambientPalette={ambientPalette} onUpdateAmbientPalette={setAmbientPalette}
+                   ambientPalette={ambientPalette} onUpdateAmbientPalette={(palette) => {
+                     if (isAmbientScreensaver) setAmbientPalettes(previous => ({ ...previous, [screensaverType]: palette }));
+                   }}
                    ambientOverlay={ambientOverlay} onUpdateAmbientOverlay={setAmbientOverlay}
                    onPreviewScreensaver={() => setShowIdleClock(true)}
                   screensaverPhotoSource={screensaverPhotoSource}

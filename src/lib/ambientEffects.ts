@@ -1,6 +1,7 @@
 // Procedural, full-bleed ambient artwork for the Raspberry Pi kiosk.
 // Canvas 2D only: no downloaded media, WebGL dependency, or network requests.
 import type { AmbientScreensaverType, AmbientPalette } from '@/types';
+import { AMBIENT_PRESETS } from './ambientPresets';
 
 export type AmbientScene = {
   kind: AmbientScreensaverType;
@@ -21,11 +22,7 @@ const rgba = (hex: string, opacity: number) => {
   const b = parseInt(value.slice(4, 6), 16);
   return 'rgba(' + r + ',' + g + ',' + b + ',' + clamp(opacity) + ')';
 };
-const palettes = {
-  ember: { base: '#10090e', warm: '#ff6b37', bright: '#ffdc78', cool: '#e64d7e', ink: '#33131a' },
-  ultraviolet: { base: '#08091c', warm: '#ba5fff', bright: '#ffb2f3', cool: '#4f9eff', ink: '#231142' },
-  tidal: { base: '#03191d', warm: '#40dcc6', bright: '#b7fff1', cool: '#367cdb', ink: '#0a3d42' },
-} as const;
+
 
 function gradientBackground(ctx: CanvasRenderingContext2D, w: number, h: number, base: string, tint: string) {
   ctx.fillStyle = base;
@@ -77,7 +74,7 @@ function prepareLava(w: number, h: number): LavaCache | null {
 
 function lava(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   const { width: w, height: h, time: t } = s;
-  const p = palettes[s.palette];
+  const p = AMBIENT_PRESETS[s.kind][s.palette].colors;
   gradientBackground(ctx, w, h, p.base, p.ink);
   glow(ctx, w * 0.5, h * 1.02, w * 0.72, p.warm, 0.21);
   glow(ctx, w * 0.48, h * 0.31, w * 0.56, p.cool, 0.09);
@@ -156,8 +153,8 @@ function lava(ctx: CanvasRenderingContext2D, s: AmbientScene) {
 
 function aurora(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   const { width: w, height: h, time: t } = s;
-  const p = palettes[s.palette];
-  gradientBackground(ctx, w, h, '#020711', '#061c2a');
+  const p = AMBIENT_PRESETS[s.kind][s.palette].colors;
+  gradientBackground(ctx, w, h, p.base, p.ink);
   glow(ctx, w * 0.45, h * 0.64, Math.max(w, h) * 0.85, p.cool, 0.12);
 
   for (let i = 0; i < 115; i++) {
@@ -233,11 +230,16 @@ function aurora(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   ctx.fillRect(0, h * 0.68, w, h * 0.32);
 }
 
-function koiFish(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, size: number, phase: number, pale: boolean, t: number) {
+function koiFish(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, size: number, phase: number, variety: AmbientPalette, t: number) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle + Math.PI / 2);
   ctx.scale(size, size);
+  const coat = variety === 'ember'
+    ? { edge: '#a9a99c', light: '#fff1db', mid: '#f7d9bd', dark: '#997c74', fin: '#ead3b6', tail: '#e7c4a1', patch: '#bd342a' }
+    : variety === 'ultraviolet'
+      ? { edge: '#181b29', light: '#e3e1dd', mid: '#a5a7ba', dark: '#242735', fin: '#687084', tail: '#353d50', patch: '#dc5434' }
+      : { edge: '#986019', light: '#fff2a8', mid: '#f0c14b', dark: '#a46a20', fin: '#f7d981', tail: '#e9ae39', patch: '#d99a26' };
   // Soft pool shadow.
   ctx.fillStyle = 'rgba(0, 0, 0, 0.21)';
   ctx.beginPath();
@@ -247,7 +249,7 @@ function koiFish(ctx: CanvasRenderingContext2D, x: number, y: number, angle: num
   ctx.save();
   ctx.translate(0, 0.7);
   ctx.rotate(wag);
-  ctx.fillStyle = pale ? '#e7c4a1' : '#bd4a38';
+  ctx.fillStyle = coat.tail;
   ctx.beginPath();
   ctx.moveTo(0, -0.1);
   ctx.quadraticCurveTo(-0.5, 0.55, -0.35, 0.78);
@@ -256,7 +258,7 @@ function koiFish(ctx: CanvasRenderingContext2D, x: number, y: number, angle: num
   ctx.fill();
   ctx.restore();
   // Pectoral fins.
-  ctx.fillStyle = pale ? '#ead3b6' : '#bd6a53';
+  ctx.fillStyle = coat.fin;
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 0.2, -0.13);
@@ -265,17 +267,10 @@ function koiFish(ctx: CanvasRenderingContext2D, x: number, y: number, angle: num
     ctx.fill();
   }
   const body = ctx.createLinearGradient(-0.38, 0, 0.42, 0);
-  if (pale) {
-    body.addColorStop(0, '#a9a99c');
-    body.addColorStop(0.38, '#fff1db');
-    body.addColorStop(0.75, '#f7d9bd');
-    body.addColorStop(1, '#997c74');
-  } else {
-    body.addColorStop(0, '#8a392b');
-    body.addColorStop(0.35, '#e87643');
-    body.addColorStop(0.65, '#f8bd7f');
-    body.addColorStop(1, '#813e30');
-  }
+  body.addColorStop(0, coat.edge);
+  body.addColorStop(0.38, coat.light);
+  body.addColorStop(0.75, coat.mid);
+  body.addColorStop(1, coat.dark);
   ctx.fillStyle = body;
   ctx.beginPath();
   ctx.moveTo(0, -0.88);
@@ -283,11 +278,13 @@ function koiFish(ctx: CanvasRenderingContext2D, x: number, y: number, angle: num
   ctx.quadraticCurveTo(0, 0.78, -0.18, 0.71);
   ctx.bezierCurveTo(-0.49, 0.26, -0.55, -0.8, 0, -0.88);
   ctx.fill();
-  ctx.fillStyle = pale ? '#a44c31' : '#f9ead1';
   for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = variety === 'ultraviolet' && i % 2 === 1 ? '#171923' : coat.patch;
     const yy = -0.46 + i * 0.43;
     const xx = Math.sin(phase * 2 + i * 2.1) * 0.13;
     ctx.beginPath();
+    // Ogon have an uninterrupted metallic coat, not contrasting patches.
+    if (variety === 'tidal') continue;
     ctx.ellipse(xx, yy, 0.17 + (i % 2) * 0.09, 0.18, 0.3 + i * 0.23, 0, TAU);
     ctx.fill();
   }
@@ -302,9 +299,10 @@ function koiFish(ctx: CanvasRenderingContext2D, x: number, y: number, angle: num
 
 function koiPond(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   const { width: w, height: h, time: t } = s;
-  gradientBackground(ctx, w, h, '#041b21', '#134047');
-  glow(ctx, w * 0.16, h * 0.12, w * 0.85, '#1d9e9e', 0.13);
-  glow(ctx, w * 0.82, h * 0.85, w * 0.78, '#184f7f', 0.12);
+  const p = AMBIENT_PRESETS.koi[s.palette].colors;
+  gradientBackground(ctx, w, h, p.base, p.ink);
+  glow(ctx, w * 0.16, h * 0.12, w * 0.85, p.warm, 0.2);
+  glow(ctx, w * 0.82, h * 0.85, w * 0.78, p.cool, 0.15);
 
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
@@ -312,7 +310,7 @@ function koiPond(ctx: CanvasRenderingContext2D, s: AmbientScene) {
     const x = hash(i + 22) * w;
     const y = hash(i + 59) * h;
     const size = 20 + hash(i + 201) * 130;
-    ctx.strokeStyle = rgba('#8fdad2', 0.018 + Math.sin(t * 0.3 + i) * 0.01);
+    ctx.strokeStyle = rgba(p.bright, 0.018 + Math.sin(t * 0.3 + i) * 0.01);
     ctx.lineWidth = 1 + hash(i) * 1.4;
     ctx.beginPath();
     ctx.ellipse(x, y, size, size * 0.43, hash(i + 12) * TAU, 0, TAU);
@@ -341,14 +339,14 @@ function koiPond(ctx: CanvasRenderingContext2D, s: AmbientScene) {
     // Wake rings stay subtle, so the koi remain the focal point.
     for (let ring = 0; ring < 2; ring++) {
       const radius = ((t * 16 + ring * 28 + i * 11) % 80) + 8;
-      ctx.strokeStyle = rgba('#adddd2', 0.095 * (1 - radius / 95));
+      ctx.strokeStyle = rgba(p.bright, 0.095 * (1 - radius / 95));
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.ellipse(x, y, radius, radius * 0.47, 0, 0, TAU);
       ctx.stroke();
     }
     const size = Math.min(w, h) * ((tall ? 0.075 : 0.054) + hash(i + 40) * 0.02);
-    koiFish(ctx, x, y, Math.atan2(vy, vx), size, phase, i % 2 === 0, t);
+    koiFish(ctx, x, y, Math.atan2(vy, vx), size, phase, s.palette, t);
   }
   // Drifted highlight trails along the surface.
   ctx.save();
@@ -356,18 +354,18 @@ function koiPond(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   for (let i = 0; i < 21; i++) {
     const x = ((hash(i + 101) + t * 0.0013) % 1) * w;
     const y = hash(i + 142) * h;
-    glow(ctx, x, y, Math.min(w, h) * 0.09, '#a6ffec', 0.025);
+    glow(ctx, x, y, Math.min(w, h) * 0.09, p.bright, 0.025);
   }
   ctx.restore();
 }
 
 function oscilloscope(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   const { width: w, height: h, time: t } = s;
-  const p = palettes[s.palette];
-  gradientBackground(ctx, w, h, '#020808', '#06231e');
+  const p = AMBIENT_PRESETS[s.kind][s.palette].colors;
+  gradientBackground(ctx, w, h, p.base, p.ink);
   const spacing = Math.max(32, Math.round(Math.min(w, h) / 12));
   ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(98, 190, 166, 0.07)';
+  ctx.strokeStyle = rgba(p.warm, 0.09);
   ctx.beginPath();
   for (let x = w % spacing; x < w; x += spacing) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
   for (let y = h % spacing; y < h; y += spacing) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
@@ -423,11 +421,11 @@ function oscilloscope(ctx: CanvasRenderingContext2D, s: AmbientScene) {
 
 function deepSpace(ctx: CanvasRenderingContext2D, s: AmbientScene) {
   const { width: w, height: h, time: t } = s;
-  const p = palettes[s.palette];
-  gradientBackground(ctx, w, h, '#01030b', '#0b142b');
+  const p = AMBIENT_PRESETS[s.kind][s.palette].colors;
+  gradientBackground(ctx, w, h, p.base, p.ink);
   glow(ctx, w * 0.2 + Math.sin(t * 0.03) * w * 0.07, h * 0.27, w * 0.7, p.cool, 0.14);
   glow(ctx, w * 0.82, h * 0.79, w * 0.63, p.warm, 0.12);
-  glow(ctx, w * 0.53, h * 0.46, w * 0.43, '#414a91', 0.11);
+  glow(ctx, w * 0.53, h * 0.46, w * 0.43, p.cool, 0.11);
 
   for (let i = 0; i < 350; i++) {
     const depth = 0.25 + hash(i + 88) * 0.75;

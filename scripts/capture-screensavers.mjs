@@ -51,6 +51,10 @@ async function capture(name) {
   }
   if (name.startsWith('ambient-')) {
     const scene = page.locator('[data-screensaver] canvas');
+    if (name === 'ambient-koi-gold' || name === 'ambient-koi-showa') {
+      const expected = name.endsWith('gold') ? 'tidal' : 'ultraviolet';
+      if (await page.locator('[data-screensaver="koi"]').getAttribute('data-ambient-palette') !== expected) throw new Error('Koi variant not applied');
+    }
     const result = await scene.evaluate(canvas => {
       const bounds = canvas.getBoundingClientRect();
       const parent = canvas.parentElement.getBoundingClientRect();
@@ -105,6 +109,25 @@ for (const [label, slug] of [
   ['Deep Space', 'space'],
 ]) {
   await page.getByRole('button', { name: label, exact: true }).click();
+  const thumbnails = page.locator('[data-ambient-preview]');
+  if (await thumbnails.count() !== 3) throw new Error('Expected three animated scene previews for ' + slug);
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-ambient-preview]')].every(canvas => canvas.width > 10 && canvas.height > 10));
+  const samples = await thumbnails.evaluateAll(canvases => canvases.map(canvas => {
+    const ctx = canvas.getContext('2d');
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const totals = [0, 0, 0];
+    for (let i = 0; i < img.length; i += 4) for (let c = 0; c < 3; c++) totals[c] += img[i + c];
+    return totals.map(total => Math.round(total / (img.length / 4))).join(',');
+  }));
+  if (new Set(samples).size !== 3) throw new Error('Distinct preview palettes expected for ' + slug + ': ' + samples);
+  if (slug === 'koi') {
+    await page.locator('[data-ambient-preset="tidal"]').click();
+    if (await page.locator('[data-ambient-preset="tidal"]').getAttribute('aria-pressed') !== 'true') throw new Error('Golden koi selection not applied');
+    await capture('ambient-koi-gold');
+    await page.locator('[data-ambient-preset="ultraviolet"]').click();
+    await capture('ambient-koi-showa');
+    await page.locator('[data-ambient-preset="ember"]').click();
+  }
   await capture('ambient-' + slug);
 }
 await page.getByRole('button', { name: 'Lava Lamp', exact: true }).click();

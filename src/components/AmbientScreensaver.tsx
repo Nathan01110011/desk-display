@@ -21,7 +21,7 @@ function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meetings, portrait = false }: AmbientScreensaverProps) {
+export function AmbientCanvas({ kind, palette, preview = false }: { kind: AmbientScreensaverType; palette: AmbientPalette; preview?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -37,16 +37,21 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
     let previousTime = -Infinity;
     let width = 1;
     let height = 1;
+    let visible = true;
 
     const resize = () => {
       // Pi Frame rotates the parent with CSS, so its visual bounding rectangle
       // swaps axes. Canvas pixels must be sized to the untransformed layout.
-      width = Math.max(1, canvas.clientWidth);
-      height = Math.max(1, canvas.clientHeight);
+      const layoutWidth = Math.max(1, canvas.clientWidth);
+      const layoutHeight = Math.max(1, canvas.clientHeight);
+      // Miniatures use the same artwork geometry, drawn into a smaller backing store.
+      const scale = preview ? 640 / Math.max(layoutWidth, layoutHeight) : 1;
+      width = Math.round(layoutWidth * scale);
+      height = Math.round(layoutHeight * scale);
       // Do not allocate a 4K/Retina canvas on resource-constrained Pi hardware.
-      const ratio = Math.min(1.5, window.devicePixelRatio || 1);
-      canvas.width = Math.round(width * ratio);
-      canvas.height = Math.round(height * ratio);
+      const ratio = preview ? 1 : Math.min(1.5, window.devicePixelRatio || 1);
+      canvas.width = Math.round(layoutWidth * ratio);
+      canvas.height = Math.round(layoutHeight * ratio);
       ctx.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
       paintAmbient(ctx, { kind, palette, width, height, time: performance.now() / 1000 * 0.55, frame });
     };
@@ -54,7 +59,7 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
     const draw = (timestamp: number) => {
       if (disposed) return;
       animationFrame = window.requestAnimationFrame(draw);
-      if (document.hidden || reducedMotion.matches || timestamp - previousTime < 1000 / 30) return;
+      if (document.hidden || !visible || reducedMotion.matches || timestamp - previousTime < 1000 / (preview ? 10 : 30)) return;
       previousTime = timestamp;
       paintAmbient(ctx, { kind, palette, width, height, time: timestamp / 1000 * 0.55, frame: frame++ });
     };
@@ -64,6 +69,8 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
     };
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
+    const intersection = preview ? new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }) : null;
+    intersection?.observe(canvas);
     resize();
     if (!reducedMotion.matches) animationFrame = window.requestAnimationFrame(draw);
     document.addEventListener('visibilitychange', handleVisibility);
@@ -71,11 +78,16 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
     return () => {
       disposed = true;
       observer.disconnect();
+      intersection?.disconnect();
       document.removeEventListener('visibilitychange', handleVisibility);
       window.cancelAnimationFrame(animationFrame);
     };
-  }, [kind, palette]);
+  }, [kind, palette, preview]);
 
+  return <canvas ref={canvasRef} data-ambient-preview={preview ? palette : undefined} className="absolute inset-0 block size-full" />;
+}
+
+export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meetings, portrait = false }: AmbientScreensaverProps) {
   const hasMeetings = Boolean(meetings.now || meetings.later);
   const displayTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   const displayDate = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
@@ -84,11 +96,12 @@ export function AmbientScreensaver({ kind, palette, overlay, now, spotify, meeti
     <div
       data-screensaver={kind}
       data-ambient-overlay={overlay}
+      data-ambient-palette={palette}
       data-ambient-layout={portrait ? 'portrait' : 'landscape'}
       className="absolute inset-0 h-full w-full overflow-hidden bg-[#020710] text-white"
     >
       {/* Entire screen is the artwork: no lamp silhouette, frame, or border. */}
-      <canvas ref={canvasRef} className="absolute inset-0 block size-full" />
+      <AmbientCanvas kind={kind} palette={palette} />
       {overlay !== 'none' && (
         <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-[clamp(14px,2.8vw,42px)]">
           <div className={'flex min-w-0 gap-4 ' + (portrait ? 'flex-col items-start' : 'flex-row items-start justify-between')}>
