@@ -11,7 +11,6 @@ export type AmbientScene = {
   frame: number;
 };
 
-type Point = { x: number; y: number };
 const TAU = Math.PI * 2;
 const clamp = (n: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
 const mix = (a: number, b: number, n: number) => a + (b - a) * n;
