@@ -614,7 +614,7 @@ export default function Dashboard() {
                       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                       data-dashboard-hero={isPortrait ? 'portrait' : undefined}
                       className={isPortrait
-                        ? `w-full shrink-0 min-h-0 ${hasPomodoroHero || hasTimerHero ? 'h-[min(30vh,240px)]' : 'h-52'} flex items-center justify-center`
+                        ? `w-full shrink-0 min-h-0 ${hasPomodoroHero || hasTimerHero ? 'h-[min(30vh,240px)]' : 'h-72'} flex items-center justify-center`
                         : 'w-full flex-1 min-h-0 flex items-center justify-center'}
                     >
                       {hasPomodoroHero || hasTimerHero ? (

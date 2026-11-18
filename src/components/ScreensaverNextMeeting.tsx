@@ -70,38 +70,38 @@ export function ScreensaverMeetingReminders({
       className={(light
         ? 'border-[#b5b2a8] bg-[#ddd9ce] text-[#252723]'
         : 'border-white/10 bg-[#0b0e0d] text-[#f0eadc]') +
-        ' relative z-20 w-full shrink-0 border-t px-3 py-2'}
+        ' relative z-20 w-full shrink-0 border-t px-4 py-3'}
     >
-      <div className={'mx-auto grid w-full items-center gap-x-5 gap-y-1.5 ' +
-        (active && later ? 'max-w-[60rem] grid-cols-1 sm:grid-cols-2' : 'max-w-[36rem] grid-cols-1')}>
+      <div className={'mx-auto grid w-full items-center gap-x-8 gap-y-2 ' +
+        (active && later ? 'max-w-[75rem] grid-cols-1 lg:grid-cols-2' : 'max-w-[44rem] grid-cols-1')}>
         {active && (
-          <div data-meeting-state="now" className="flex h-8 min-w-0 items-center justify-center gap-2">
-            <CalendarClock aria-hidden="true" size={16} className="shrink-0 opacity-70" />
+          <div data-meeting-state="now" className="flex h-12 min-w-0 items-center justify-center gap-2.5">
+            <CalendarClock aria-hidden="true" size={20} className="shrink-0 opacity-70" />
             <span className={(light
               ? 'bg-[#2e6556]/15 text-[#245746]'
               : 'bg-[#72d6ae]/15 text-[#9be5c3]') +
-              ' shrink-0 rounded-md px-2 py-1 text-[11px] font-black tracking-widest'}>NOW</span>
-            <span className="min-w-0 truncate text-sm font-semibold" title={active.summary}>{active.summary}</span>
-            <time dateTime={active.end} className="shrink-0 text-xs font-medium tabular-nums opacity-75">
+              ' shrink-0 rounded-md px-2.5 py-1.5 text-xs font-black tracking-widest'}>NOW</span>
+            <span className="min-w-0 truncate text-lg font-semibold" title={active.summary}>{active.summary}</span>
+            <time dateTime={active.end} className="shrink-0 text-sm font-semibold tabular-nums opacity-75">
               until {formatClockTime(active.end)}
             </time>
           </div>
         )}
         {later && (
-          <div data-meeting-state="later" className="flex h-8 min-w-0 items-center justify-center gap-2">
-            {!active && <CalendarClock aria-hidden="true" size={16} className="shrink-0 opacity-70" />}
+          <div data-meeting-state="later" className="flex h-12 min-w-0 items-center justify-center gap-2.5">
+            {!active && <CalendarClock aria-hidden="true" size={20} className="shrink-0 opacity-70" />}
             <span className={(soon
               ? light ? 'bg-[#ae4536]/10 text-[#972f23]' : 'bg-[#c9874a]/15 text-[#f0b67f]'
               : light ? 'bg-black/5 text-[#52534e]' : 'bg-white/10 text-white/75') +
-              ' shrink-0 rounded-md px-2 py-1 text-[11px] font-black tracking-widest'}>LATER</span>
-            <span className="min-w-0 truncate text-sm font-semibold" title={later.summary}>{later.summary}</span>
-            <time dateTime={later.start} className="shrink-0 text-xs font-medium tabular-nums opacity-75">
+              ' shrink-0 rounded-md px-2.5 py-1.5 text-xs font-black tracking-widest'}>LATER</span>
+            <span className="min-w-0 truncate text-lg font-semibold" title={later.summary}>{later.summary}</span>
+            <time dateTime={later.start} className="shrink-0 text-sm font-semibold tabular-nums opacity-75">
               {formatClockTime(later.start)}
             </time>
             <span className={(soon
               ? light ? 'text-[#972f23]' : 'text-[#f0b67f]'
               : 'opacity-75') +
-              ' hidden shrink-0 text-xs font-semibold tabular-nums sm:inline'}>
+              ' hidden shrink-0 text-sm font-semibold tabular-nums sm:inline'}>
               {countdownTo(later.start, now)}
             </span>
           </div>
