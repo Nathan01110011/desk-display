@@ -59,8 +59,13 @@ async function assertScreensaverNowAndLater() {
     return {
       bar: { top: outer.top, bottom: outer.bottom, left: outer.left, right: outer.right },
       items: inner.map(r => ({ top: r.top, bottom: r.bottom, left: r.left, right: r.right })),
+      rowHeights: [...element.querySelectorAll('[data-meeting-state]')].map(el => el.offsetHeight),
+      titleSizes: [...element.querySelectorAll('[data-meeting-state] .truncate')].map(el => Number.parseFloat(getComputedStyle(el).fontSize)),
     };
   });
+  if (bounds.rowHeights.some(height => height < 48) || bounds.titleSizes.some(size => size < 18)) {
+    throw new Error('Screensaver meeting reminders are too small: ' + JSON.stringify(bounds));
+  }
   if (bounds.items.some(r =>
     r.top < bounds.bar.top - 2 || r.bottom > bounds.bar.bottom + 2 ||
     r.left < bounds.bar.left - 2 || r.right > bounds.bar.right + 2)) {
@@ -138,6 +143,8 @@ try {
     const frame = get('main');
     const player = get('[data-spotify-layout="portrait"]');
     const launcher = get('[data-app-launcher="portrait"]');
+    const albumSize = document.querySelector('[data-spotify-layout="portrait"] img')?.parentElement?.offsetWidth ?? 0;
+    const heroHeight = document.querySelector('[data-dashboard-hero="portrait"]')?.offsetHeight ?? 0;
     const controls = get('[data-spotify-layout="portrait"] button');
     const title = document.querySelector('[data-spotify-layout="portrait"] h3');
     const artist = document.querySelector('[data-spotify-layout="portrait"] p');
@@ -155,18 +162,20 @@ try {
     return {
       calendarHeight: calendar?.offsetHeight ?? 0,
       logicalHeight: document.querySelector('main')?.offsetHeight ?? 0,
-      player, launcher, controls,
+      albumSize, heroHeight, player, launcher, controls,
       titleSize: font(title), artistSize: font(artist), timestampSize: font(timestamps),
       titleFits: within(title), artistFits: within(artist),
       intersects: area(player, launcher),
+      overlapsCalendar: area(get('[data-portrait-agenda="with-hero"]'), player),
       fitsFrame: inFrame(player) && inFrame(launcher) && inFrame(controls),
       buttonsFit: buttons.every(b => frame && b.left >= frame.left - 2 && b.right <= frame.right + 2 && b.top >= frame.top - 2 && b.bottom <= frame.bottom + 2),
     };
   });
   if (layout.calendarHeight < layout.logicalHeight * 0.35
       || layout.calendarHeight > layout.logicalHeight * 0.5
-      || layout.intersects > 1 || !layout.fitsFrame || !layout.buttonsFit
-      || layout.titleSize < 25 || layout.artistSize < 16 || layout.timestampSize < 14
+      || layout.intersects > 1 || layout.overlapsCalendar > 1 || !layout.fitsFrame || !layout.buttonsFit
+      || layout.albumSize < 168 || layout.heroHeight < 280
+      || layout.titleSize < 30 || layout.artistSize < 18 || layout.timestampSize < 16
       || !layout.titleFits || !layout.artistFits) {
     throw new Error('Music player overlaps launcher or clips off-screen in portrait: ' + JSON.stringify(layout));
   }
