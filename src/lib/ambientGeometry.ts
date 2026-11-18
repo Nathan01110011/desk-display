@@ -25,10 +25,10 @@ export function scopePoint(fraction: number, time: number, portrait: boolean) {
 export function portraitAuroraX(layer: number, fraction: number, time: number) {
   // Four evenly spaced curtains sweep around a shared, zero-mean center.
   // Opposite wave phases cancel the overall bias, while each ribbon moves.
-  const lane = 0.5 + (layer - 1.5) * 0.19;
-  const globalDrift = 0.12 * Math.sin(time * 0.16);
-  const lean = (fraction - 0.5) * 0.24 * Math.cos(time * 0.12);
+  const lane = 0.5 + (layer - 1.5) * 0.22;
+  const globalDrift = 0.08 * Math.sin(time * 0.16);
+  const lean = (fraction - 0.5) * 0.16 * Math.cos(time * 0.12);
   return lane + globalDrift + lean +
-    0.14 * Math.sin(fraction * 6.5 + time * 0.22 + layer * Math.PI / 2) +
+    0.12 * Math.sin(fraction * 6.5 + time * 0.22 + layer * Math.PI / 2) +
     0.035 * Math.sin(fraction * 13 - time * 0.17 + layer * Math.PI);
 }
