@@ -49,6 +49,36 @@ async function capture(name) {
     await music.getByText('Screensaver test track', { exact: true }).waitFor();
     if (await music.locator('button').count()) throw new Error('Clock music preview must not include controls');
   }
+  if (name.startsWith('ambient-')) {
+    const scene = page.locator('[data-screensaver] canvas');
+    const result = await scene.evaluate(canvas => {
+      const bounds = canvas.getBoundingClientRect();
+      const parent = canvas.parentElement.getBoundingClientRect();
+      const context = canvas.getContext('2d');
+      const sample = context?.getImageData(Math.floor(canvas.width * 0.43), Math.floor(canvas.height * 0.57), 1, 1).data;
+      return {
+        dimensions: [canvas.width, canvas.height],
+        fillsScreen: Math.abs(bounds.width - parent.width) < 2 && Math.abs(bounds.height - parent.height) < 2,
+        sample: sample ? [...sample] : null,
+      };
+    });
+    if (!result.fillsScreen || result.dimensions.some(value => value < 100) || !result.sample ||
+        result.sample.slice(0, 3).every(value => value === 0)) {
+      throw new Error('Ambient artwork must render coloured pixels across the full display: ' + JSON.stringify(result));
+    }
+    if (name.endsWith('clean')) {
+      if (await page.locator('[data-ambient-overlay="none"] [data-screensaver-now-playing]').count() ||
+          await page.locator('[data-ambient-overlay="none"] time').count()) {
+        throw new Error('Clean art mode should hide all information overlays');
+      }
+    } else {
+      await page.locator('[data-ambient-overlay="full"] time').first().waitFor();
+      await page.locator('[data-screensaver-now-playing]').getByText('Screensaver test track').waitFor();
+      if (await page.locator('[data-screensaver-now-playing] button').count()) {
+        throw new Error('Ambient music card must be view-only');
+      }
+    }
+  }
   await page.screenshot({ path: 'screensaver-screenshots/' + name + '.png', animations: 'disabled' });
   await page.locator('[data-screensaver]').click({ position: { x: 15, y: 15 } });
   await page.locator('[data-screensaver]').waitFor({ state: 'detached' });
@@ -62,5 +92,21 @@ for (const theme of ['Clockwork', 'Orbital', 'Station', 'Chronograph']) {
 
 await page.getByRole('button', { name: 'Big Clock' }).click();
 await capture('big-clock');
+
+// Each ambient animation must run in a production browser, not just typecheck.
+for (const [label, slug] of [
+  ['Lava Lamp', 'lava'],
+  ['Aurora', 'aurora'],
+  ['Koi Pond', 'koi'],
+  ['Oscilloscope', 'oscilloscope'],
+  ['Deep Space', 'space'],
+]) {
+  await page.getByRole('button', { name: label, exact: true }).click();
+  await capture('ambient-' + slug);
+}
+await page.getByRole('button', { name: 'Lava Lamp', exact: true }).click();
+await page.getByRole('button', { name: 'Clean art', exact: false }).click();
+await capture('ambient-lava-clean');
+await page.getByRole('button', { name: 'Dashboard', exact: false }).click();
 
 await browser.close();
